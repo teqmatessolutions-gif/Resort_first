@@ -1,0 +1,220 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: resort_postgres
+    environment:
+      POSTGRES_DB: resort_db
+      POSTGRES_USER: resort_user
+      POSTGRES_PASSWORD: secure_password_123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - resort_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resort_user -d resort_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: resort_redis
+    command: redis-server --appendonly yes --requirepass redis_password_123
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - resort_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # FastAPI Backend
+  api:
+    build:
+      context: ./ResortApp
+      dockerfile: Dockerfile
+    container_name: resort_api
+    environment:
+      DATABASE_URL: postgresql://resort_user:secure_password_123@postgres:5432/resort_db
+      REDIS_URL: redis://:redis_password_123@redis:6379/0
+      SECRET_KEY: your-super-secret-jwt-key-change-this-in-production
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,https://teqmates.com,https://www.teqmates.com
+      ENVIRONMENT: production
+      DEBUG: "False"
+      HOST: 0.0.0.0
+      PORT: 8000
+    volumes:
+      - ./ResortApp/uploads:/app/uploads
+      - ./ResortApp/logs:/app/logs
+    ports:
+      - "8000:8000"
+    networks:
+      - resort_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Admin Dashboard (React)
+  dashboard:
+    build:
+      context: ./dasboard
+      dockerfile: Dockerfile
+    container_name: resort_dashboard
+    environment:
+      REACT_APP_API_URL: http://localhost:8000/api
+      REACT_APP_ENV: production
+      PUBLIC_URL: /dashboard
+    volumes:
+      - dashboard_build:/app/build
+    networks:
+      - resort_network
+    restart: unless-stopped
+
+  # User Frontend (React)
+  userend:
+    build:
+      context: ./userend/userend
+      dockerfile: Dockerfile
+    container_name: resort_userend
+    environment:
+      REACT_APP_API_URL: http://localhost:8000/api
+      REACT_APP_ENV: production
+      PUBLIC_URL: /userend
+    volumes:
+      - userend_build:/app/build
+    networks:
+      - resort_network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: resort_nginx
+    volumes:
+      - ./deployment/nginx-docker.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./landingpage:/var/www/landingpage:ro
+      - dashboard_build:/var/www/dashboard:ro
+      - userend_build:/var/www/userend:ro
+      - ./ResortApp/uploads:/var/www/uploads:ro
+      - ./ssl:/etc/ssl:ro
+      - nginx_logs:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - resort_network
+    depends_on:
+      - api
+      - dashboard
+      - userend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: resort_backup
+    environment:
+      PGPASSWORD: secure_password_123
+    volumes:
+      - ./backups:/backups
+      - ./deployment/backup.sh:/backup.sh:ro
+    command: ["/bin/sh", "-c", "chmod +x /backup.sh && crond -f"]
+    networks:
+      - resort_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    profiles:
+      - backup
+
+  # Monitoring with Prometheus (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: resort_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - resort_network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana Dashboard (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: resort_grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - resort_network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  dashboard_build:
+    driver: local
+  userend_build:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  resort_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
