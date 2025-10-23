@@ -1,0 +1,351 @@
+import React, { useEffect, useState } from "react";
+import DashboardLayout from "../layout/DashboardLayout";
+import axios from "axios";
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { DollarSign, Users, Calendar, BedDouble, Briefcase, Package, Utensils, ConciergeBell, CheckCircle, ShoppingCart, TrendingUp } from "lucide-react";
+import CountUp from "react-countup";
+import { motion } from "framer-motion";
+import { useInfiniteScroll } from "./useInfiniteScroll";
+
+// In your actual project, you would import your configured API instance.
+const api = axios.create({
+  baseURL: "http://localhost:8000",
+});
+
+// --- Helper Components ---
+
+const KpiCard = ({ title, value, icon, prefix = "", suffix = "", loading }) => {
+  if (loading) {
+    return <div className="bg-gray-200 h-24 rounded-2xl animate-pulse"></div>;
+  }
+  return (
+    <motion.div
+      className="bg-white rounded-2xl shadow-lg p-5 flex items-center gap-4 hover:shadow-xl transition duration-300 transform hover:-translate-y-1"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {icon}
+      <div>
+        <p className="text-gray-500 text-sm font-medium">{title}</p>
+        <CountUp end={value} prefix={prefix} suffix={suffix} duration={1.5} className="text-3xl font-bold text-gray-800" />
+      </div>
+    </motion.div>
+  );
+};
+
+const SectionCard = ({ title, icon, children, loading }) => {
+  if (loading) {
+    return <div className="bg-gray-200 h-96 rounded-2xl animate-pulse"></div>;
+  }
+  return (
+    <motion.div
+      className="bg-white rounded-2xl shadow-xl p-6 flex flex-col"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="flex items-center mb-4 border-b border-gray-200 pb-3">
+        {icon}
+        <h2 className="text-xl font-bold text-gray-800 ml-3">{title}</h2>
+      </div>
+      {children}
+    </motion.div>
+  );
+};
+
+const DetailTable = ({ title, headers, data, loading, hasMore, loadMore, isSubmitting }) => {
+  if (loading) {
+    return <div className="bg-gray-200 h-64 rounded-2xl animate-pulse"></div>;
+  }
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6">
+      <h3 className="text-xl font-bold text-gray-700 mb-4">{title}</h3>
+      <div className="overflow-x-auto max-h-80">
+        <table className="min-w-full text-sm">
+          <thead className="bg-gray-100 sticky top-0">
+            <tr>
+              {headers.map((h) => <th key={h} className="px-4 py-2 text-left font-semibold text-gray-600">{h}</th>)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {data.length > 0 ? data.map((row, i) => (
+              <tr key={i} className="hover:bg-gray-50 transition-colors">
+                {headers.map((h) => <td key={h} className="px-4 py-3 whitespace-nowrap">{row[h.toLowerCase().replace(/ /g, '_')] || 'N/A'}</td>)}
+              </tr>
+            )) : (
+              <tr><td colSpan={headers.length} className="text-center py-10 text-gray-500">No data available.</td></tr>
+            )}
+          </tbody>
+        </table>
+        {hasMore && (
+          <div ref={loadMore} className="text-center p-4">
+            {isSubmitting && <span className="text-indigo-600">Loading...</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const CHART_COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444", "#3b82f6"];
+
+export default function ReportsDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [period, setPeriod] = useState("all"); // 'day', 'week', 'month', 'all'
+  const [kpiData, setKpiData] = useState({});
+  const [chartData, setChartData] = useState({ revenue_breakdown: [], weekly_performance: [] });
+  const [detailsLoading, setDetailsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [detailedData, setDetailedData] = useState({
+    roomBookings: [],
+    packageBookings: [],
+    foodOrders: [],
+    expenses: [],
+    employees: [],
+  });
+  const [pagination, setPagination] = useState({
+    roomBookings: { skip: 0, hasMore: true },
+    packageBookings: { skip: 0, hasMore: true },
+    foodOrders: { skip: 0, hasMore: true },
+    expenses: { skip: 0, hasMore: true },
+    employees: { skip: 0, hasMore: true },
+  });
+  const PAGE_LIMIT = 10;
+
+  const roomBookingsRef = useInfiniteScroll(() => loadMore('roomBookings'), pagination.roomBookings.hasMore, isSubmitting);
+  const packageBookingsRef = useInfiniteScroll(() => loadMore('packageBookings'), pagination.packageBookings.hasMore, isSubmitting);
+  const foodOrdersRef = useInfiniteScroll(() => loadMore('foodOrders'), pagination.foodOrders.hasMore, isSubmitting);
+  const expensesRef = useInfiniteScroll(() => loadMore('expenses'), pagination.expenses.hasMore, isSubmitting);
+  const employeesRef = useInfiniteScroll(() => loadMore('employees'), pagination.employees.hasMore, isSubmitting);
+  useEffect(() => {
+    const fetchKpis = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/dashboard/summary?period=${period}`);
+        setKpiData(response.data);
+      } catch (err) {
+        console.error("Failed to fetch KPI data:", err);
+        setError("Failed to load dashboard data. Please refresh the page.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchKpis();
+  }, [period]);
+
+  useEffect(() => {
+    const fetchCharts = async () => {
+      try {
+        setChartLoading(true);
+        const response = await api.get("/dashboard/charts");
+        setChartData(response.data);
+      } catch (err) {
+        console.error("Failed to fetch chart data:", err);
+        // Non-critical error, so we don't set the main error state
+      } finally {
+        setChartLoading(false);
+      }
+    };
+    fetchCharts();
+  }, []);
+
+  useEffect(() => {
+    const fetchDetailedData = async () => {
+      try {
+        setDetailsLoading(true);
+        // Reset pagination on period change
+        setPagination({
+            roomBookings: { skip: 0, hasMore: true },
+            packageBookings: { skip: 0, hasMore: true },
+            foodOrders: { skip: 0, hasMore: true },
+            expenses: { skip: 0, hasMore: true },
+            employees: { skip: 0, hasMore: true },
+        });
+
+        const fromDate = getPeriodDate(period);
+        const params = new URLSearchParams();
+        if (fromDate) params.append('from_date', fromDate);
+        params.append('skip', 0);
+        params.append('limit', PAGE_LIMIT);
+        const queryString = params.toString();
+
+        const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
+          api.get(`/reports/room-bookings?${queryString}`),
+          api.get(`/reports/package-bookings?${queryString}`),
+          api.get(`/reports/food-orders?${queryString}`),
+          api.get(`/reports/expenses?${queryString}`),
+          api.get(`/reports/employees?${queryString}`),
+        ]);
+        setDetailedData({
+          roomBookings: roomBookingsRes.data || [],
+          packageBookings: packageBookingsRes.data || [],
+          foodOrders: foodOrdersRes.data || [],
+          expenses: expensesRes.data || [],
+          employees: employeesRes.data || [],
+        });
+      } catch (err) {
+        console.error("Failed to fetch detailed data:", err);
+      } finally {
+        setDetailsLoading(false);
+      }
+    };
+    fetchDetailedData();
+  }, [period]);
+
+  const loadMore = async (dataType) => {
+    if (isSubmitting || !pagination[dataType].hasMore) return;
+
+    setIsSubmitting(true);
+    try {
+      const fromDate = getPeriodDate(period);
+      const params = new URLSearchParams();
+      if (fromDate) params.append('from_date', fromDate);
+      const currentSkip = pagination[dataType].skip + PAGE_LIMIT;
+      params.append('skip', currentSkip);
+      params.append('limit', PAGE_LIMIT);
+      const queryString = params.toString();
+
+      const response = await api.get(`/reports/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
+      const newData = response.data || [];
+
+      setDetailedData(prev => ({
+        ...prev,
+        [dataType]: [...prev[dataType], ...newData]
+      }));
+
+      setPagination(prev => ({
+        ...prev,
+        [dataType]: { skip: currentSkip, hasMore: newData.length === PAGE_LIMIT }
+      }));
+    } catch (err) {
+      console.error(`Failed to load more ${dataType}:`, err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen text-red-500 text-lg">
+          <p>{error}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const getPeriodDate = (period) => {
+    const date = new Date();
+    if (period === 'day') {
+      // No change
+    } else if (period === 'week') {
+      date.setDate(date.getDate() - 7);
+    } else if (period === 'month') {
+      date.setMonth(date.getMonth() - 1);
+    } else {
+      return ''; // all time
+    }
+    return date.toISOString().split('T')[0];
+  };
+
+  return (
+    <DashboardLayout>
+      {/* Animated Background */}
+      <div className="bubbles-container">
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+        <li></li>
+      </div>
+
+      <div className="p-6 md:p-8 space-y-8 bg-gray-50 min-h-screen">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-800">Comprehensive Dashboard</h1>
+          <div className="flex items-center space-x-2 bg-white p-1 rounded-lg shadow">
+            {['day', 'week', 'month', 'all'].map(p => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${period === p ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}
+              >
+                {p === 'day' ? 'Today' : p === 'week' ? 'This Week' : p === 'month' ? 'This Month' : 'All Time'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ===== KPI Grid ===== */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5">
+          <KpiCard title="Room Bookings" value={kpiData.room_bookings || 0} loading={loading} icon={<BedDouble className="text-purple-500 w-8 h-8" />} />
+          <KpiCard title="Package Bookings" value={kpiData.package_bookings || 0} loading={loading} icon={<Package className="text-indigo-500 w-8 h-8" />} />
+          <KpiCard title="Total Bookings" value={kpiData.total_bookings || 0} loading={loading} icon={<Calendar className="text-blue-500 w-8 h-8" />} />
+          
+          <KpiCard title="Food Orders" value={kpiData.food_orders || 0} loading={loading} icon={<Utensils className="text-orange-500 w-8 h-8" />} />
+          <KpiCard title="Services Assigned" value={kpiData.assigned_services || 0} loading={loading} icon={<ConciergeBell className="text-teal-500 w-8 h-8" />} />
+          <KpiCard title="Services Completed" value={kpiData.completed_services || 0} loading={loading} icon={<CheckCircle className="text-green-500 w-8 h-8" />} />
+
+          <KpiCard title="Total Expenses" value={kpiData.total_expenses || 0} prefix="₹" loading={loading} icon={<DollarSign className="text-red-500 w-8 h-8" />} />
+          <KpiCard title="Expense Count" value={kpiData.expense_count || 0} loading={loading} icon={<ShoppingCart className="text-red-400 w-8 h-8" />} />
+
+          <KpiCard title="Active Employees" value={kpiData.active_employees || 0} loading={loading} icon={<Users className="text-cyan-500 w-8 h-8" />} />
+          <KpiCard title="Total Salary" value={kpiData.total_salary || 0} prefix="₹" loading={loading} icon={<Briefcase className="text-gray-600 w-8 h-8" />} />
+
+          <KpiCard title="Food Items" value={kpiData.food_items_available || 0} suffix=" Available" loading={loading} icon={<Utensils className="text-yellow-500 w-8 h-8" />} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Revenue Breakdown Pie Chart */}
+          <SectionCard title="Revenue Breakdown (All Time)" icon={<DollarSign className="text-green-600" />} loading={chartLoading} className="lg:col-span-2">
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={chartData.revenue_breakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                  {chartData.revenue_breakdown.map((_, index) => <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />)}
+                </Pie>
+                <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </SectionCard>
+
+          {/* Weekly Performance Bar Chart */}
+          <SectionCard title="Weekly Performance" icon={<TrendingUp className="text-blue-600" />} loading={chartLoading} className="lg:col-span-3">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.weekly_performance}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="day" />
+                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                <Tooltip />
+                <Legend />
+                <Bar yAxisId="left" dataKey="revenue" fill="#8884d8" name="Revenue (₹)" />
+                <Bar yAxisId="right" dataKey="checkouts" fill="#82ca9d" name="Checkouts" />
+              </BarChart>
+            </ResponsiveContainer>
+          </SectionCard>
+        </div>
+
+        {/* --- Detailed Data Section --- */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Detailed Reports for Period: <span className="text-indigo-600 capitalize">{period}</span></h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <DetailTable title="Room Bookings" headers={['Guest Name', 'Check In', 'Check Out', 'Status']} data={detailedData.roomBookings} loading={detailsLoading} hasMore={pagination.roomBookings.hasMore} loadMore={roomBookingsRef} isSubmitting={isSubmitting} />
+            <DetailTable title="Package Bookings" headers={['Guest Name', 'Check In', 'Check Out', 'Status']} data={detailedData.packageBookings} loading={detailsLoading} hasMore={pagination.packageBookings.hasMore} loadMore={packageBookingsRef} isSubmitting={isSubmitting} />
+            <DetailTable title="Food Orders" headers={['Room Number', 'Amount', 'Status', 'Created At']} data={detailedData.foodOrders} loading={detailsLoading} hasMore={pagination.foodOrders.hasMore} loadMore={foodOrdersRef} isSubmitting={isSubmitting} />
+            <DetailTable title="Expenses" headers={['Category', 'Description', 'Amount', 'Expense Date']} data={detailedData.expenses} loading={detailsLoading} hasMore={pagination.expenses.hasMore} loadMore={expensesRef} isSubmitting={isSubmitting} />
+            <DetailTable title="Employee Salaries" headers={['Name', 'Role', 'Salary', 'Hire Date']} data={detailedData.employees} loading={detailsLoading} hasMore={pagination.employees.hasMore} loadMore={employeesRef} isSubmitting={isSubmitting} />
+          </div>
+        </div>
+
+      </div>
+    </DashboardLayout>
+  );
+}

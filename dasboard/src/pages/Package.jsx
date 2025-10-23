@@ -1,0 +1,541 @@
+import React, { useEffect, useState } from "react";
+import api from "../services/api";
+import { toast } from "react-hot-toast";
+import DashboardLayout from "../layout/DashboardLayout";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement } from 'chart.js';
+import { Pie, Bar, Line } from 'react-chartjs-2';
+import { motion } from "framer-motion";
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement);
+
+// KPI Card
+const KpiCard = ({ title, value, icon, color }) => (
+  <div className={`p-6 rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
+    <div className="flex-1">
+      <h4 className="text-lg font-medium">{title}</h4>
+      <p className="text-3xl font-bold mt-1">{value}</p>
+    </div>
+    <div className="text-4xl opacity-80">{icon}</div>
+  </div>
+);
+
+// Card Wrapper
+const Card = ({ children, title, className = "" }) => (
+  <div className={`bg-white p-6 rounded-2xl shadow-lg border border-gray-200 transition-shadow duration-300 hover:shadow-xl ${className}`}>
+    {title && <h3 className="text-2xl font-bold text-gray-800 mb-6">{title}</h3>}
+    {children}
+  </div>
+);
+
+// Check-in Modal Component
+const CheckInModal = ({ booking, onSave, onClose, isSubmitting }) => {
+  const [idCardImage, setIdCardImage] = useState(null);
+  const [guestPhoto, setGuestPhoto] = useState(null);
+  const [idCardPreview, setIdCardPreview] = useState(null);
+  const [guestPhotoPreview, setGuestPhotoPreview] = useState(null);
+
+  const handleFileChange = (e, type) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    if (type === 'id') {
+      setIdCardImage(file);
+      setIdCardPreview(previewUrl);
+    } else {
+      setGuestPhoto(file);
+      setGuestPhotoPreview(previewUrl);
+    }
+  };
+
+  const handleSave = () => {
+    if (!idCardImage || !guestPhoto) {
+      toast.error("Please upload both ID card and guest photo.");
+      return;
+    }
+    onSave(booking.id, { id_card_image: idCardImage, guest_photo: guestPhoto });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
+        <h3 className="text-2xl font-bold text-gray-800 mb-4">Check-in Guest: {booking.guest_name}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col items-center"><label className="font-medium text-gray-700 mb-2">ID Card Image</label><input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'id')} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required />{idCardPreview && <img src={idCardPreview} alt="ID Preview" className="mt-4 w-full h-40 object-contain rounded-lg border" />}</div>
+          <div className="flex flex-col items-center"><label className="font-medium text-gray-700 mb-2">Guest Photo</label><input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'guest')} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required />{guestPhotoPreview && <img src={guestPhotoPreview} alt="Guest Preview" className="mt-4 w-full h-40 object-contain rounded-lg border" />}</div>
+        </div>
+        <div className="flex gap-4 mt-6"><button onClick={onClose} className="w-full bg-gray-200 text-gray-800 font-semibold py-2 rounded-md hover:bg-gray-300 transition-colors">Cancel</button><button onClick={handleSave} disabled={isSubmitting || !idCardImage || !guestPhoto} className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-md hover:bg-indigo-700 transition-colors disabled:bg-gray-400">{isSubmitting ? "Checking in..." : "Confirm Check-in"}</button></div>
+      </motion.div>
+    </div>
+  );
+};
+
+// --- Chart Configurations for a Professional Look ---
+
+const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6'];
+
+const commonChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: {
+        font: {
+          family: 'Inter, sans-serif',
+          size: 12,
+        },
+        color: '#4b5563', // gray-600
+      },
+    },
+    tooltip: {
+      enabled: true,
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleFont: { size: 14, weight: 'bold' },
+      bodyFont: { size: 12 },
+      padding: 10,
+      cornerRadius: 8,
+      boxPadding: 4,
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: '#6b7280' }, // gray-500
+      border: { color: '#e5e7eb' }, // gray-200
+    },
+    y: {
+      grid: { color: '#f3f4f6' }, // gray-100
+      ticks: { color: '#6b7280' }, // gray-500
+      border: { display: false },
+    },
+  },
+};
+
+const Packages = () => {
+  const [packages, setPackages] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [packageFilter, setPackageFilter] = useState("");
+  const [bookingToCheckIn, setBookingToCheckIn] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingFilter, setBookingFilter] = useState({ guestName: "", status: "all", checkIn: "", checkOut: "" });
+  const [createForm, setCreateForm] = useState({ title: "", description: "", price: "", images: [] });
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [bookingForm, setBookingForm] = useState({
+    package_id: "",
+    guest_name: "",
+    guest_email: "",
+    guest_mobile: "",
+    check_in: "",
+    check_out: "",
+    adults: 2,
+    children: 0,
+    room_ids: []
+  });
+
+  const fetchData = async () => {
+    try {
+      const [packageRes, roomRes, bookingRes] = await Promise.all([
+        api.get("/packages/"),
+        api.get("/rooms/"),
+        api.get("/packages/bookingsall")
+      ]);
+      setPackages(packageRes.data || []);
+      setRooms(roomRes.data || []);
+      setBookings(bookingRes.data || []);
+    } catch (err) {
+      toast.error("Failed to load data.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  // Filter only available rooms
+  const availableRooms = rooms.filter(r => r.status == "Available");
+
+  // Create Package Form handlers
+  const handleCreateChange = e => setCreateForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleCreateImageChange = e => {
+    const files = Array.from(e.target.files);
+    setCreateForm(prev => ({ ...prev, images: files }));
+    setImagePreviews(files.map(f => URL.createObjectURL(f)));
+  };
+  const handleCreateSubmit = async e => {
+    e.preventDefault();
+    try {
+      const data = new FormData();
+      data.append("title", createForm.title);
+      data.append("description", createForm.description);
+      data.append("price", createForm.price);
+      createForm.images.forEach(img => data.append("images", img));
+      await api.post("/packages/", data, { headers: { "Content-Type": "multipart/form-data" } });
+      toast.success("Package created successfully!");
+      setCreateForm({ title: "", description: "", price: "", images: [] });
+      setImagePreviews([]);
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to create package");
+    }
+  };
+  const handleDeletePackage = async id => {
+    if (window.confirm("Are you sure you want to delete this package?")) {
+      try {
+        await api.delete(`/packages/${id}`);
+        toast.success("Package deleted successfully!");
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to delete package");
+      }
+    }
+  };
+
+  // Booking handlers
+  const handleBookingChange = e => setBookingForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleRoomSelect = roomId => {
+    setBookingForm(prev => ({
+      ...prev,
+      room_ids: prev.room_ids.includes(roomId)
+        ? prev.room_ids.filter(id => id !== roomId)
+        : [...prev.room_ids, roomId]
+    }));
+  };
+  const handleBookingSubmit = async e => {
+    e.preventDefault();
+    try {
+      const bookingData = {
+        ...bookingForm,
+        package_id: parseInt(bookingForm.package_id),
+        adults: parseInt(bookingForm.adults),
+        children: parseInt(bookingForm.children),
+        room_ids: bookingForm.room_ids.map(id => parseInt(id))
+      };
+      if (editingBooking) {
+        await api.put(`/packages/bookings/${editingBooking.id}`, bookingData);
+        toast.success("Booking updated successfully!");
+        setEditingBooking(null);
+      } else {
+        await api.post("/packages/book", bookingData);
+        toast.success("Package booked successfully!");
+      }
+      setBookingForm({ package_id: "", guest_name: "", guest_email: "", guest_mobile: "", check_in: "", check_out: "", adults: 2, children: 0, room_ids: [] });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || "Failed to process booking");
+    }
+  };
+  const handleEditBooking = booking => {
+    setEditingBooking(booking);
+    setBookingForm({
+      package_id: booking.package?.id,
+      guest_name: booking.guest_name,
+      guest_email: booking.guest_email || "",
+      guest_mobile: booking.guest_mobile || "",
+      check_in: booking.check_in,
+      check_out: booking.check_out,
+      adults: booking.adults,
+      children: booking.children,
+      room_ids: booking.rooms.map(r => r.room.id)
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const handleCancelBooking = async bookingId => {
+    if (window.confirm("Are you sure you want to cancel this booking?")) {
+      try {
+        await api.delete(`/packages/booking/${bookingId}`);
+        toast.success("Booking canceled successfully!");
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to cancel booking");
+      }
+    }
+  };
+
+  const handleCheckIn = async (bookingId, images) => {
+    setIsSubmitting(true);
+    const toastId = toast.loading("Processing check-in...");
+
+    const formData = new FormData();
+    formData.append("id_card_image", images.id_card_image);
+    formData.append("guest_photo", images.guest_photo);
+
+    try {
+      const response = await api.put(`/packages/booking/${bookingId}/check-in`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Update the specific booking in the state
+      setBookings(prevBookings =>
+        prevBookings.map(b => (b.id === bookingId ? { ...b, ...response.data } : b))
+      );
+
+      toast.success("Guest checked in successfully!", { id: toastId });
+      setBookingToCheckIn(null);
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || "Failed to check in guest.";
+      toast.error(errorMessage, { id: toastId });
+      console.error("Check-in error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  // Filters
+  const handlePackageFilterChange = e => setPackageFilter(e.target.value);
+  const handleBookingFilterChange = e => setBookingFilter(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const filteredPackages = packages.filter(pkg => pkg.title.toLowerCase().includes(packageFilter.toLowerCase()));
+  const filteredBookings = bookings.filter(b => {
+    const matchesGuest = b.guest_name.toLowerCase().includes(bookingFilter.guestName.toLowerCase());
+    const matchesStatus = bookingFilter.status === "all" || b.status === bookingFilter.status;
+    const matchesCheckIn = !bookingFilter.checkIn || b.check_in >= bookingFilter.checkIn;
+    const matchesCheckOut = !bookingFilter.checkOut || b.check_out <= bookingFilter.checkOut;
+    return matchesGuest && matchesStatus && matchesCheckIn && matchesCheckOut;
+  });
+
+  const totalPackages = packages.length;
+  const totalBookings = bookings.length;
+  const totalRevenue = bookings.reduce((sum, b) => sum + (b.package?.price || 0), 0);
+
+  // Charts
+  const bookingCounts = filteredBookings.reduce((acc, b) => {
+    const pkg = b.package?.title || "Unknown";
+    acc[pkg] = (acc[pkg] || 0) + 1;
+    return acc;
+  }, {});
+  const pieData = {
+    labels: Object.keys(bookingCounts),
+    datasets: [{
+      data: Object.values(bookingCounts),
+      backgroundColor: CHART_COLORS.map(color => `${color}B3`), // 0.7 opacity
+      borderColor: CHART_COLORS,
+      borderWidth: 2,
+    }]
+  };
+
+  const monthlyData = bookings.reduce((acc, b) => {
+    const date = new Date(b.check_in);
+    const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+    acc[month] = (acc[month] || 0) + 1;
+    return acc;
+  }, {});
+  const barData = {
+    labels: Object.keys(monthlyData),
+    datasets: [{ label: 'Bookings per Month', data: Object.values(monthlyData), backgroundColor: 'rgba(53, 162, 235, 0.8)', borderColor: 'rgba(53, 162, 235, 1)', borderWidth: 1, borderRadius: 4 }]
+  };
+
+  const revenueData = bookings.reduce((acc, b) => {
+    const date = new Date(b.check_in).toISOString().split('T')[0];
+    acc[date] = (acc[date] || 0) + (b.package?.price || 0);
+    return acc;
+  }, {});
+
+  const sortedRevenueLabels = Object.keys(revenueData).sort();
+  const sortedRevenueValues = sortedRevenueLabels.map(label => revenueData[label]);
+
+  const lineData = {
+    labels: sortedRevenueLabels,
+    datasets: [{ label: 'Total Revenue', data: sortedRevenueValues, borderColor: 'rgba(75, 192, 192, 1)', backgroundColor: 'rgba(75, 192, 192, 0.2)', tension: 0.4, fill: true, pointBackgroundColor: 'rgba(75, 192, 192, 1)', pointBorderColor: '#fff', pointHoverRadius: 7 }]
+  };
+
+  if (loading) return <p className="text-center text-gray-600 font-serif">Loading packages, rooms, and bookings...</p>;
+
+  return (
+    <DashboardLayout>
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">Package Management</h1>
+
+      {/* KPI Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <KpiCard title="Total Packages" value={totalPackages} color="bg-gradient-to-r from-blue-500 to-blue-700" icon={<i className="fas fa-box-open"></i>} />
+        <KpiCard title="Total Bookings" value={totalBookings} color="bg-gradient-to-r from-green-500 to-green-700" icon={<i className="fas fa-calendar-check"></i>} />
+        <KpiCard title="Total Revenue" value={`₹${totalRevenue.toLocaleString()}`} color="bg-gradient-to-r from-purple-500 to-purple-700" icon={<i className="fas fa-rupee-sign"></i>} />
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-12">
+        <Card title="Bookings by Package" className="lg:col-span-1">
+          <div className="h-80 w-full">
+            <Pie data={pieData} options={{ ...commonChartOptions, plugins: { ...commonChartOptions.plugins, legend: { position: 'bottom' } } }} />
+          </div>
+        </Card>
+        <Card title="Monthly Bookings" className="lg:col-span-2">
+          <div className="h-80 w-full">
+            <Bar data={barData} options={commonChartOptions} />
+          </div>
+        </Card>
+      </div>
+      <Card title="Revenue Over Time" className="mb-8 md:mb-12">
+        <div className="h-96 w-full">
+          <Line data={lineData} options={commonChartOptions} />
+        </div>
+      </Card>
+
+      {/* Packages List Section */}
+      <Card title="Available Packages">
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search for a package..."
+            value={packageFilter}
+            onChange={handlePackageFilterChange}
+            className="w-full md:w-1/2 p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
+          />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredPackages.length > 0 ? (
+            filteredPackages.map(pkg => (
+              <motion.div key={pkg.id} whileHover={{ y: -5 }} className="bg-gray-50 rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col">
+                {pkg.images && pkg.images.length > 0 ? (
+                  <img className="h-48 w-full object-cover" src={`${api.defaults.baseURL}/${pkg.images[0].image_url}`} alt={pkg.title} />
+                ) : (
+                  <div className="h-48 w-full bg-gray-200 flex items-center justify-center"><span className="text-gray-500">No Image</span></div>
+                )}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h4 className="font-bold text-xl mb-2 text-gray-800">{pkg.title}</h4>
+                  <p className="text-gray-600 text-base mb-4 flex-grow">{pkg.description}</p>
+                  <div className="flex justify-between items-center mt-auto pt-4 border-t border-gray-200">
+                    <p className="text-green-600 font-bold text-2xl">₹{pkg.price.toLocaleString()}</p>
+                    <button onClick={() => handleDeletePackage(pkg.id)} className="text-red-500 hover:text-red-700 font-semibold transition-colors duration-300 flex items-center gap-2"><i className="fas fa-trash-alt"></i> Delete</button>
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500 col-span-full py-8">No packages found matching your search.</p>
+          )}
+        </div>
+      </Card>
+
+      {/* Forms Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+
+        {/* Create Package Form */}
+        <Card title="Create New Package">
+          <form onSubmit={handleCreateSubmit} className="space-y-6">
+            <input type="text" name="title" placeholder="Package Title" value={createForm.title} onChange={handleCreateChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+            <textarea name="description" placeholder="Package Description" value={createForm.description} onChange={handleCreateChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" rows="4" required />
+            <input type="number" name="price" placeholder="Price (₹)" value={createForm.price} onChange={handleCreateChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+            <label className="block">
+              <span className="text-gray-600 font-medium">Package Images:</span>
+              <input type="file" multiple onChange={handleCreateImageChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all" />
+            </label>
+            {imagePreviews.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4">
+                {imagePreviews.map((src, index) => (
+                  <div key={index} className="relative w-full aspect-square rounded-lg overflow-hidden shadow-md">
+                    <img src={src} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">Create Package 🚀</button>
+          </form>
+        </Card>
+
+        {/* Booking Form */}
+        <Card title={editingBooking ? "Edit Booking" : "Book a Package"}>
+          <form onSubmit={handleBookingSubmit} className="space-y-6">
+            <select name="package_id" value={bookingForm.package_id} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required>
+              <option value="">Select Package</option>
+              {packages.map(p => (<option key={p.id} value={p.id}>{p.title} - ₹{p.price}</option>))}
+            </select>
+            <input name="guest_name" placeholder="Guest Name" value={bookingForm.guest_name} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+            <input type="email" name="guest_email" placeholder="Guest Email" value={bookingForm.guest_email} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
+            <input name="guest_mobile" placeholder="Guest Mobile" value={bookingForm.guest_mobile} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input type="date" name="check_in" value={bookingForm.check_in} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+              <input type="date" name="check_out" value={bookingForm.check_out} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input type="number" name="adults" min={1} placeholder="Adults" value={bookingForm.adults} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
+              <input type="number" name="children" min={0} placeholder="Children" value={bookingForm.children} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
+            </div>
+            <div>
+              <label className="block text-gray-600 font-medium mb-2">Select Rooms:</label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                {availableRooms.map(room => (
+                  <div key={room.id} onClick={() => handleRoomSelect(room.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                                       ${bookingForm.room_ids.includes(room.id) ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white border-gray-300 hover:border-indigo-500'}
+                  `}>
+                    <p className="font-semibold">Room {room.number}</p>
+                    <p className={`text-sm ${bookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
+              {editingBooking ? "Update Booking ✏️" : "Book Package ✅"}
+            </button>
+          </form>
+        </Card>
+      </div>
+
+      {/* Bookings Table */}
+      <Card title="All Package Bookings" className="mt-8">
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rooms</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-In</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check-Out</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredBookings.map(b => (
+                <tr key={b.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900">{b.guest_name}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{b.package?.title || "-"}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{b.rooms.map(r => r.room.number).join(", ")}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{b.check_in}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{b.check_out}</td>
+                  <td className="px-4 py-3 whitespace-nowrap capitalize">{b.status}</td>
+                  <td className="px-4 py-3 text-center space-x-2">
+                    <button onClick={() => handleEditBooking(b)} className="text-blue-600 hover:text-blue-800 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed" disabled={b.status !== 'booked'}>
+                      Edit
+                    </button>
+                    <button onClick={() => handleCancelBooking(b.id)} className="text-red-600 hover:text-red-800 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed" disabled={b.status !== 'booked'}>
+                      Cancel
+                    </button>
+                    <button onClick={() => setBookingToCheckIn(b)} className="text-green-600 hover:text-green-800 font-semibold disabled:text-gray-400 disabled:cursor-not-allowed" disabled={b.status !== 'booked'}>
+                      Check-in
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredBookings.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center py-4 text-gray-500">No bookings found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {bookingToCheckIn && (
+        <CheckInModal
+          booking={bookingToCheckIn}
+          onClose={() => setBookingToCheckIn(null)}
+          onSave={handleCheckIn}
+          isSubmitting={isSubmitting}
+        />
+      )}
+    </DashboardLayout>
+  );
+};
+
+export default Packages;
