@@ -129,7 +129,7 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
-      const res = await API.get("/rooms?skip=0&limit=12");
+      const res = await API.get("/rooms/test?skip=0&limit=12");
       const dataWithTrend = res.data.map((r) => ({
         ...r,
         trend:
@@ -141,6 +141,7 @@ const Rooms = () => {
       setPage(1);
     } catch (error) {
       console.error("Error fetching rooms:", error);
+      setMessage("❌ Error fetching rooms");
     }
   };
 

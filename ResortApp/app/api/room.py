@@ -92,6 +92,15 @@ def delete_room_test(room_id: int, db: Session = Depends(get_db)):
         print(f"Error deleting room: {e}")
         raise HTTPException(status_code=500, detail=f"Error deleting room: {str(e)}")
 
+# Test GET endpoint for fetching rooms
+@router.get("/test", response_model=list[RoomOut])
+def get_rooms_test(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    try:
+        return db.query(Room).offset(skip).limit(limit).all()
+    except Exception as e:
+        print(f"Error fetching rooms: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
+
 # ---------------- CREATE ----------------
 @router.post("/", response_model=RoomOut)
 def create_room(
