@@ -1318,11 +1318,20 @@ export default function App() {
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                         {rooms.filter(r => r.status === 'Available').map(room => (
                                             <div key={room.id} onClick={() => handleRoomSelection(room.id)}
-                                                className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all duration-200 ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                             >
-                                                <p className="font-semibold">Room {room.number}</p>
-                                                <p className="text-xs opacity-80">{room.type}</p>
-                                                <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                <img 
+                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                    alt={room.type} 
+                                                    className="w-full h-20 object-cover" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="p-2 text-center">
+                                                    <p className="font-semibold text-xs">Room {room.number}</p>
+                                                    <p className="text-xs opacity-80">{room.type}</p>
+                                                    <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                    <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -1390,11 +1399,20 @@ export default function App() {
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                         {rooms.filter(r => r.status === 'Available').map(room => (
                                             <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
-                                                className={`p-3 rounded-lg border-2 cursor-pointer text-center transition-all duration-200 ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                             >
-                                                <p className="font-semibold">Room {room.number}</p>
-                                                <p className="text-xs opacity-80">{room.type}</p>
-                                                <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                <img 
+                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                    alt={room.type} 
+                                                    className="w-full h-20 object-cover" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="p-2 text-center">
+                                                    <p className="font-semibold text-xs">Room {room.number}</p>
+                                                    <p className="text-xs opacity-80">{room.type}</p>
+                                                    <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                    <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
