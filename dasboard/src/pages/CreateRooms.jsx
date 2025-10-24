@@ -237,10 +237,19 @@ const Rooms = () => {
         setIsEditing(false);
         setEditRoomId(null);
       } else {
-        await API.post("/rooms", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+        // Use the working test endpoint for room creation
+        const params = new URLSearchParams();
+        params.append("number", form.number);
+        params.append("type", form.type);
+        params.append("price", form.price);
+        params.append("status", form.status);
+        params.append("adults", form.adults);
+        params.append("children", form.children);
+
+        await API.post("/rooms/test", params, {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
         });
-        setMessage("✅ Room created!");
+        setMessage("✅ Room created successfully!");
       }
 
       setForm({
