@@ -74,21 +74,39 @@ def create_room(
     status: str = Form("Available"),
     adults: int = Form(2),
     children: int = Form(0),
-    image: UploadFile = File(None)
-    # Temporarily removed db dependency to test
-    # db: Session = Depends(get_db)
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db)
 ):
-    # Temporary response for testing
-    return {
-        "id": 999,
-        "number": number,
-        "type": type,
-        "price": price,
-        "status": status,
-        "adults": adults,
-        "children": children,
-        "image_url": None
-    }
+    try:
+        filename = None
+        if image and image.filename:
+            try:
+                ext = image.filename.split('.')[-1]
+                filename = f"room_{uuid4().hex}.{ext}"
+                image_path = os.path.join(UPLOAD_DIR, filename)
+                with open(image_path, "wb") as buffer:
+                    shutil.copyfileobj(image.file, buffer)
+            except Exception as e:
+                print(f"Error saving image: {e}")
+                raise HTTPException(status_code=500, detail=f"Error saving image: {str(e)}")
+
+        db_room = Room(
+            number=number,
+            type=type,
+            price=price,
+            status=status,
+            adults=adults,
+            children=children,
+            image_url=f"/static/rooms/{filename}" if filename else None
+        )
+        db.add(db_room)
+        db.commit()
+        db.refresh(db_room)
+        return db_room
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating room: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating room: {str(e)}")
 
 
 # ---------------- READ ----------------
@@ -100,9 +118,20 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
 
 # ---------------- DELETE ----------------
 @router.delete("/{room_id}")
-def delete_room(room_id: int):
-    # Temporary simple response for testing
-    return {"message": f"Room {room_id} would be deleted successfully"}
+def delete_room(room_id: int, db: Session = Depends(get_db)):
+    db_room = db.query(Room).filter(Room.id == room_id).first()
+    if db_room is None:
+        raise HTTPException(status_code=404, detail="Room not found")
+
+    # Delete associated image if exists
+    if db_room.image_url:
+        image_path = db_room.image_url.lstrip("/")
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    db.delete(db_room)
+    db.commit()
+    return {"message": "Room deleted successfully"}
 
 
 # ---------------- UPDATE ----------------
