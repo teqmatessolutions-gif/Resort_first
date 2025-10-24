@@ -195,6 +195,21 @@ const Rooms = () => {
     const { name, value, files } = e.target;
     if (name === "image") {
       const file = files[0];
+      if (file) {
+        // Check file size (5MB limit)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
+          setMessage("❌ Image file is too large. Please select an image smaller than 5MB.");
+          return;
+        }
+        
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          setMessage("❌ Please select a valid image file (JPEG, PNG, or WebP).");
+          return;
+        }
+      }
       setForm((prev) => ({ ...prev, image: file }));
       setPreviewImage(file ? URL.createObjectURL(file) : null);
     } else {
@@ -381,10 +396,11 @@ const Rooms = () => {
             <input
               type="file"
               name="image"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={handleChange}
               className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all"
             />
+            <p className="text-xs text-gray-500 mt-1">Max file size: 5MB. Supported formats: JPEG, PNG, WebP</p>
           </div>
 
           {/* Show preview if image selected */}
