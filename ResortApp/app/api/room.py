@@ -70,6 +70,28 @@ def create_room_test(
 def test_simple():
     return {"message": "Room router is working"}
 
+# Test delete endpoint
+@router.delete("/test/{room_id}")
+def delete_room_test(room_id: int, db: Session = Depends(get_db)):
+    try:
+        db_room = db.query(Room).filter(Room.id == room_id).first()
+        if db_room is None:
+            raise HTTPException(status_code=404, detail="Room not found")
+
+        # Delete associated image if exists
+        if db_room.image_url:
+            image_path = db_room.image_url.lstrip("/")
+            if os.path.exists(image_path):
+                os.remove(image_path)
+
+        db.delete(db_room)
+        db.commit()
+        return {"message": "Room deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        print(f"Error deleting room: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting room: {str(e)}")
+
 # ---------------- CREATE ----------------
 @router.post("/", response_model=RoomOut)
 def create_room(

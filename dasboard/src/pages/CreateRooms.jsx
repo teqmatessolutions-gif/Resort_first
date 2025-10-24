@@ -237,7 +237,7 @@ const Rooms = () => {
         setIsEditing(false);
         setEditRoomId(null);
       } else {
-        // Use the main rooms endpoint for room creation
+        // Use the working test endpoint for room creation
         const formData = new FormData();
         formData.append("number", form.number);
         formData.append("type", form.type);
@@ -247,7 +247,7 @@ const Rooms = () => {
         formData.append("children", form.children);
         if (form.image) formData.append("image", form.image);
 
-        await API.post("/rooms", formData, {
+        await API.post("/rooms/test", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         setMessage("✅ Room created successfully!");
@@ -290,7 +290,7 @@ const Rooms = () => {
   const handleDelete = async (roomId) => {
     if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
       try {
-        await API.delete(`/rooms/${roomId}`);
+        await API.delete(`/rooms/test/${roomId}`);
         setMessage("✅ Room deleted successfully!");
         fetchRooms();
       } catch (error) {
