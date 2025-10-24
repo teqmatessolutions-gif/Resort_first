@@ -587,16 +587,16 @@ export default function App() {
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
-            const API_BASE_URL = "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
             const endpoints = {
-                rooms: '/rooms/',
-                services: '/services/',
-                foodItems: '/food-items/',
-                packages: '/packages/',
-                resortInfo: '/resort-info/',
-                gallery: '/gallery/',
-                reviews: '/reviews/',
-                banners: '/header-banner/'
+                rooms: '/api/rooms/',
+                services: '/api/services/',
+                foodItems: '/api/food-items/',
+                packages: '/api/packages/',
+                resortInfo: '/api/resort-info/',
+                gallery: '/api/gallery/',
+                reviews: '/api/reviews/',
+                banners: '/api/header-banner/'
             };
 
             try {
@@ -737,7 +737,8 @@ export default function App() {
         // -------------------------
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/bookings/guest", {
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const response = await fetch(`${API_BASE_URL}/api/bookings/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookingData)
@@ -785,11 +786,12 @@ export default function App() {
         // -------------------------
 
         try {
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
             const payload = {
                 ...packageBookingData,
                 room_ids: packageBookingData.room_ids.map(id => parseInt(id)),
             };
-            const response = await fetch("http://127.0.0.1:8000/packages/book/guest", {
+            const response = await fetch(`${API_BASE_URL}/api/packages/book/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -816,7 +818,8 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/services/bookings", { // Placeholder API endpoint
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const response = await fetch(`${API_BASE_URL}/api/services/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(serviceBookingData)
@@ -861,7 +864,8 @@ export default function App() {
         };
         
         try {
-            const response = await fetch("http://127.0.0.1:8000/food-orders/", {
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const response = await fetch(`${API_BASE_URL}/api/food-orders/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1049,7 +1053,7 @@ export default function App() {
             {bannerData.map((banner, index) => (
                 <img
                     key={banner.id}
-                    src={`http://127.0.0.1:8000${banner.image_url}`}
+                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://127.0.0.1:8000${banner.image_url}`}
                     alt={banner.title}
                     className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
                 />
@@ -1106,7 +1110,7 @@ export default function App() {
                             <div className="flex gap-6 animate-[auto-scroll_80s_linear_infinite] hover:[animation-play-state:paused]">
                                 {packages.length > 0 ? [...packages, ...packages].map((pkg, index) => (
                                     <div key={`${pkg.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={`http://127.0.0.1:8000/${pkg.images?.[0]?.image_url}`} alt={pkg.title} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${pkg.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${pkg.images?.[0]?.image_url}`} alt={pkg.title} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                         <div className="p-6">
                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{pkg.title}</h3>
                                             <p className={`mb-1 ${priceStyle}`}>₹{pkg.price}</p>
@@ -1128,7 +1132,7 @@ export default function App() {
                            <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_70s_linear_infinite] hover:[animation-play-state:paused]">
                                 {rooms.length > 0 ? [...rooms, ...rooms].map((room, index) => (
                                     <div key={`${room.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={`http://127.0.0.1:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                         <div className="p-6">
                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{room.type}</h3>
                                             <p className={`text-sm mb-1 ${textSecondary}`}>Room Number: {room.number}</p>
@@ -1174,7 +1178,7 @@ export default function App() {
                            <div className="flex gap-6 animate-[auto-scroll-reverse_80s_linear_infinite] hover:[animation-play-state:paused]">
                                 {foodItems.length > 0 ? [...foodItems, ...foodItems].map((food, index) => (
                                     <div key={`${food.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={`http://localhost:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                         <div className="p-6">
                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{food.name}</h3>
                                             <p className={`mb-1 ${priceStyle}`}>₹{food.price}</p>
@@ -1195,7 +1199,7 @@ export default function App() {
                             <div className="flex gap-6 animate-[auto-scroll_75s_linear_infinite] hover:[animation-play-state:paused]">
                                 {galleryImages.length > 0 ? [...galleryImages, ...galleryImages].map((image, index) => (
                                     <div key={`${image.id}-${index}`} className="flex-none w-64 h-48 md:w-80 md:h-64 rounded-2xl overflow-hidden shadow-2xl transition duration-500 hover:scale-105">
-                                        <img src={`http://127.0.0.1:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://127.0.0.1:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                     </div>
                                 )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No images available.</p>}
                             </div>
@@ -1501,7 +1505,7 @@ export default function App() {
                                     {foodItems.map(item => (
                                         <div key={item.id} className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4">
-                                                <img src={`http://localhost:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
+                                                <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
                                                 <div>
                                                     <p className={`font-semibold ${theme.textPrimary}`}>{item.name}</p>
                                                     <p className={`text-sm ${theme.textSecondary}`}>₹{item.price}</p>
