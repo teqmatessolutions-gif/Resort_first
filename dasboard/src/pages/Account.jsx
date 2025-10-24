@@ -168,14 +168,14 @@ export default function ReportsDashboard() {
         const queryString = params.toString();
 
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          API.get(`/reports/room-bookings?${queryString}`),
-          API.get(`/reports/package-bookings?${queryString}`),
-          API.get(`/reports/food-orders?${queryString}`),
-          API.get(`/reports/expenses?${queryString}`),
-          API.get(`/reports/employees?${queryString}`),
+          API.get(`/bookings?${queryString}`),
+          API.get(`/packages?${queryString}`),
+          API.get(`/food-orders?${queryString}`),
+          API.get(`/expenses?${queryString}`),
+          API.get(`/employees?${queryString}`),
         ]);
         setDetailedData({
-          roomBookings: roomBookingsRes.data || [],
+          roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
           foodOrders: foodOrdersRes.data || [],
           expenses: expensesRes.data || [],
@@ -203,8 +203,8 @@ export default function ReportsDashboard() {
       params.append('limit', PAGE_LIMIT);
       const queryString = params.toString();
 
-      const response = await API.get(`/reports/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
-      const newData = response.data || [];
+        const response = await API.get(`/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
+        const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
 
       setDetailedData(prev => ({
         ...prev,
