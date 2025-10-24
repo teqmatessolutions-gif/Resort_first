@@ -12,7 +12,7 @@ export default function LoginPage() {
     try {
       const response = await api.post("/auth/login", { email, password });
       localStorage.setItem("token", response.data.access_token);
-      window.location.href = "/dashboard";
+      window.location.href = "/admin/dashboard";
     } catch (err) {
       console.error(err);
       alert("Login failed. Please check your credentials.");
