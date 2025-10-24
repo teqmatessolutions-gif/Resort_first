@@ -1003,21 +1003,21 @@ export default function App() {
             <div className={`relative ${theme.bgPrimary} ${theme.textPrimary} font-sans min-h-screen transition-colors duration-500`}>
                 <BackgroundAnimation theme={theme} />
                 <header className={`fixed top-0 left-0 right-0 z-50 ${theme.bgSecondary} bg-opacity-80 backdrop-blur-sm`}>
-                    <div className="container mx-auto px-4 md:px-12 py-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                            <BedDouble className={`w-8 h-8 ${theme.textAccent}`} />
-                            <span className="text-xl font-bold tracking-tight">Elysian Retreat</span>
+                    <div className="container mx-auto px-2 sm:px-4 md:px-12 py-2 sm:py-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                            <BedDouble className={`w-6 h-6 sm:w-8 sm:h-8 ${theme.textAccent}`} />
+                            <span className="text-lg sm:text-xl font-bold tracking-tight">Elysian Retreat</span>
                         </div>
-                        <nav className="flex items-center space-x-4">
+                        <nav className="flex items-center space-x-2 sm:space-x-4">
                             <div className="relative">
                                 <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-2 rounded-full transition-colors duration-300 ${theme.textSecondary} hover:${theme.textAccent}`}
+                                    className={`p-1 sm:p-2 rounded-full transition-colors duration-300 ${theme.textSecondary} hover:${theme.textAccent}`}
                                     title="Change Theme">
                                     {themes[currentTheme].icon}
                                 </button>
                                 {isThemeDropdownOpen && (
-                                    <div className={`absolute right-0 mt-2 w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
-                                        <div className="p-2 grid grid-cols-4 gap-1">
+                                    <div className={`absolute right-0 mt-2 w-40 sm:w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
+                                        <div className="p-2 grid grid-cols-3 sm:grid-cols-4 gap-1">
                                             {Object.values(themes).map((t) => (
                                                 <button key={t.id} onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
                                                     className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `${t.buttonBg} ${t.buttonText}` : `${theme.textSecondary} hover:${t.textAccent} hover:${theme.bgSecondary}`}`}
@@ -1032,7 +1032,7 @@ export default function App() {
 
                             <button 
                                 onClick={() => setIsGeneralBookingOpen(true)} 
-                                className={`px-4 py-2 ${theme.buttonBg} ${theme.buttonText} font-bold rounded-full shadow-lg ${theme.buttonHover} transition-colors`}
+                                className={`px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base ${theme.buttonBg} ${theme.buttonText} font-bold rounded-full shadow-lg ${theme.buttonHover} transition-colors`}
                             >
                                 Book Now
                             </button>
@@ -1040,7 +1040,7 @@ export default function App() {
                     </div>
                 </header>
 
-                <main className="w-full pt-16 space-y-12 relative z-10 overflow-hidden">
+                <main className="w-full pt-12 sm:pt-16 space-y-8 sm:space-y-12 relative z-10 overflow-hidden">
                   {/* Banner Section */}
 <div
   ref={bannerRef}
