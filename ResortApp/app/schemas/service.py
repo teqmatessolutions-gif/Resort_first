@@ -16,7 +16,7 @@ class ServiceOut(ServiceBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # For employee and room resolution
 class EmployeeOut(BaseModel):
@@ -24,14 +24,14 @@ class EmployeeOut(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class RoomOut(BaseModel):
     id: int
     number: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ServiceStatus(str, Enum):
     pending = "pending"
@@ -59,4 +59,4 @@ class AssignedServiceOut(BaseModel):
     status: ServiceStatus
 
     class Config:
-        orm_mode = True
+        from_attributes = True
