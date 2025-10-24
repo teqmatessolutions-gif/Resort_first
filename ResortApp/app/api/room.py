@@ -23,6 +23,37 @@ UPLOAD_DIR = os.path.join("static", "rooms")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+# Test endpoint without authentication
+@router.post("/test", response_model=RoomOut)
+def create_room_test(
+    number: str = Form(...),
+    type: str = Form(...),
+    price: float = Form(...),
+    status: str = Form("Available"),
+    adults: int = Form(2),
+    children: int = Form(0),
+    db: Session = Depends(get_db)
+):
+    try:
+        db_room = Room(
+            number=number,
+            type=type,
+            price=price,
+            status=status,
+            adults=adults,
+            children=children,
+            image_url=None
+        )
+        db.add(db_room)
+        db.commit()
+        db.refresh(db_room)
+        return db_room
+    except Exception as e:
+        db.rollback()
+        print(f"Error creating room: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating room: {str(e)}")
+
+
 # ---------------- CREATE ----------------
 @router.post("/", response_model=RoomOut)
 def create_room(
