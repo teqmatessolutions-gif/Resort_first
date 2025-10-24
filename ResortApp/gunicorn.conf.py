@@ -15,8 +15,9 @@ worker_connections = 1000
 max_requests = 1000
 max_requests_jitter = 50
 preload_app = True
-timeout = 30
-keepalive = 2
+timeout = 120  # Increased timeout for slower operations
+graceful_timeout = 30  # Graceful shutdown timeout
+keepalive = 5  # Increased keepalive for better connection reuse
 
 # Logging
 accesslog = "/var/log/resort/access.log"
