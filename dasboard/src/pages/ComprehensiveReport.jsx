@@ -1,12 +1,8 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
-import axios from "axios";
+import API from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { DollarSign, Users, Calendar, BedDouble, Briefcase, Package, Utensils, ConciergeBell, UserCheck } from "lucide-react";
-
-const api = axios.create({
-  baseURL: "http://localhost:8000",
-});
 
 const SectionCard = ({ title, icon, children, loading, count }) => {
   return (
@@ -71,36 +67,28 @@ export default function ComprehensiveReport() {
         setLoading(true);
         setError(null);
 
-        const endpoints = [
-          "expenses",
-          "service-charges",
-          "food-orders",
-          "room-bookings",
-          "package-bookings",
-          "employees",
-          "checkin-by-employee",
-        ];
-
         const [
           expensesRes,
-          serviceChargesRes,
           foodOrdersRes,
           roomBookingsRes,
           packageBookingsRes,
           employeesRes,
-          checkInByEmployeeRes,
-        ] = await Promise.all(
-          endpoints.map(endpoint => api.get(`/reports/${endpoint}`, { params }))
-        );
+        ] = await Promise.all([
+          API.get("/expenses", { params }),
+          API.get("/food-orders", { params }),
+          API.get("/bookings", { params }),
+          API.get("/packages", { params }),
+          API.get("/employees", { params }),
+        ]);
 
         setReportData({
           expenses: expensesRes.data,
-          serviceCharges: serviceChargesRes.data,
+          serviceCharges: [], // No service charges endpoint available
           foodOrders: foodOrdersRes.data,
-          roomBookings: roomBookingsRes.data,
+          roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data,
           employees: employeesRes.data,
-          checkInByEmployee: checkInByEmployeeRes.data,
+          checkInByEmployee: [], // No checkin by employee endpoint available
         });
       } catch (err) {
         console.error("Failed to fetch comprehensive report data:", err);
