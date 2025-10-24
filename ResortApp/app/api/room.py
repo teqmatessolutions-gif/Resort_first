@@ -65,6 +65,11 @@ def create_room_test(
         raise HTTPException(status_code=500, detail=f"Error creating room: {str(e)}")
 
 
+# Test endpoint to check if the router is working
+@router.get("/test-simple")
+def test_simple():
+    return {"message": "Room router is working"}
+
 # ---------------- CREATE ----------------
 @router.post("/", response_model=RoomOut)
 def create_room(
