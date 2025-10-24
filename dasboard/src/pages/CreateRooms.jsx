@@ -72,7 +72,7 @@ const ImageModal = ({ imageUrl, onClose }) => {
           &times;
         </button>
         <img
-          src={`http://localhost:8000${imageUrl}`}
+          src={`https://www.teqmates.com${imageUrl}`}
           alt="Room"
           className="w-full h-auto rounded-2xl shadow-lg"
         />
@@ -281,9 +281,22 @@ const Rooms = () => {
       children: room.children,
       image: null,
     });
-    setPreviewImage(room.image_url ? `http://localhost:8000${room.image_url}` : null);
+    setPreviewImage(room.image_url ? `https://www.teqmates.com${room.image_url}` : null);
     setMessage("");
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (roomId) => {
+    if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
+      try {
+        await API.delete(`/rooms/${roomId}`);
+        setMessage("✅ Room deleted successfully!");
+        fetchRooms();
+      } catch (error) {
+        console.error("Error deleting room:", error);
+        setMessage("❌ Error deleting room");
+      }
+    }
   };
 
   // Calculate KPIs
@@ -476,7 +489,7 @@ const Rooms = () => {
             <motion.div key={room.id} className="bg-gray-50 rounded-2xl shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col" whileHover={{ y: -5 }}>
               <div className="relative">
                 <img
-                  src={room.image_url ? `http://localhost:8000${room.image_url}` : 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image'}
+                  src={room.image_url ? `https://www.teqmates.com${room.image_url}` : 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image'}
                   alt={`Room ${room.number}`}
                   className="h-48 w-full object-cover cursor-pointer"
                   onClick={() => setSelectedImage(room.image_url)}
@@ -505,8 +518,9 @@ const Rooms = () => {
                 <div className="mt-auto pt-4 border-t border-gray-200 flex flex-col gap-2">
                   <div className="flex justify-between gap-2">
                     <button onClick={() => handleEdit(room)} className="w-1/2 bg-green-100 text-green-700 text-sm font-semibold py-2 rounded-lg hover:bg-green-200 transition">Edit</button>
-                    <button onClick={() => fetchBookings(room.number)} className="w-1/2 bg-blue-100 text-blue-700 text-sm font-semibold py-2 rounded-lg hover:bg-blue-200 transition">Bookings</button>
+                    <button onClick={() => handleDelete(room.id)} className="w-1/2 bg-red-100 text-red-700 text-sm font-semibold py-2 rounded-lg hover:bg-red-200 transition">Delete</button>
                   </div>
+                  <button onClick={() => fetchBookings(room.number)} className="w-full bg-blue-100 text-blue-700 text-sm font-semibold py-2 rounded-lg hover:bg-blue-200 transition">View Bookings</button>
                   {room.status !== "Booked" && (
                     <select
                       value={room.status}
