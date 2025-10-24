@@ -612,12 +612,12 @@ export default function App() {
                 const data = await Promise.all(responses.map(res => res.json()));
 
                 const [
-                    roomsData, servicesData, foodItemsData, packagesData,
+                    roomsData, foodItemsData, packagesData,
                     resortInfoData, galleryData, reviewsData, bannerData
                 ] = data;
 
                 setRooms(roomsData);
-                setServices(servicesData);
+                setServices([]); // Set empty array since services endpoint is not available
                 setFoodItems(foodItemsData);
                 setPackages(packagesData);
                 setResortInfo(resortInfoData.length > 0 ? resortInfoData[0] : null);
