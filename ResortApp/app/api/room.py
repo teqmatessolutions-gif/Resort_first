@@ -93,9 +93,30 @@ def create_room(
 
 # ---------------- READ ----------------
 @router.get("/", response_model=list[RoomOut])
-def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
-    # Query directly in the endpoint to apply pagination
-    return db.query(Room).offset(skip).limit(limit).all()
+def get_rooms(skip: int = 0, limit: int = 100):
+    # Temporary response for testing
+    return [
+        {
+            "id": 1,
+            "number": "TEST123",
+            "type": "Standard",
+            "price": 150.0,
+            "status": "Available",
+            "adults": 2,
+            "children": 0,
+            "image_url": "/static/rooms/room_1.jpg"
+        },
+        {
+            "id": 2,
+            "number": "TEST999",
+            "type": "Test",
+            "price": 200.0,
+            "status": "Available",
+            "adults": 3,
+            "children": 1,
+            "image_url": "/static/rooms/room_2.jpg"
+        }
+    ]
 
 
 # ---------------- DELETE ----------------
