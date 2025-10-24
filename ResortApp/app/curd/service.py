@@ -28,14 +28,8 @@ def create_assigned_service(db: Session, assigned: AssignedServiceCreate):
     return db_assigned
 
 def get_assigned_services(db: Session, skip: int = 0, limit: int = 100):
-    return (
-        db.query(AssignedService)
-        .options(
-            joinedload(AssignedService.service),
-            joinedload(AssignedService.room),
-            joinedload(AssignedService.employee)
-        )
-        .offset(skip).limit(limit).all())
+    # Simplified version to avoid complex joins that might cause issues
+    return db.query(AssignedService).offset(skip).limit(limit).all()
 
 def update_assigned_service_status(db: Session, assigned_id: int, update_data: AssignedServiceUpdate):
     assigned = db.query(AssignedService).filter(AssignedService.id == assigned_id).first()

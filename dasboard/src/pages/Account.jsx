@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
-import axios from "axios";
+import API from "../services/api";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { DollarSign, Users, Calendar, BedDouble, Briefcase, Package, Utensils, ConciergeBell, CheckCircle, ShoppingCart, TrendingUp } from "lucide-react";
 import CountUp from "react-countup";
 import { motion } from "framer-motion";
 import { useInfiniteScroll } from "./useInfiniteScroll";
-
-// In your actual project, you would import your configured API instance.
-const api = axios.create({
-  baseURL: "http://localhost:8000",
-});
 
 // --- Helper Components ---
 
@@ -124,7 +119,7 @@ export default function ReportsDashboard() {
     const fetchKpis = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/dashboard/summary?period=${period}`);
+        const response = await API.get(`/dashboard/summary?period=${period}`);
         setKpiData(response.data);
       } catch (err) {
         console.error("Failed to fetch KPI data:", err);
@@ -140,7 +135,7 @@ export default function ReportsDashboard() {
     const fetchCharts = async () => {
       try {
         setChartLoading(true);
-        const response = await api.get("/dashboard/charts");
+        const response = await API.get("/dashboard/charts");
         setChartData(response.data);
       } catch (err) {
         console.error("Failed to fetch chart data:", err);
@@ -173,11 +168,11 @@ export default function ReportsDashboard() {
         const queryString = params.toString();
 
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          api.get(`/reports/room-bookings?${queryString}`),
-          api.get(`/reports/package-bookings?${queryString}`),
-          api.get(`/reports/food-orders?${queryString}`),
-          api.get(`/reports/expenses?${queryString}`),
-          api.get(`/reports/employees?${queryString}`),
+          API.get(`/reports/room-bookings?${queryString}`),
+          API.get(`/reports/package-bookings?${queryString}`),
+          API.get(`/reports/food-orders?${queryString}`),
+          API.get(`/reports/expenses?${queryString}`),
+          API.get(`/reports/employees?${queryString}`),
         ]);
         setDetailedData({
           roomBookings: roomBookingsRes.data || [],
@@ -208,7 +203,7 @@ export default function ReportsDashboard() {
       params.append('limit', PAGE_LIMIT);
       const queryString = params.toString();
 
-      const response = await api.get(`/reports/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
+      const response = await API.get(`/reports/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
       const newData = response.data || [];
 
       setDetailedData(prev => ({

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
-import axios from "../services/api";
+import API from "../services/api";
 import { LineChart, Line, Tooltip, ResponsiveContainer } from "recharts";
 import CountUp from "react-countup";
 import { useInfiniteScroll } from "./useInfiniteScroll";
@@ -33,7 +33,7 @@ const Expenses = () => {
     if (isFetchingMore || !hasMore) return;
     setIsFetchingMore(true);
     try {
-      const res = await axios.get(`/expenses?skip=${expenses.length}&limit=20`);
+      const res = await API.get(`/expenses?skip=${expenses.length}&limit=20`);
       const newExpenses = res.data || [];
       const dataWithTrend = newExpenses.map((exp) => ({ ...exp, trend: Array.from({ length: 30 }, () => Math.floor(Math.random() * 5000)) }));
       setExpenses(prev => [...prev, ...dataWithTrend]);
@@ -51,7 +51,7 @@ const Expenses = () => {
 
   const fetchExpenses = async () => {
     try {
-      const res = await axios.get("/expenses?skip=0&limit=20");
+      const res = await API.get("/expenses?skip=0&limit=20");
       const dataWithTrend = res.data.map((exp) => ({
         ...exp,
         trend: Array.from({ length: 30 }, () => Math.floor(Math.random() * 5000)),
@@ -66,7 +66,7 @@ const Expenses = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await axios.get("/employees?limit=1000"); // Fetch all for dropdown
+      const res = await API.get("/employees?limit=1000"); // Fetch all for dropdown
       setEmployees(res.data);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -85,7 +85,7 @@ const Expenses = () => {
       data.append("description", form.description);
       if (form.bill_image) data.append("image", form.bill_image);
 
-      await axios.post("/expenses", data, {
+      await API.post("/expenses", data, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -109,7 +109,7 @@ const Expenses = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this expense?")) return;
     try {
-      await axios.delete(`/expenses/${id}`);
+      await API.delete(`/expenses/${id}`);
       fetchExpenses();
     } catch (error) {
       console.error("Delete failed:", error);
@@ -289,7 +289,7 @@ const Expenses = () => {
                     <td className="p-2">
                       {exp.image && (
                         <img
-                          src={`http://localhost:8000/${exp.image.replace(/\\/g, "/")}`}
+                          src={`${process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000'}/${exp.image.replace(/\\/g, "/")}`}
                           alt="Bill"
                           className="h-12 rounded"
                         />
