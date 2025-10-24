@@ -4,8 +4,6 @@ from app.database import SessionLocal
 from app.schemas.room import RoomCreate, RoomOut
 from app.curd import room as crud_room
 from app.models.room import Room
-from app.models.user import User
-from app.utils.auth import get_current_user
 import shutil
 import os
 from uuid import uuid4
