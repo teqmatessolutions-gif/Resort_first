@@ -24,7 +24,7 @@ import EmployeeManagement from "./pages/EmployeeManagement.jsx";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/admin">
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={
