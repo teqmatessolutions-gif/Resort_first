@@ -105,7 +105,7 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
 
 # ---------------- DELETE ----------------
 @router.delete("/{room_id}")
-def delete_room(room_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_room(room_id: int, db: Session = Depends(get_db)):
     db_room = db.query(Room).filter(Room.id == room_id).first()
     if db_room is None:
         raise HTTPException(status_code=404, detail="Room not found")
@@ -132,8 +132,7 @@ def update_room(
     adults: int = Form(None),
     children: int = Form(None),
     image: UploadFile = File(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     db_room = db.query(Room).filter(Room.id == room_id).first()
     if not db_room:
