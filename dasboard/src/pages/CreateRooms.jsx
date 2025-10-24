@@ -237,17 +237,18 @@ const Rooms = () => {
         setIsEditing(false);
         setEditRoomId(null);
       } else {
-        // Use the working test endpoint for room creation
-        const params = new URLSearchParams();
-        params.append("number", form.number);
-        params.append("type", form.type);
-        params.append("price", form.price);
-        params.append("status", form.status);
-        params.append("adults", form.adults);
-        params.append("children", form.children);
+        // Use the main rooms endpoint for room creation
+        const formData = new FormData();
+        formData.append("number", form.number);
+        formData.append("type", form.type);
+        formData.append("price", form.price);
+        formData.append("status", form.status);
+        formData.append("adults", form.adults);
+        formData.append("children", form.children);
+        if (form.image) formData.append("image", form.image);
 
-        await API.post("/rooms/test", params, {
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        await API.post("/rooms", formData, {
+          headers: { "Content-Type": "multipart/form-data" },
         });
         setMessage("✅ Room created successfully!");
       }
