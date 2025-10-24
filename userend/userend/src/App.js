@@ -589,14 +589,14 @@ export default function App() {
         const fetchResortData = async () => {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
             const endpoints = {
-                rooms: '/api/rooms/',
-                services: '/api/services/',
-                foodItems: '/api/food-items/',
-                packages: '/api/packages/',
-                resortInfo: '/api/resort-info/',
-                gallery: '/api/gallery/',
-                reviews: '/api/reviews/',
-                banners: '/api/header-banner/'
+                rooms: '/rooms/',
+                services: '/services/',
+                foodItems: '/food-items/',
+                packages: '/packages/',
+                resortInfo: '/resort-info/',
+                gallery: '/gallery/',
+                reviews: '/reviews/',
+                banners: '/header-banner/'
             };
 
             try {
@@ -738,7 +738,7 @@ export default function App() {
 
         try {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
-            const response = await fetch(`${API_BASE_URL}/api/bookings/guest`, {
+            const response = await fetch(`${API_BASE_URL}/bookings/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookingData)
@@ -791,7 +791,7 @@ export default function App() {
                 ...packageBookingData,
                 room_ids: packageBookingData.room_ids.map(id => parseInt(id)),
             };
-            const response = await fetch(`${API_BASE_URL}/api/packages/book/guest`, {
+            const response = await fetch(`${API_BASE_URL}/packages/book/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -819,7 +819,7 @@ export default function App() {
 
         try {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
-            const response = await fetch(`${API_BASE_URL}/api/services/bookings`, {
+            const response = await fetch(`${API_BASE_URL}/services/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(serviceBookingData)
@@ -865,7 +865,7 @@ export default function App() {
         
         try {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
-            const response = await fetch(`${API_BASE_URL}/api/food-orders/`, {
+            const response = await fetch(`${API_BASE_URL}/food-orders/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
