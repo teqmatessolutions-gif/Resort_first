@@ -1,7 +1,7 @@
-// Axios in// src/services/api.js
+// src/services/api.js
 import axios from "axios";
 
- pozycja// Set your backend API base URL
+// Set your backend API base URL
 const API = axios.create({
   baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://localhost:8000",
 });
