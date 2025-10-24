@@ -27,18 +27,36 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />{" "}
-        {/* Public dashboard view */}
-        <Route path="/bookings" element={<Bookings />} />{" "}
-        {/* Assuming general access */}
-        <Route path="/rooms" element={<CreateRooms />} />{" "}
-        {/* Assuming general access */}
-        <Route path="/users" element={<Users />} />{" "}
-        {/* Assuming general access */}
-        <Route path="/services" element={<Services />} />{" "}
-        {/* Assuming general access */}
-        <Route path="/expenses" element={<Expenses />} />{" "}
-        {/* Assuming general access */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute requiredPermission="/dashboard">
+            <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/bookings" element={
+          <ProtectedRoute requiredPermission="/bookings">
+            <Bookings />
+          </ProtectedRoute>
+        } />
+        <Route path="/rooms" element={
+          <ProtectedRoute requiredPermission="/rooms">
+            <CreateRooms />
+          </ProtectedRoute>
+        } />
+        <Route path="/users" element={
+          <ProtectedRoute requiredPermission="/users">
+            <Users />
+          </ProtectedRoute>
+        } />
+        <Route path="/services" element={
+          <ProtectedRoute requiredPermission="/services">
+            <Services />
+          </ProtectedRoute>
+        } />
+        <Route path="/expenses" element={
+          <ProtectedRoute requiredPermission="/expenses">
+            <Expenses />
+          </ProtectedRoute>
+        } />
         {/* Protected Routes */}
         <Route
           path="/roles"
