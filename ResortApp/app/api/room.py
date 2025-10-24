@@ -147,30 +147,12 @@ def create_room(
 
 # ---------------- READ ----------------
 @router.get("/", response_model=list[RoomOut])
-def get_rooms(skip: int = 0, limit: int = 100):
-    # Temporary response for testing - will restore database later
-    return [
-        {
-            "id": 1,
-            "number": "TEST123",
-            "type": "Standard",
-            "price": 150.0,
-            "status": "Available",
-            "adults": 2,
-            "children": 0,
-            "image_url": "/static/rooms/room_1.jpg"
-        },
-        {
-            "id": 2,
-            "number": "TEST999",
-            "type": "Test",
-            "price": 200.0,
-            "status": "Available",
-            "adults": 3,
-            "children": 1,
-            "image_url": "/static/rooms/room_2.jpg"
-        }
-    ]
+def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    try:
+        return db.query(Room).offset(skip).limit(limit).all()
+    except Exception as e:
+        print(f"Error fetching rooms: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
 
 
 # ---------------- DELETE ----------------
