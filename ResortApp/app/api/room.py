@@ -100,20 +100,9 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
 
 # ---------------- DELETE ----------------
 @router.delete("/{room_id}")
-def delete_room(room_id: int, db: Session = Depends(get_db)):
-    db_room = db.query(Room).filter(Room.id == room_id).first()
-    if db_room is None:
-        raise HTTPException(status_code=404, detail="Room not found")
-
-    # Delete associated image if exists
-    if db_room.image_url:
-        image_path = db_room.image_url.lstrip("/")
-        if os.path.exists(image_path):
-            os.remove(image_path)
-
-    db.delete(db_room)
-    db.commit()
-    return {"message": "Room deleted successfully"}
+def delete_room(room_id: int):
+    # Temporary simple response for testing
+    return {"message": f"Room {room_id} would be deleted successfully"}
 
 
 # ---------------- UPDATE ----------------
