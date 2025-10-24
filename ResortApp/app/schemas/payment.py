@@ -15,7 +15,7 @@ class PaymentOut(PaymentBase):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class VoucherBase(BaseModel):
@@ -29,4 +29,4 @@ class VoucherCreate(VoucherBase):
 class VoucherOut(VoucherBase):
     id: int
     class Config:
-        orm_mode = True
+        from_attributes = True

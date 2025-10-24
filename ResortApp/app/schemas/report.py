@@ -14,7 +14,7 @@ class BookingReportOut(BaseModel):
     status: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ServiceChargeReportOut(BaseModel):
     id: int
@@ -25,7 +25,7 @@ class ServiceChargeReportOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FoodOrderReportOut(BaseModel):
     id: int
@@ -36,7 +36,7 @@ class FoodOrderReportOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 class RoomChargeReportOut(BaseModel):
     room_number: str
     total_charges: float

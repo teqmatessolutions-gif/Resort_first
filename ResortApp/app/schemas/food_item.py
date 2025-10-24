@@ -6,7 +6,7 @@ class FoodItemImageOut(BaseModel):
     image_url: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FoodItemCreate(BaseModel):
     name: str
@@ -25,4 +25,4 @@ class FoodItemOut(BaseModel):
     images: List[FoodItemImageOut] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

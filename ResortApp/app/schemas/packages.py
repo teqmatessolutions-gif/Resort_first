@@ -8,7 +8,7 @@ class PackageImageOut(BaseModel):
     image_url: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PackageOut(BaseModel):
@@ -19,7 +19,7 @@ class PackageOut(BaseModel):
     images: List[PackageImageOut] = Field(default_factory=list)
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # New schema to represent the Room model
@@ -29,7 +29,7 @@ class RoomOut(BaseModel):
     type: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Updated schema to correctly nest the RoomOut model
@@ -39,7 +39,7 @@ class PackageBookingRoomOut(BaseModel):
     room: Optional[RoomOut] = None# ✅ match SQLAlchemy relationship
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PackageBookingBase(BaseModel):
     package_id: int
@@ -51,13 +51,13 @@ class PackageBookingBase(BaseModel):
     adults: int = 2
     children: int = 0
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PackageBookingCreate(PackageBookingBase):
     room_ids: List[int]
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PackageBookingUpdate(BaseModel):
@@ -65,7 +65,7 @@ class PackageBookingUpdate(BaseModel):
     adults: Optional[int] = None
     children: Optional[int] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PackageBookingOut(PackageBookingBase):
@@ -75,4 +75,4 @@ class PackageBookingOut(PackageBookingBase):
     package: Optional[PackageOut]
 
     class Config:
-        orm_mode = True
+        from_attributes = True

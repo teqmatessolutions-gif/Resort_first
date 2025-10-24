@@ -8,14 +8,14 @@ class FoodOrderItem(BaseModel):
     amount: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ServiceItem(BaseModel):
     service_name: str
     charges: float
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class BillBreakdown(BaseModel):
     room_charges: Optional[float] = 0.0
@@ -56,7 +56,7 @@ class CheckoutFull(BaseModel):
     room_number: Optional[str] = ""
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class CheckoutSuccess(BaseModel):
     message: str = "Checkout successful"

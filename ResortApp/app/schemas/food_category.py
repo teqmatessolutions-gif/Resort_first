@@ -12,4 +12,4 @@ class FoodCategoryOut(FoodCategoryBase):
     image: str | None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
