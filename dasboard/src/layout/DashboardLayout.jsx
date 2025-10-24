@@ -226,6 +226,14 @@ export default function DashboardLayout({ children }) {
         color: 'var(--text-primary)'
       }}
     >
+      {/* Mobile overlay for sidebar */}
+      {!collapsed && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setCollapsed(true)}
+        />
+      )}
+
       {/* Bubble animation styles */}
       <style>
         {`
@@ -242,6 +250,12 @@ export default function DashboardLayout({ children }) {
           filter: blur(2px);
           border-radius: 50%;
         }
+
+        @media (max-width: 1024px) {
+          .bubble {
+            display: none; /* Hide bubbles on mobile for better performance */
+          }
+        }
         `}
       </style>
 
@@ -253,15 +267,17 @@ export default function DashboardLayout({ children }) {
         {/* Sidebar container */}
         <div
           className={`shadow-xl transition-all duration-300 ${
-            collapsed ? "w-20" : "w-72"
-          } flex flex-col flex-shrink-0 z-20 rounded-r-2xl overflow-hidden`}
+            collapsed ? "w-16 lg:w-20" : "w-72"
+          } flex flex-col flex-shrink-0 z-50 rounded-r-2xl overflow-hidden fixed lg:relative h-full ${
+            collapsed ? "-translate-x-full lg:translate-x-0" : "translate-x-0"
+          }`}
           style={{ backgroundColor: 'var(--bg-secondary)' }}
         >
           {/* Header section with logo, app name, and menu toggle */}
           <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'var(--accent-bg)' }}>
             {/* Left side: App Logo and Name */}
             <div className="flex items-center gap-4">
-              <img src="/logo.jpeg" className="h-10 w-10 rounded-full" alt="Logo" />
+              <img src="./logo.jpeg" className="h-10 w-10 rounded-full" alt="Logo" />
               {!collapsed && (
                 <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)'}}>ResortApp</span>
               )}
@@ -373,7 +389,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Main content area */}
-        <main className="flex-1 overflow-y-auto p-8 z-10" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-10 lg:ml-0 ml-0" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
