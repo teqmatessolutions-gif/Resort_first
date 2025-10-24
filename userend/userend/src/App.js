@@ -589,7 +589,7 @@ export default function App() {
         const fetchResortData = async () => {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
             const endpoints = {
-                rooms: '/rooms/',
+                rooms: '/rooms/test',  // Use working test endpoint for real room data
                 foodItems: '/food-items/',
                 packages: '/packages/',
                 resortInfo: '/resort-info/',
