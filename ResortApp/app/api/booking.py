@@ -26,13 +26,25 @@ class PaginatedBookingResponse(BaseModel):
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 @router.get("", response_model=PaginatedBookingResponse)
-def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100, order_by: str = "id", order: str = "desc"):
     try:
-        # Get regular bookings with room details
-        regular_bookings = db.query(Booking).options(
+        # Get regular bookings with room details, ordered by latest first
+        query = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
             joinedload(Booking.user)
-        ).offset(skip).limit(limit).all()
+        )
+        
+        # Apply ordering
+        if order_by == "id" and order == "desc":
+            query = query.order_by(Booking.id.desc())
+        elif order_by == "id" and order == "asc":
+            query = query.order_by(Booking.id.asc())
+        elif order_by == "check_in" and order == "desc":
+            query = query.order_by(Booking.check_in.desc())
+        elif order_by == "check_in" and order == "asc":
+            query = query.order_by(Booking.check_in.asc())
+        
+        regular_bookings = query.offset(skip).limit(limit).all()
         
         # Convert to BookingOut format
         booking_results = []

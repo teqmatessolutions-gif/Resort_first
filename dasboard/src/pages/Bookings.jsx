@@ -362,7 +362,7 @@ const Bookings = () => {
 
       const [roomsRes, bookingsRes, packageRes] = await Promise.all([
         API.get("/rooms/", authHeader()),
-        API.get("/bookings?skip=0&limit=20", authHeader()), // Initial fetch with pagination
+        API.get("/bookings?skip=0&limit=20&order_by=id&order=desc", authHeader()), // Order by latest first
         API.get("/packages/", authHeader()),
       ]);
 
@@ -413,7 +413,7 @@ const Bookings = () => {
     if (!hasMoreBookings) return;
     setIsSubmitting(true);
     try {
-      const response = await API.get(`/bookings?skip=${bookings.length}&limit=20`, authHeader());
+      const response = await API.get(`/bookings?skip=${bookings.length}&limit=20&order_by=id&order=desc`, authHeader());
       const { bookings: newBookings, total } = response.data;
       setBookings(prev => [...prev, ...newBookings]);
       setHasMoreBookings(bookings.length + newBookings.length < total);
@@ -468,6 +468,12 @@ const Bookings = () => {
 
   const handlePackageBookingSubmit = async e => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setFeedback({ message: "", type: "" });
     try {
@@ -546,6 +552,12 @@ const Bookings = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setFeedback({ message: "", type: "" });
 
@@ -1022,15 +1034,15 @@ const Bookings = () => {
           <table className="min-w-full text-sm border-collapse rounded-xl">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">ID</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Guest</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Booking Type</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Rooms</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Check-in</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Check-out</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Guests</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Status</th>
-                <th className="p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">Actions</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">ID</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guest</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Booking Type</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Rooms</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-in</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-out</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guests</th>
+                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Status</th>
+                <th className="p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
