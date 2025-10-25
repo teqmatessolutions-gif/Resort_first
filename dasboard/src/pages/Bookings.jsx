@@ -637,7 +637,10 @@ const Bookings = () => {
     
     return bookings
       .filter((b) => {
-        const statusMatch = statusFilter === "All" || b.status.toLowerCase() === statusFilter.toLowerCase();
+        // Normalize status values to handle both hyphens and underscores
+        const normalizedBookingStatus = b.status?.toLowerCase().replace(/-/g, '_');
+        const normalizedFilterStatus = statusFilter?.toLowerCase().replace(/-/g, '_');
+        const statusMatch = statusFilter === "All" || normalizedBookingStatus === normalizedFilterStatus;
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
         // Fix: Apply date filter to both check-in and check-out dates
