@@ -596,35 +596,32 @@ const Bookings = () => {
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
         // Fix: Apply date filter to both check-in and check-out dates
-        const checkInDate = new Date(b.check_in);
-        const checkOutDate = new Date(b.check_out);
-        const from = fromDate ? new Date(fromDate) : null;
-        const to = toDate ? new Date(toDate) : null;
-        
-        // Date match: booking is visible if its date range overlaps with the filter range
-        // OR if the date range includes either check-in or check-out date
         let dateMatch = true;
-        if (from || to) {
-          dateMatch = false;
-          // Check if check-in date is in range
-          if (!from || checkInDate >= from) {
-            if (!to || checkInDate <= to) {
-              dateMatch = true;
-            }
-          }
-          // Check if check-out date is in range
-          if (!dateMatch) {
-            if (!from || checkOutDate >= from) {
-              if (!to || checkOutDate <= to) {
-                dateMatch = true;
-              }
-            }
-          }
-          // Check if booking spans the entire date range
-          if (!dateMatch && from && to) {
-            if (checkInDate <= from && checkOutDate >= to) {
-              dateMatch = true;
-            }
+        
+        if (fromDate || toDate) {
+          const checkInDate = new Date(b.check_in);
+          const checkOutDate = new Date(b.check_out);
+          checkInDate.setHours(0, 0, 0, 0); // Normalize times for accurate comparison
+          checkOutDate.setHours(0, 0, 0, 0);
+          
+          if (fromDate && toDate) {
+            // Both dates specified: booking overlaps if it intersects with the range
+            const from = new Date(fromDate);
+            const to = new Date(toDate);
+            from.setHours(0, 0, 0, 0);
+            to.setHours(0, 0, 0, 0);
+            
+            dateMatch = checkInDate <= to && checkOutDate >= from;
+          } else if (fromDate) {
+            // Only from date specified: booking must end on or after this date
+            const from = new Date(fromDate);
+            from.setHours(0, 0, 0, 0);
+            dateMatch = checkOutDate >= from;
+          } else if (toDate) {
+            // Only to date specified: booking must start on or before this date
+            const to = new Date(toDate);
+            to.setHours(0, 0, 0, 0);
+            dateMatch = checkInDate <= to;
           }
         }
         
