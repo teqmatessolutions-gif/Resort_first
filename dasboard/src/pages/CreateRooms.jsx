@@ -18,7 +18,12 @@ const KpiCard = ({ title, value, icon, color }) => (
 );
 
 // Booking Modal for displaying booking data in table format
-const BookingModal = ({ onClose, roomNumber, bookings }) => {
+const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter }) => {
+  // Apply status filter to bookings
+  const filteredBookings = filter === "all" 
+    ? bookings 
+    : bookings.filter(booking => booking.status === filter);
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
       <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-4xl w-full m-4 max-h-[80vh] overflow-hidden">
@@ -28,10 +33,25 @@ const BookingModal = ({ onClose, roomNumber, bookings }) => {
         >
           &times;
         </button>
-        <h3 className="text-2xl font-bold mb-4">
-          Booking History for Room {roomNumber}
-        </h3>
-        {bookings.length > 0 ? (
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-bold">
+            Booking History for Room {roomNumber}
+          </h3>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
+            >
+              <option value="all">All</option>
+              <option value="booked">Booked</option>
+              <option value="checked-in">Checked In</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        {filteredBookings.length > 0 ? (
           <div className="overflow-y-auto max-h-[60vh]">
             <table className="w-full border-collapse border border-gray-300">
               <thead className="bg-gray-50 sticky top-0">
@@ -47,7 +67,7 @@ const BookingModal = ({ onClose, roomNumber, bookings }) => {
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((booking, index) => (
+                {filteredBookings.map((booking, index) => (
                   <tr key={booking.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                     <td className="border border-gray-300 px-4 py-2">{booking.id}</td>
                     <td className="border border-gray-300 px-4 py-2 font-medium">{booking.guest_name}</td>
@@ -74,8 +94,8 @@ const BookingModal = ({ onClose, roomNumber, bookings }) => {
         ) : (
           <div className="text-center py-8 text-gray-500">
             <div className="text-4xl mb-4">📅</div>
-            <p className="text-lg font-medium">No bookings found for Room {roomNumber}</p>
-            <p className="text-sm mt-2">This room has no booking history</p>
+            <p className="text-lg font-medium">No {filter !== 'all' ? filter : ''} bookings found for Room {roomNumber}</p>
+            <p className="text-sm mt-2">Try changing the filter or this room has no booking history</p>
           </div>
         )}
       </div>
@@ -129,6 +149,7 @@ const Rooms = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState({ type: "all", status: "all" });
+  const [bookingFilter, setBookingFilter] = useState("booked"); // Filter for booking modal
 
   // Function to show banner message
   const showBannerMessage = (type, text) => {
@@ -185,15 +206,15 @@ const Rooms = () => {
       const response = await API.get("/bookings?limit=1000");
       const allBookings = response.data.bookings || [];
       
-      // Filter bookings that include this room AND have "booked" status
+      // Filter bookings that include this room (all statuses)
       const roomBookings = allBookings.filter(booking => {
         const hasRoom = booking.rooms && booking.rooms.some(room => room.number === roomNumber);
-        const isBooked = booking.status === 'booked';
-        return hasRoom && isBooked;
+        return hasRoom;
       });
       
       setBookings(roomBookings);
       setSelectedRoomNumber(roomNumber);
+      setBookingFilter("booked"); // Reset to default filter
       setShowBookingModal(true);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -587,6 +608,8 @@ const Rooms = () => {
           onClose={() => setShowBookingModal(false)}
           roomNumber={selectedRoomNumber}
           bookings={bookings}
+          filter={bookingFilter}
+          setFilter={setBookingFilter}
         />
       )}
 
