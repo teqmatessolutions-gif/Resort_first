@@ -633,14 +633,12 @@ const Bookings = () => {
       const response = await API.post("/packages/book", bookingData, authHeader());
       showBannerMessage("success", "Package booked successfully!");
       setPackageBookingForm({ package_id: "", guest_name: "", guest_email: "", guest_mobile: "", check_in: "", check_out: "", adults: 2, children: 0, room_ids: [] });
-      // Add the new package booking to the state instead of refetching all data
+      
+      // Add the new package booking to the state - use response data as-is from backend
       const newPackageBooking = {
         ...response.data,
-        is_package: true,
-        rooms: packageBookingForm.room_ids.map(roomId => {
-          const room = rooms.find(r => r.id === parseInt(roomId));
-          return room ? { id: room.id, number: room.number, type: room.type } : null;
-        }).filter(Boolean)
+        is_package: true
+        // Backend already returns rooms in the response, so we don't need to reconstruct them
       };
       
       // Use functional update to prevent duplicates
@@ -830,14 +828,11 @@ const Bookings = () => {
         adults: 1,
         children: 0,
       });
-      // Add the new booking to the state instead of refetching all data
+      // Add the new booking to the state - use response data as-is from backend
       const newBooking = {
         ...response.data,
-        is_package: false,
-        rooms: formData.roomNumbers.map(roomNumber => {
-          const room = rooms.find(r => r.number === roomNumber);
-          return room ? { id: room.id, number: room.number, type: room.type } : null;
-        }).filter(Boolean)
+        is_package: false
+        // Backend already returns rooms in the response, so we don't need to reconstruct them
       };
       
       // Use functional update to prevent duplicates
