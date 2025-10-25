@@ -116,6 +116,7 @@ const commonChartOptions = {
 const Packages = () => {
   const [packages, setPackages] = useState([]);
   const [rooms, setRooms] = useState([]);
+  const [allRooms, setAllRooms] = useState([]); // Store all rooms for filtering
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingBooking, setEditingBooking] = useState(null);
@@ -144,8 +145,10 @@ const Packages = () => {
         api.get("/rooms/"),
         api.get("/packages/bookingsall")
       ]);
+      const allRoomsData = roomRes.data || [];
       setPackages(packageRes.data || []);
-      setRooms(roomRes.data || []);
+      setAllRooms(allRoomsData);
+      setRooms(allRoomsData.filter(r => r.status === "Available")); // Initial available rooms
       setBookings(bookingRes.data || []);
     } catch (err) {
       toast.error("Failed to load data.");
@@ -156,6 +159,37 @@ const Packages = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // Filter rooms based on selected dates
+  useEffect(() => {
+    if (bookingForm.check_in && bookingForm.check_out && allRooms.length > 0) {
+      const availableRooms = allRooms.filter(room => {
+        // Check if room has any conflicting bookings
+        const hasConflict = bookings.some(booking => {
+          if (booking.status === "cancelled") return false;
+          
+          const bookingCheckIn = new Date(booking.check_in);
+          const bookingCheckOut = new Date(booking.check_out);
+          const requestedCheckIn = new Date(bookingForm.check_in);
+          const requestedCheckOut = new Date(bookingForm.check_out);
+          
+          // Check if room is part of this booking
+          const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.room.id === room.id);
+          if (!isRoomInBooking) return false;
+          
+          // Check for date overlap
+          return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+        });
+        
+        return !hasConflict && room.status === "Available";
+      });
+      
+      setRooms(availableRooms);
+    } else if (!bookingForm.check_in || !bookingForm.check_out) {
+      // If no dates selected, show all available rooms
+      setRooms(allRooms.filter(r => r.status === "Available"));
+    }
+  }, [bookingForm.check_in, bookingForm.check_out, allRooms, bookings]);
 
   // Filter only available rooms
   const availableRooms = rooms.filter(r => r.status == "Available");
@@ -460,17 +494,39 @@ const Packages = () => {
               <input type="number" name="children" min={0} placeholder="Children" value={bookingForm.children} onChange={handleBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
             </div>
             <div>
-              <label className="block text-gray-600 font-medium mb-2">Select Rooms:</label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
-                {availableRooms.map(room => (
-                  <div key={room.id} onClick={() => handleRoomSelect(room.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
-                                       ${bookingForm.room_ids.includes(room.id) ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white border-gray-300 hover:border-indigo-500'}
-                  `}>
-                    <p className="font-semibold">Room {room.number}</p>
-                    <p className={`text-sm ${bookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-gray-600 font-medium mb-2">
+                Select Rooms for Package
+                {bookingForm.check_in && bookingForm.check_out && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({bookingForm.check_in} to {bookingForm.check_out})
+                  </span>
+                )}
+              </label>
+              {!bookingForm.check_in || !bookingForm.check_out ? (
+                <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-lg border">
+                  <p>Please select check-in and check-out dates first</p>
+                  <p className="text-xs mt-1">Available rooms will be shown here</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                  {availableRooms.length > 0 ? (
+                    availableRooms.map(room => (
+                      <div key={room.id} onClick={() => handleRoomSelect(room.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                                           ${bookingForm.room_ids.includes(room.id) ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white border-gray-300 hover:border-indigo-500'}
+                      `}>
+                        <p className="font-semibold">Room {room.number}</p>
+                        <p className={`text-sm ${bookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
+                        <p className={`text-xs ${bookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>₹{room.price}/night</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full text-center py-4 text-gray-500">
+                      <p className="font-medium">No rooms available for the selected dates</p>
+                      <p className="text-sm mt-1">Please try different dates</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">
               {editingBooking ? "Update Booking ✏️" : "Book Package ✅"}
