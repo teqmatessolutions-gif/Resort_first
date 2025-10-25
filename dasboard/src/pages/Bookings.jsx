@@ -437,10 +437,21 @@ const Bookings = () => {
       setRooms(availableRooms);
       
       // Combine initial regular bookings with package bookings, sorted by ID descending
-      const combinedBookings = [
-        ...initialBookings.map(b => ({ ...b, is_package: false })),
-        ...packageBookings.map(pb => ({ ...pb, is_package: true, rooms: pb.rooms || [] }))
-      ].sort((a, b) => b.id - a.id);
+      // Use a Map to deduplicate by ID (in case of duplicates between regular and package bookings)
+      const bookingsMap = new Map();
+      
+      // Add regular bookings first
+      initialBookings.forEach(b => {
+        bookingsMap.set(b.id, { ...b, is_package: false });
+      });
+      
+      // Add package bookings (will overwrite duplicates if they exist)
+      packageBookings.forEach(pb => {
+        bookingsMap.set(pb.id, { ...pb, is_package: true, rooms: pb.rooms || [] });
+      });
+      
+      // Convert Map to array and sort by ID descending
+      const combinedBookings = Array.from(bookingsMap.values()).sort((a, b) => b.id - a.id);
       
       setBookings(combinedBookings);
       setPackages(packageRes.data || []);
