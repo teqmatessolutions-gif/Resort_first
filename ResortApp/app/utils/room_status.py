@@ -6,7 +6,7 @@ from datetime import date
 def update_room_statuses(db: Session):
     """
     Update room statuses based on current bookings.
-    This function should be called periodically to keep room statuses accurate.
+    Only shows current day status - not future bookings.
     """
     try:
         today = date.today()
@@ -26,27 +26,19 @@ def update_room_statuses(db: Session):
                 if room.status != "Occupied":
                     room.status = "Occupied"
             else:
-                # Check if room has future bookings (booked but not yet occupied)
-                future_booking = db.query(BookingRoom).join(Booking).filter(
+                # Check if booking has ended today or before
+                past_booking = db.query(BookingRoom).join(Booking).filter(
                     BookingRoom.room_id == room.id,
                     Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_in > today
+                    Booking.check_out <= today
                 ).first()
                 
-                if future_booking:
-                    if room.status != "Booked":
-                        room.status = "Booked"
-                elif room.status in ["Booked", "Occupied"]:
-                    # Check if booking has ended
-                    past_booking = db.query(BookingRoom).join(Booking).filter(
-                        BookingRoom.room_id == room.id,
-                        Booking.status.in_(['booked', 'checked-in']),
-                        Booking.check_out <= today
-                    ).first()
-                    
-                    if past_booking:
-                        # Booking has ended, make room available
-                        room.status = "Available"
+                if past_booking:
+                    # Booking has ended, make room available
+                    room.status = "Available"
+                else:
+                    # No active booking and no past booking, make available
+                    room.status = "Available"
         
         db.commit()
         print(f"Updated room statuses for {len(rooms)} rooms")

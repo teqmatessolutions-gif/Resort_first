@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
+import BannerMessage from "../components/BannerMessage";
 import API from "../services/api";
 import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from "recharts";
 import { toast } from "react-hot-toast";
-import Calendar from "react-calendar";
-import "react-calendar/dist/Calendar.css";
 import { motion } from "framer-motion";
-import BannerMessage from "../components/BannerMessage";
 
 // KPI Card for quick stats
 const KpiCard = ({ title, value, icon, color }) => (
@@ -19,40 +17,66 @@ const KpiCard = ({ title, value, icon, color }) => (
   </div>
 );
 
-// Calendar Modal for bookings
+// Booking Modal for displaying booking data in table format
 const BookingModal = ({ onClose, roomNumber, bookings }) => {
-  const isBooked = (date) => {
-    return bookings.some((booking) => {
-      const checkInDate = new Date(booking.check_in_date);
-      const checkOutDate = new Date(booking.check_out_date);
-      checkInDate.setHours(0, 0, 0, 0);
-      checkOutDate.setHours(0, 0, 0, 0);
-      const currentDate = new Date(date);
-      currentDate.setHours(0, 0, 0, 0);
-      return currentDate >= checkInDate && currentDate <= checkOutDate;
-    });
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-lg w-full m-4">
+      <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-4xl w-full m-4 max-h-[80vh] overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10"
         >
           &times;
         </button>
         <h3 className="text-2xl font-bold mb-4">
-          Bookings for Room {roomNumber}
+          Booking History for Room {roomNumber}
         </h3>
         {bookings.length > 0 ? (
-          <Calendar
-            tileClassName={({ date, view }) =>
-              view === "month" && isBooked(date) ? "booked-date" : null
-            }
-          />
+          <div className="overflow-y-auto max-h-[60vh]">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead className="bg-gray-50 sticky top-0">
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Booking ID</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Guest Name</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Check-in</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Check-out</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Guests</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Status</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Mobile</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Email</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((booking, index) => (
+                  <tr key={booking.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="border border-gray-300 px-4 py-2">{booking.id}</td>
+                    <td className="border border-gray-300 px-4 py-2 font-medium">{booking.guest_name}</td>
+                    <td className="border border-gray-300 px-4 py-2">{booking.check_in}</td>
+                    <td className="border border-gray-300 px-4 py-2">{booking.check_out}</td>
+                    <td className="border border-gray-300 px-4 py-2">{booking.adults}A, {booking.children}C</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        booking.status === 'booked' ? 'bg-blue-100 text-blue-800' :
+                        booking.status === 'checked-in' ? 'bg-green-100 text-green-800' :
+                        booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {booking.status || 'Pending'}
+                      </span>
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">{booking.guest_mobile}</td>
+                    <td className="border border-gray-300 px-4 py-2">{booking.guest_email}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <p>No bookings found for this room.</p>
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-4">📅</div>
+            <p className="text-lg font-medium">No bookings found for Room {roomNumber}</p>
+            <p className="text-sm mt-2">This room has no booking history</p>
+          </div>
         )}
       </div>
     </div>
@@ -117,24 +141,6 @@ const Rooms = () => {
 
   useEffect(() => {
     fetchRooms();
-  }, []);
-
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.innerHTML = `
-      .react-calendar__tile.booked-date {
-        background-color: #fca5a5 !important;
-        color: #555 !important;
-        font-weight: bold;
-      }
-      .react-calendar__tile.booked-date:hover {
-        background-color: #f87171 !important;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
   }, []);
 
   const fetchRooms = async () => {
@@ -573,7 +579,7 @@ const Rooms = () => {
         </div>
       </div>
 
-      {/* Booking Calendar Modal */}
+      {/* Booking Data Modal */}
       {showBookingModal && (
         <BookingModal
           onClose={() => setShowBookingModal(false)}
