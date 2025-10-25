@@ -13,7 +13,7 @@ def update_room_statuses(db: Session):
         rooms = db.query(Room).all()
         
         for room in rooms:
-            # Check if room has active bookings
+            # Check if room has active bookings (currently occupied)
             active_booking = db.query(BookingRoom).join(Booking).filter(
                 BookingRoom.room_id == room.id,
                 Booking.status.in_(['booked', 'checked-in']),
@@ -25,28 +25,28 @@ def update_room_statuses(db: Session):
                 # Room is currently occupied
                 if room.status != "Occupied":
                     room.status = "Occupied"
-            elif room.status == "Booked":
-                # Check if booking has ended
-                past_booking = db.query(BookingRoom).join(Booking).filter(
+            else:
+                # Check if room has future bookings (booked but not yet occupied)
+                future_booking = db.query(BookingRoom).join(Booking).filter(
                     BookingRoom.room_id == room.id,
                     Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_out <= today
+                    Booking.check_in > today
                 ).first()
                 
-                if past_booking:
-                    # Booking has ended, make room available
-                    room.status = "Available"
-            elif room.status == "Occupied":
-                # Check if there's no active booking
-                no_active_booking = not db.query(BookingRoom).join(Booking).filter(
-                    BookingRoom.room_id == room.id,
-                    Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_in <= today,
-                    Booking.check_out > today
-                ).first()
-                
-                if no_active_booking:
-                    room.status = "Available"
+                if future_booking:
+                    if room.status != "Booked":
+                        room.status = "Booked"
+                elif room.status in ["Booked", "Occupied"]:
+                    # Check if booking has ended
+                    past_booking = db.query(BookingRoom).join(Booking).filter(
+                        BookingRoom.room_id == room.id,
+                        Booking.status.in_(['booked', 'checked-in']),
+                        Booking.check_out <= today
+                    ).first()
+                    
+                    if past_booking:
+                        # Booking has ended, make room available
+                        room.status = "Available"
         
         db.commit()
         print(f"Updated room statuses for {len(rooms)} rooms")

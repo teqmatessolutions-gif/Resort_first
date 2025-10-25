@@ -105,7 +105,7 @@ def get_rooms_test(db: Session = Depends(get_db), skip: int = 0, limit: int = 10
         today = date.today()
         
         for room in rooms:
-            # Check if room has active bookings
+            # Check if room has active bookings (currently occupied)
             active_booking = db.query(BookingRoom).join(Booking).filter(
                 BookingRoom.room_id == room.id,
                 Booking.status.in_(['booked', 'checked-in']),
@@ -115,16 +115,26 @@ def get_rooms_test(db: Session = Depends(get_db), skip: int = 0, limit: int = 10
             
             if active_booking:
                 room.status = "Occupied"
-            elif room.status == "Booked":
-                # Check if booking has ended
-                past_booking = db.query(BookingRoom).join(Booking).filter(
+            else:
+                # Check if room has future bookings (booked but not yet occupied)
+                future_booking = db.query(BookingRoom).join(Booking).filter(
                     BookingRoom.room_id == room.id,
                     Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_out <= today
+                    Booking.check_in > today
                 ).first()
                 
-                if past_booking:
-                    room.status = "Available"
+                if future_booking:
+                    room.status = "Booked"
+                elif room.status in ["Booked", "Occupied"]:
+                    # Check if booking has ended
+                    past_booking = db.query(BookingRoom).join(Booking).filter(
+                        BookingRoom.room_id == room.id,
+                        Booking.status.in_(['booked', 'checked-in']),
+                        Booking.check_out <= today
+                    ).first()
+                    
+                    if past_booking:
+                        room.status = "Available"
         
         return rooms
     except Exception as e:
@@ -198,7 +208,7 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
         today = date.today()
         
         for room in rooms:
-            # Check if room has active bookings
+            # Check if room has active bookings (currently occupied)
             active_booking = db.query(BookingRoom).join(Booking).filter(
                 BookingRoom.room_id == room.id,
                 Booking.status.in_(['booked', 'checked-in']),
@@ -208,16 +218,26 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
             
             if active_booking:
                 room.status = "Occupied"
-            elif room.status == "Booked":
-                # Check if booking has ended
-                past_booking = db.query(BookingRoom).join(Booking).filter(
+            else:
+                # Check if room has future bookings (booked but not yet occupied)
+                future_booking = db.query(BookingRoom).join(Booking).filter(
                     BookingRoom.room_id == room.id,
                     Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_out <= today
+                    Booking.check_in > today
                 ).first()
                 
-                if past_booking:
-                    room.status = "Available"
+                if future_booking:
+                    room.status = "Booked"
+                elif room.status in ["Booked", "Occupied"]:
+                    # Check if booking has ended
+                    past_booking = db.query(BookingRoom).join(Booking).filter(
+                        BookingRoom.room_id == room.id,
+                        Booking.status.in_(['booked', 'checked-in']),
+                        Booking.check_out <= today
+                    ).first()
+                    
+                    if past_booking:
+                        room.status = "Available"
         
         return rooms
     except Exception as e:
