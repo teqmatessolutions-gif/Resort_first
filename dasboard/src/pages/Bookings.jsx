@@ -660,6 +660,12 @@ const Bookings = () => {
         // Normalize status values to handle both hyphens and underscores
         const normalizedBookingStatus = b.status?.toLowerCase().replace(/-/g, '_');
         const normalizedFilterStatus = statusFilter?.toLowerCase().replace(/-/g, '_');
+        
+        // Debug log to see what's being compared
+        if (statusFilter !== "All") {
+          console.log(`Booking ${b.id}: status="${b.status}", normalized="${normalizedBookingStatus}", filter="${normalizedFilterStatus}", match=${normalizedBookingStatus === normalizedFilterStatus}`);
+        }
+        
         const statusMatch = statusFilter === "All" || normalizedBookingStatus === normalizedFilterStatus;
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
