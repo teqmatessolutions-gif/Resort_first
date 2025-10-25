@@ -566,7 +566,7 @@ const Billing = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Completed Checkouts</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left">
-              <thead className="bg-gray-50 border-b-2 border-gray-200 text-gray-600 uppercase tracking-wider">
+              <thead className="bg-gray-50 border-b-2 border-gray-200 text-gray-800 uppercase tracking-wider">
                 <tr>
                   <th className="p-3">ID</th>
                   <th className="p-3">Guest</th>
@@ -581,12 +581,12 @@ const Billing = () => {
                 {checkouts.length > 0 ? (
                   checkouts.map((c) => (
                     <tr key={c.id} className="hover:bg-indigo-50 cursor-pointer" onClick={() => setSelectedCheckout(c)}>
-                      <td className="p-3 font-medium text-gray-500">{c.id}</td>
+                      <td className="p-3 font-medium text-gray-800">{c.id}</td>
                       <td className="p-3 font-semibold text-gray-900">{c.guest_name}</td>
-                      <td className="p-3 text-gray-600">{c.room_number}</td>
-                      <td className="p-3 text-gray-600">{c.booking_id || c.package_booking_id || 'N/A'}</td>
-                      <td className="p-3 text-gray-600">{c.payment_method}</td>
-                      <td className="p-3 text-gray-600">{new Date(c.created_at).toLocaleDateString()}</td>
+                      <td className="p-3 text-gray-800">{c.room_number}</td>
+                      <td className="p-3 text-gray-800">{c.booking_id || c.package_booking_id || 'N/A'}</td>
+                      <td className="p-3 text-gray-800">{c.payment_method}</td>
+                      <td className="p-3 text-gray-800">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="p-3 font-bold text-gray-900 text-right">₹{c.grand_total.toFixed(2)}</td>
                     </tr>
                   ))
