@@ -315,6 +315,7 @@ const Bookings = () => {
     room_ids: []
   });
   const [rooms, setRooms] = useState([]);
+  const [packageRooms, setPackageRooms] = useState([]); // Separate state for package booking rooms
   const [allRooms, setAllRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
@@ -391,6 +392,9 @@ const Bookings = () => {
       // Store all rooms for filtering
       setAllRooms(allRooms);
       
+      // Set initial package rooms to all available rooms
+      setPackageRooms(allRooms.filter((r) => r.status === "Available"));
+      
       // Filter rooms based on date availability if dates are selected
       let availableRooms = allRooms;
       if (formData.checkIn && formData.checkOut) {
@@ -443,7 +447,7 @@ const Bookings = () => {
     fetchData();
   }, [fetchData]);
 
-  // Refilter rooms when check-in/check-out dates change
+  // Refilter rooms when check-in/check-out dates change for room booking
   useEffect(() => {
     if (formData.checkIn && formData.checkOut && allRooms.length > 0) {
       const availableRooms = allRooms.filter(room => {
@@ -473,6 +477,38 @@ const Bookings = () => {
       setRooms(allRooms.filter((r) => r.status === "Available"));
     }
   }, [formData.checkIn, formData.checkOut, allRooms, bookings]);
+
+  // Refilter rooms for package booking when dates change
+  useEffect(() => {
+    if (packageBookingForm.check_in && packageBookingForm.check_out && allRooms.length > 0) {
+      const availableRooms = allRooms.filter(room => {
+        // Check if room has any conflicting bookings
+        const hasConflict = bookings.some(booking => {
+          if (booking.status === "cancelled") return false;
+          
+          const bookingCheckIn = new Date(booking.check_in);
+          const bookingCheckOut = new Date(booking.check_out);
+          const requestedCheckIn = new Date(packageBookingForm.check_in);
+          const requestedCheckOut = new Date(packageBookingForm.check_out);
+          
+          // Check if room is part of this booking
+          const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+          if (!isRoomInBooking) return false;
+          
+          // Check for date overlap
+          return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+        });
+        
+        return !hasConflict;
+      });
+      
+      // Update package rooms separately
+      setPackageRooms(availableRooms);
+    } else if (!packageBookingForm.check_in || !packageBookingForm.check_out) {
+      // If no dates selected, show all available rooms
+      setPackageRooms(allRooms.filter((r) => r.status === "Available"));
+    }
+  }, [packageBookingForm.check_in, packageBookingForm.check_out, allRooms, bookings]);
 
   const loadMoreBookings = async () => {
     if (!hasMoreBookings) return;
@@ -1124,17 +1160,39 @@ const Bookings = () => {
                   <input type="number" name="children" min={0} placeholder="Children" value={packageBookingForm.children} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-gray-600 font-medium mb-2">Select Rooms:</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
-                    {rooms.map(room => (
-                      <div key={room.id} onClick={() => handlePackageRoomSelect(room.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
-                                           ${packageBookingForm.room_ids.includes(room.id) ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white border-gray-300 hover:border-indigo-500'}
-                      `}>
-                        <p className="font-semibold">Room {room.number}</p>
-                        <p className={`text-sm ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
-                      </div>
-                    ))}
-                  </div>
+                  <label className="block text-gray-600 font-medium mb-2">
+                    Select Rooms for Package
+                    {packageBookingForm.check_in && packageBookingForm.check_out && (
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({packageBookingForm.check_in} to {packageBookingForm.check_out})
+                      </span>
+                    )}
+                  </label>
+                  {!packageBookingForm.check_in || !packageBookingForm.check_out ? (
+                    <div className="text-center py-8 text-gray-500 text-sm bg-gray-50 rounded-lg border">
+                      <p>Please select check-in and check-out dates first</p>
+                      <p className="text-xs mt-1">Available rooms will be shown here</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto p-2 bg-gray-50 rounded-lg border">
+                      {packageRooms.length > 0 ? (
+                        packageRooms.map(room => (
+                          <div key={room.id} onClick={() => handlePackageRoomSelect(room.id)} className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200
+                                               ${packageBookingForm.room_ids.includes(room.id) ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white border-gray-300 hover:border-indigo-500'}
+                          `}>
+                            <p className="font-semibold">Room {room.number}</p>
+                            <p className={`text-sm ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
+                            <p className={`text-xs ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>₹{room.price}/night</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-full text-center py-4 text-gray-500">
+                          <p className="font-medium">No rooms available for the selected dates</p>
+                          <p className="text-sm mt-1">Please try different dates</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <button
