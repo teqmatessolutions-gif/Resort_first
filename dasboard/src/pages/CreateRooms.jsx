@@ -185,9 +185,11 @@ const Rooms = () => {
       const response = await API.get("/bookings?limit=1000");
       const allBookings = response.data.bookings || [];
       
-      // Filter bookings that include this room
+      // Filter bookings that include this room AND have "booked" status
       const roomBookings = allBookings.filter(booking => {
-        return booking.rooms && booking.rooms.some(room => room.number === roomNumber);
+        const hasRoom = booking.rooms && booking.rooms.some(room => room.number === roomNumber);
+        const isBooked = booking.status === 'booked';
+        return hasRoom && isBooked;
       });
       
       setBookings(roomBookings);
