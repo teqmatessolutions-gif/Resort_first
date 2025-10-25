@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
+import BannerMessage from "../components/BannerMessage";
 import axios from "axios"; // We need axios to create the api service object
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { DollarSign, BedDouble, Users, Utensils, Package, Hash, Calendar, CreditCard, X } from 'lucide-react';
@@ -100,12 +101,21 @@ const Billing = () => {
   const [paymentMethod, setPaymentMethod] = useState("Card");
   const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
   const [activeRooms, setActiveRooms] = useState([]);
   const [checkouts, setCheckouts] = useState([]);
   const [selectedCheckout, setSelectedCheckout] = useState(null);
   const [hasMoreCheckouts, setHasMoreCheckouts] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+  // Function to show banner message
+  const showBannerMessage = (type, text) => {
+    setBannerMessage({ type, text });
+  };
+
+  const closeBannerMessage = () => {
+    setBannerMessage({ type: null, text: "" });
+  };
 
   const loadMoreCheckouts = useCallback(async () => {
     if (isFetchingMore || !hasMoreCheckouts) return;
@@ -164,26 +174,25 @@ const Billing = () => {
       setHasMoreCheckouts(checkoutsRes.data.length === 20);
     } catch (err) {
       console.error("Error fetching initial dashboard data:", err);
-      setMessage({ type: "error", text: "Could not fetch dashboard data. Please refresh." });
+      showBannerMessage("error", "Could not fetch dashboard data. Please refresh.");
       setCheckouts([]);
     }
   };
 
   const handleGetBill = async () => {
     if (!roomNumber) {
-      setMessage({ type: "error", text: "Please enter a room number." });
+      showBannerMessage("error", "Please enter a room number.");
       return;
     }
     setLoading(true);
     setBillData(null);
     setDiscount(0); // Reset discount when fetching a new bill
-    setMessage({ type: "", text: "" });
     try {
       const res = await api.get(`/bill/${roomNumber}`);
       setBillData(res.data);
-      setMessage({ type: "success", text: "Bill for the entire booking retrieved successfully." });
+      showBannerMessage("success", "Bill for the entire booking retrieved successfully.");
     } catch (error) {
-      setMessage({ type: "error", text: `Error: ${error.response?.data?.detail || error.message}` });
+      showBannerMessage("error", `Error: ${error.response?.data?.detail || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -191,11 +200,10 @@ const Billing = () => {
 
   const handleCheckout = async () => {
     if (!billData) {
-      setMessage({ type: "error", text: "Please retrieve the bill before checkout." });
+      showBannerMessage("error", "Please retrieve the bill before checkout.");
       return;
     }
     setLoading(true);
-    setMessage({ type: "", text: "" });
     try {
       const res = await api.post(`/bill/checkout/${roomNumber}`, {
         payment_method: paymentMethod,
@@ -204,11 +212,11 @@ const Billing = () => {
       setBillData(null);
       setDiscount(0);
       setRoomNumber(""); // Clear input on successful checkout
-      setMessage({ type: "success", text: `${res.data.message} (ID: ${res.data.checkout_id})` });
+      showBannerMessage("success", `${res.data.message} (ID: ${res.data.checkout_id})`);
       fetchInitialData(); // Refresh all data
     } catch (error) {
       const errorMessage = `Error: ${error.response?.data?.detail || error.message}`;
-      setMessage({ type: "error", text: errorMessage });
+      showBannerMessage("error", errorMessage);
       // If it's a conflict error, it means it's already checked out. Clear the form.
       if (error.response?.status === 409) {
         setBillData(null);
@@ -368,6 +376,12 @@ const Billing = () => {
 
   return (
     <DashboardLayout>
+      <BannerMessage 
+        message={bannerMessage} 
+        onClose={closeBannerMessage}
+        autoDismiss={true}
+        duration={5000}
+      />
       {/* Animated Background */}
       <div className="bubbles-container">
         <li></li>
@@ -455,12 +469,6 @@ const Billing = () => {
           >
             {loading ? "Fetching Bill..." : "Get Bill for Entire Booking"}
           </button>
-
-          {message.text && (
-            <div className={`p-3 rounded-lg text-center font-medium my-4 ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-              {message.text}
-            </div>
-          )}
 
           {billData && (
             <div id="bill-details" className="bg-gray-50 border border-gray-200 p-4 rounded-xl mb-6 animate-fade-in">
