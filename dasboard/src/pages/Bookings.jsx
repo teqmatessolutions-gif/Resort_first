@@ -7,6 +7,7 @@ import CountUp from "react-countup";
 import { Pie } from "react-chartjs-2";
 import { useInfiniteScroll } from "./useInfiniteScroll";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import BannerMessage from "../components/BannerMessage";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -338,7 +339,17 @@ const Bookings = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [feedback, setFeedback] = useState({ message: "", type: "" });
+  const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Function to show banner message
+  const showBannerMessage = (type, text) => {
+    setBannerMessage({ type, text });
+  };
+
+  const closeBannerMessage = () => {
+    setBannerMessage({ type: null, text: "" });
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [kpis, setKpis] = useState({
     activeBookings: 0,
@@ -406,10 +417,7 @@ const Bookings = () => {
       });
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
-      setFeedback({
-        message: "Failed to load dashboard data. Please try again.",
-        type: "error",
-      });
+      showBannerMessage("error", "Failed to load dashboard data. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -429,7 +437,7 @@ const Bookings = () => {
       setHasMoreBookings(bookings.length + newBookings.length < total);
     } catch (err) {
       console.error("Failed to load more bookings:", err);
-      setFeedback({ message: "❌ Could not load more bookings.", type: "error" });
+      showBannerMessage("error", "Could not load more bookings.");
     } finally {
       setIsSubmitting(false);
     }
@@ -489,13 +497,13 @@ const Bookings = () => {
         room_ids: packageBookingForm.room_ids.map(id => parseInt(id))
       };
       await API.post("/packages/book", bookingData, authHeader());
-      setFeedback({ message: "✅ Package booked successfully!", type: "success" });
+      showBannerMessage("success", "Package booked successfully!");
       setPackageBookingForm({ package_id: "", guest_name: "", guest_email: "", guest_mobile: "", check_in: "", check_out: "", adults: 2, children: 0, room_ids: [] });
       fetchData();
     } catch (err) {
       console.error(err);
       const errorMessage = err.response?.data?.detail || "Failed to process package booking.";
-      setFeedback({ message: `❌ ${errorMessage}`, type: "error" });
+      showBannerMessage("error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -584,7 +592,7 @@ const Bookings = () => {
         authHeader()
       );
 
-      setFeedback({ message: "✅ Bookings created successfully!", type: "success" });
+      showBannerMessage("success", "Bookings created successfully!");
       setFormData({
         guestName: "",
         guestMobile: "",
@@ -600,7 +608,7 @@ const Bookings = () => {
     } catch (err) {
       console.error("Booking creation error:", err);
       const errorMessage = err.response?.data?.message || "Error creating booking.";
-      setFeedback({ message: `❌ ${errorMessage}`, type: "error" });
+      showBannerMessage("error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -744,6 +752,12 @@ const Bookings = () => {
 
   return (
     <DashboardLayout>
+      <BannerMessage 
+        message={bannerMessage} 
+        onClose={closeBannerMessage}
+        autoDismiss={true}
+        duration={5000}
+      />
       {/* Animated Background */}
       <div className="bubbles-container">
         <li></li>
