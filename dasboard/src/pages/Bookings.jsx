@@ -166,19 +166,6 @@ const ExtendBookingModal = ({ booking, onSave, onClose, feedback, isSubmitting }
             </svg>
           </button>
         </div>
-        {feedback.message && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`mb-4 p-4 rounded-lg text-sm font-semibold ${
-              feedback.type === "success"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {feedback.message}
-          </motion.div>
-        )}
         <div className="space-y-4 text-gray-700">
           <p><strong>Current Check-in:</strong> {booking.check_in}</p>
           <p><strong>Current Check-out:</strong> {booking.check_out}</p>
@@ -237,11 +224,6 @@ const CheckInModal = ({ booking, onSave, onClose, feedback, isSubmitting }) => {
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50">
       <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-2xl">
         <h3 className="text-2xl font-bold text-gray-800 mb-4">Check-in Guest: {booking.guest_name}</h3>
-        {feedback.message && (
-          <div className={`mb-4 p-3 rounded-lg text-sm font-semibold ${feedback.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-            {feedback.message}
-          </div>
-        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col items-center">
             <label className="font-medium text-gray-700 mb-2">ID Card Image</label>
@@ -489,6 +471,20 @@ const Bookings = () => {
     setIsSubmitting(true);
     setFeedback({ message: "", type: "" });
     try {
+      // --- MINIMUM BOOKING DURATION VALIDATION ---
+      if (packageBookingForm.check_in && packageBookingForm.check_out) {
+        const checkInDate = new Date(packageBookingForm.check_in);
+        const checkOutDate = new Date(packageBookingForm.check_out);
+        const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+        const daysDiff = timeDiff / (1000 * 3600 * 24);
+        
+        if (daysDiff < 1) {
+          showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const bookingData = {
         ...packageBookingForm,
         package_id: parseInt(packageBookingForm.package_id),
@@ -554,14 +550,28 @@ const Bookings = () => {
     setFeedback({ message: "", type: "" });
 
     try {
+      // --- MINIMUM BOOKING DURATION VALIDATION ---
+      if (formData.checkIn && formData.checkOut) {
+        const checkInDate = new Date(formData.checkIn);
+        const checkOutDate = new Date(formData.checkOut);
+        const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+        const daysDiff = timeDiff / (1000 * 3600 * 24);
+        
+        if (daysDiff < 1) {
+          showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (formData.roomNumbers.length === 0) {
-        setFeedback({ message: "❌ Please select at least one room.", type: "error" });
+        showBannerMessage("error", "Please select at least one room.");
         setIsSubmitting(false);
         return;
       }
 
       if (totalGuests > totalCapacity) {
-        setFeedback({ message: `❌ The total number of guests (${totalGuests}) exceeds the capacity of the selected rooms (${totalCapacity}).`, type: "error" });
+        showBannerMessage("error", `The total number of guests (${totalGuests}) exceeds the capacity of the selected rooms (${totalCapacity}).`);
         setIsSubmitting(false);
         return;
       }
@@ -572,7 +582,7 @@ const Bookings = () => {
       }).filter(id => id !== null);
 
       if (roomIds.length !== formData.roomNumbers.length) {
-        setFeedback({ message: "❌ One or more selected rooms are invalid.", type: "error" });
+        showBannerMessage("error", "One or more selected rooms are invalid.");
         setIsSubmitting(false);
         return;
       }

@@ -18,8 +18,8 @@ const BannerMessage = ({ message, onClose, autoDismiss = true, duration = 5000 }
   const icon = isSuccess ? '✅' : '❌';
 
   return (
-    <div className={`fixed top-0 right-0 z-50 ${bgColor} text-white shadow-lg rounded-bl-lg max-w-md`}>
-      <div className="px-4 py-2">
+    <div className={`fixed top-4 right-4 z-50 ${bgColor} text-white shadow-xl rounded-lg max-w-sm`}>
+      <div className="px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <span className="mr-2 text-sm">{icon}</span>
@@ -27,7 +27,7 @@ const BannerMessage = ({ message, onClose, autoDismiss = true, duration = 5000 }
           </div>
           <button
             onClick={onClose}
-            className="ml-2 p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
+            className="ml-3 p-1 rounded-full hover:bg-white hover:bg-opacity-20 transition-colors"
           >
             <X className="w-3 h-3" />
           </button>
