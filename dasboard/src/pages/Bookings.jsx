@@ -371,7 +371,7 @@ const Bookings = () => {
       const todaysDate = new Date().toISOString().split("T")[0];
 
       // We need all bookings for accurate KPIs. This is a trade-off.
-      const allBookingsRes = await API.get("/bookings?limit=10000", authHeader()); // Fetch all for KPIs
+      const allBookingsRes = await API.get("/bookings?limit=10000&order_by=id&order=desc", authHeader()); // Fetch all for KPIs with ordering
       const allBookings = allBookingsRes.data.bookings;
 
       const activeBookingsCount = allBookings.filter(b => b.status === "booked" || b.status === "checked-in").length;
@@ -526,7 +526,7 @@ const Bookings = () => {
         const dateMatch = (!from || checkInDate >= from) && (!to || checkInDate <= to);
         return statusMatch && roomNumberMatch && dateMatch;
       })
-      .sort((a, b) => new Date(b.check_in) - new Date(a.check_in));
+      .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
   }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
 
   const handleRoomNumberToggle = (roomNumber) => {
