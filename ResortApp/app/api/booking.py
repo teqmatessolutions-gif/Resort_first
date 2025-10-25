@@ -169,6 +169,21 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     """
     Public endpoint for guests to create a booking without authentication.
     """
+    # Check for duplicate booking with same details and dates
+    duplicate_booking = db.query(Booking).filter(
+        (Booking.guest_email == booking.guest_email) & 
+        (Booking.guest_mobile == booking.guest_mobile) &
+        (Booking.check_in == booking.check_in) &
+        (Booking.check_out == booking.check_out) &
+        (Booking.status.in_(['booked', 'checked-in']))
+    ).first()
+    
+    if duplicate_booking:
+        raise HTTPException(
+            status_code=400, 
+            detail="A booking with the same details and dates already exists. Please check your existing bookings."
+        )
+
     # Check for an existing booking to reuse guest details for consistency
     existing_booking = db.query(Booking).filter(
         (Booking.guest_email == booking.guest_email) & (Booking.guest_mobile == booking.guest_mobile)
@@ -178,6 +193,23 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     if existing_booking:
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
+
+    # Check if rooms are available for the requested dates
+    for room_id in booking.room_ids:
+        # Check if room is already booked for overlapping dates
+        conflicting_booking = db.query(BookingRoom).join(Booking).filter(
+            BookingRoom.room_id == room_id,
+            Booking.status.in_(['booked', 'checked-in']),
+            Booking.check_in < booking.check_out,
+            Booking.check_out > booking.check_in
+        ).first()
+        
+        if conflicting_booking:
+            room = db.query(Room).filter(Room.id == room_id).first()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Room {room.number if room else room_id} is not available for the selected dates."
+            )
 
     db_booking = Booking(
         guest_name=guest_name_to_use,

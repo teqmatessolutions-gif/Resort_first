@@ -4,9 +4,11 @@ from app.database import SessionLocal
 from app.schemas.room import RoomCreate, RoomOut
 from app.curd import room as crud_room
 from app.models.room import Room
+from app.models.booking import Booking, BookingRoom
 import shutil
 import os
 from uuid import uuid4
+from datetime import date
 
 router = APIRouter(prefix="/rooms", tags=["Rooms"])
 
@@ -96,7 +98,35 @@ def delete_room_test(room_id: int, db: Session = Depends(get_db)):
 @router.get("/test", response_model=list[RoomOut])
 def get_rooms_test(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
-        return db.query(Room).offset(skip).limit(limit).all()
+        rooms = db.query(Room).offset(skip).limit(limit).all()
+        
+        # Update room status based on current bookings
+        from datetime import date
+        today = date.today()
+        
+        for room in rooms:
+            # Check if room has active bookings
+            active_booking = db.query(BookingRoom).join(Booking).filter(
+                BookingRoom.room_id == room.id,
+                Booking.status.in_(['booked', 'checked-in']),
+                Booking.check_in <= today,
+                Booking.check_out > today
+            ).first()
+            
+            if active_booking:
+                room.status = "Occupied"
+            elif room.status == "Booked":
+                # Check if booking has ended
+                past_booking = db.query(BookingRoom).join(Booking).filter(
+                    BookingRoom.room_id == room.id,
+                    Booking.status.in_(['booked', 'checked-in']),
+                    Booking.check_out <= today
+                ).first()
+                
+                if past_booking:
+                    room.status = "Available"
+        
+        return rooms
     except Exception as e:
         print(f"Error fetching rooms: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
@@ -146,10 +176,50 @@ def create_room(
 
 
 # ---------------- READ ----------------
+@router.post("/update-statuses")
+def update_room_statuses_endpoint(db: Session = Depends(get_db)):
+    """
+    Manually trigger room status update based on current bookings.
+    This endpoint can be called to refresh room statuses.
+    """
+    try:
+        from app.utils.room_status import update_room_statuses
+        update_room_statuses(db)
+        return {"message": "Room statuses updated successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating room statuses: {str(e)}")
+
 @router.get("/", response_model=list[RoomOut])
 def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
-        return db.query(Room).offset(skip).limit(limit).all()
+        rooms = db.query(Room).offset(skip).limit(limit).all()
+        
+        # Update room status based on current bookings
+        today = date.today()
+        
+        for room in rooms:
+            # Check if room has active bookings
+            active_booking = db.query(BookingRoom).join(Booking).filter(
+                BookingRoom.room_id == room.id,
+                Booking.status.in_(['booked', 'checked-in']),
+                Booking.check_in <= today,
+                Booking.check_out > today
+            ).first()
+            
+            if active_booking:
+                room.status = "Occupied"
+            elif room.status == "Booked":
+                # Check if booking has ended
+                past_booking = db.query(BookingRoom).join(Booking).filter(
+                    BookingRoom.room_id == room.id,
+                    Booking.status.in_(['booked', 'checked-in']),
+                    Booking.check_out <= today
+                ).first()
+                
+                if past_booking:
+                    room.status = "Available"
+        
+        return rooms
     except Exception as e:
         print(f"Error fetching rooms: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
