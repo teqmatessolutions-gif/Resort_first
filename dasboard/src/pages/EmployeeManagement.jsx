@@ -733,7 +733,13 @@ const EmployeeListAndForm = () => {
       password: "",
       image: null,
     });
-    setPreviewImage(emp.image_url || null);
+    // Build full URL for the preview image
+    if (emp.image_url) {
+      const baseURL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
+      setPreviewImage(`${baseURL}/${emp.image_url}`);
+    } else {
+      setPreviewImage(null);
+    }
   };
 
   const handleDelete = async (id) => {
