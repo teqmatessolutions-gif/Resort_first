@@ -19,8 +19,39 @@ const UserHistory = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await api.get("/employees");
-        setUsers(response.data || []);
+        // Fetch both users and employees to show all users including admins
+        const [usersRes, employeesRes] = await Promise.all([
+          api.get("/users/"),
+          api.get("/employees")
+        ]);
+        
+        const users = usersRes.data || [];
+        const employees = employeesRes.data || [];
+        
+        // Create a map of employees by user_id for quick lookup
+        const employeeMap = new Map();
+        employees.forEach(emp => {
+          if (emp.user_id) {
+            employeeMap.set(emp.user_id, emp);
+          }
+        });
+        
+        // Combine users with their employee data
+        const combinedUsers = users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role?.name || 'Unknown',
+          phone: user.phone,
+          is_active: user.is_active,
+          // Add employee-specific data if available
+          salary: employeeMap.get(user.id)?.salary || null,
+          join_date: employeeMap.get(user.id)?.join_date || null,
+          image_url: employeeMap.get(user.id)?.image_url || null,
+          has_employee_record: employeeMap.has(user.id)
+        }));
+        
+        setUsers(combinedUsers);
       } catch (err) {
         console.error("Failed to fetch users:", err);
       }
@@ -54,7 +85,11 @@ const UserHistory = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Select User</label>
           <select value={selectedUserId} onChange={(e) => setSelectedUserId(e.target.value)} className="w-full p-2 border rounded-md">
             <option value="">-- Select a User --</option>
-            {users.map((user) => <option key={user.id} value={user.id}>{user.name} ({user.role})</option>)}
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} ({user.role}) {!user.has_employee_record ? '(Admin)' : ''}
+              </option>
+            ))}
           </select>
         </div>
         <div>
@@ -571,10 +606,41 @@ const EmployeeListAndForm = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await api.get("/employees?skip=0&limit=20", authHeader());
-      const dataWithTrend = res.data.map((emp) => ({ ...emp, trend: Array.from({ length: 30 }, () => Math.floor(Math.random() * 10000)) }));
-      setEmployees(dataWithTrend);
-      setHasMore(res.data.length >= 20);
+      // Fetch both users and employees to show all users including admins
+      const [usersRes, employeesRes] = await Promise.all([
+        api.get("/users/?skip=0&limit=20", authHeader()),
+        api.get("/employees?skip=0&limit=20", authHeader())
+      ]);
+      
+      const users = usersRes.data || [];
+      const employees = employeesRes.data || [];
+      
+      // Create a map of employees by user_id for quick lookup
+      const employeeMap = new Map();
+      employees.forEach(emp => {
+        if (emp.user_id) {
+          employeeMap.set(emp.user_id, emp);
+        }
+      });
+      
+      // Combine users with their employee data
+      const combinedUsers = users.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role?.name || 'Unknown',
+        phone: user.phone,
+        is_active: user.is_active,
+        // Add employee-specific data if available
+        salary: employeeMap.get(user.id)?.salary || null,
+        join_date: employeeMap.get(user.id)?.join_date || null,
+        image_url: employeeMap.get(user.id)?.image_url || null,
+        has_employee_record: employeeMap.has(user.id),
+        trend: Array.from({ length: 30 }, () => Math.floor(Math.random() * 10000))
+      }));
+      
+      setEmployees(combinedUsers);
+      setHasMore(combinedUsers.length >= 20);
       setPage(1);
     } catch (err) {
       console.error("Error fetching employees:", err);
@@ -754,31 +820,76 @@ const EmployeeListAndForm = () => {
         <button onClick={exportToExcel} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export to Excel</button>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow overflow-x-auto">
+      <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow overflow-x-auto">
         <table className="w-full text-sm border-collapse border border-gray-200">
           <thead>
             <tr className="bg-gray-100">
-              <th className="p-3 border">#</th><th className="p-3 border">Image</th><th className="p-3 border">Name</th><th className="p-3 border">Role</th><th className="p-3 border">Salary</th><th className="p-3 border">Join Date</th><th className="p-3 border">Actions</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">#</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Image</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Name</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Role</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Salary</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Join Date</th>
+              <th className="p-2 sm:p-3 border text-xs sm:text-sm">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredEmployees.map((emp, i) => (
               <tr key={emp.id} className="hover:bg-gray-50">
-                <td className="p-2 border text-center">{i + 1}</td>
-                <td className="p-2 border">{emp.image_url ? <img src={`http://localhost:8000/${emp.image_url}`} alt="Profile" className="w-10 h-10 rounded-full object-cover" /> : <span className="text-gray-400">No image</span>}</td>
-                <td className="p-2 border">{emp.name}</td>
-                <td className="p-2 border">{emp.role}</td>
-                <td className="p-2 border text-right">₹{emp.salary}</td>
-                <td className="p-2 border">{emp.join_date}</td>
-                <td className="p-2 border">
-                  <div className="flex gap-2">
-                    <button className="bg-blue-500 text-white px-2 py-1 rounded" onClick={() => handleEdit(emp)}>Edit</button>
-                    <button className="bg-red-500 text-white px-2 py-1 rounded" onClick={() => handleDelete(emp.id)}>Delete</button>
+                <td className="p-1 sm:p-2 border text-center text-xs sm:text-sm">{i + 1}</td>
+                <td className="p-1 sm:p-2 border">
+                  {emp.image_url ? (
+                    <img 
+                      src={`${process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000'}/${emp.image_url}`} 
+                      alt="Profile" 
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" 
+                    />
+                  ) : (
+                    <span className="text-gray-400 text-xs sm:text-sm">No image</span>
+                  )}
+                </td>
+                <td className="p-1 sm:p-2 border text-xs sm:text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center">
+                    <span className="truncate">{emp.name}</span>
+                    {!emp.has_employee_record && (
+                      <span className="text-xs bg-blue-100 text-blue-800 px-1 sm:px-2 py-0.5 sm:py-1 rounded mt-1 sm:mt-0 sm:ml-2">Admin</span>
+                    )}
+                  </div>
+                </td>
+                <td className="p-1 sm:p-2 border text-xs sm:text-sm">{emp.role}</td>
+                <td className="p-1 sm:p-2 border text-right text-xs sm:text-sm">{emp.salary ? `₹${emp.salary}` : 'N/A'}</td>
+                <td className="p-1 sm:p-2 border text-xs sm:text-sm">{emp.join_date || 'N/A'}</td>
+                <td className="p-1 sm:p-2 border">
+                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                    {emp.has_employee_record ? (
+                      <>
+                        <button 
+                          className="bg-blue-500 text-white px-1 sm:px-2 py-1 text-xs sm:text-sm rounded" 
+                          onClick={() => handleEdit(emp)}
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          className="bg-red-500 text-white px-1 sm:px-2 py-1 text-xs sm:text-sm rounded" 
+                          onClick={() => handleDelete(emp.id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 text-xs sm:text-sm">Admin User</span>
+                    )}
                   </div>
                 </td>
               </tr>
             ))}
-            {filteredEmployees.length === 0 && (<tr><td colSpan="7" className="text-center py-4 text-gray-500">No employees found.</td></tr>)}
+            {filteredEmployees.length === 0 && (
+              <tr>
+                <td colSpan="7" className="text-center py-4 text-gray-500 text-sm sm:text-base">
+                  No employees found.
+                </td>
+              </tr>
+            )}
           </tbody>
           {hasMore && filteredEmployees.length > 0 && (
             <tfoot>

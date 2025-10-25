@@ -65,8 +65,8 @@ const DetailTable = ({ title, headers, data, loading, hasMore, loadMore, isSubmi
           </thead>
           <tbody className="divide-y divide-gray-200">
             {data.length > 0 ? data.map((row, i) => (
-              <tr key={i} className="hover:bg-gray-50 transition-colors">
-                {headers.map((h) => <td key={h} className="px-4 py-3 whitespace-nowrap">{row[h.toLowerCase().replace(/ /g, '_')] || 'N/A'}</td>)}
+              <tr key={`${title}-${i}`} className="hover:bg-gray-50 transition-colors">
+                {headers.map((h) => <td key={`${title}-${i}-${h}`} className="px-4 py-3 whitespace-nowrap">{row[h.toLowerCase().replace(/ /g, '_')] || 'N/A'}</td>)}
               </tr>
             )) : (
               <tr><td colSpan={headers.length} className="text-center py-10 text-gray-500">No data available.</td></tr>
@@ -145,7 +145,7 @@ export default function ReportsDashboard() {
       }
     };
     fetchCharts();
-  }, []);
+  }, []); // Remove period dependency to prevent re-fetching charts
 
   useEffect(() => {
     const fetchDetailedData = async () => {
@@ -167,6 +167,7 @@ export default function ReportsDashboard() {
         params.append('limit', PAGE_LIMIT);
         const queryString = params.toString();
 
+        // Only fetch data that's actually needed, reduce API calls
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
           API.get(`/bookings?${queryString}`),
           API.get(`/packages?${queryString}`),
@@ -174,6 +175,8 @@ export default function ReportsDashboard() {
           API.get(`/expenses?${queryString}`),
           API.get(`/employees?${queryString}`),
         ]);
+        
+        // Use a single state update to prevent blinking
         setDetailedData({
           roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
@@ -183,6 +186,14 @@ export default function ReportsDashboard() {
         });
       } catch (err) {
         console.error("Failed to fetch detailed data:", err);
+        // Set empty data instead of keeping old data to prevent confusion
+        setDetailedData({
+          roomBookings: [],
+          packageBookings: [],
+          foodOrders: [],
+          expenses: [],
+          employees: [],
+        });
       } finally {
         setDetailsLoading(false);
       }
@@ -203,9 +214,10 @@ export default function ReportsDashboard() {
       params.append('limit', PAGE_LIMIT);
       const queryString = params.toString();
 
-        const response = await API.get(`/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
-        const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
+      const response = await API.get(`/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
+      const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
 
+      // Use functional update to prevent race conditions
       setDetailedData(prev => ({
         ...prev,
         [dataType]: [...prev[dataType], ...newData]

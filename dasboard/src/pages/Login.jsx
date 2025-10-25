@@ -22,7 +22,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden p-4">
       {/* Luxury Gradient Background */}
       <div className="absolute inset-0 animate-gradient bg-gradient-to-r from-rose-100 via-yellow-50 to-purple-100"></div>
 
@@ -43,9 +43,9 @@ export default function LoginPage() {
       </div>
 
       {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-8 space-y-6">
-        <h2 className="text-3xl font-bold text-gray-800 text-center">Welcome Back</h2>
-        <p className="text-center text-gray-600">Sign in to your account</p>
+      <div className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">Welcome Back</h2>
+        <p className="text-center text-gray-600 text-sm sm:text-base">Sign in to your account</p>
 
         <form className="space-y-4" onSubmit={handleLogin}>
           <div>

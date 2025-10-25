@@ -1,0 +1,60 @@
+{
+  "rooms": {
+    "valid_room": {
+      "number": "TEST001",
+      "type": "Deluxe",
+      "price": 3000,
+      "status": "Available",
+      "adults": 2,
+      "children": 1,
+      "image_path": "test_data/images/room1.jpg"
+    },
+    "room_with_image": {
+      "number": "TEST002",
+      "type": "Premium",
+      "price": 5000,
+      "status": "Available",
+      "adults": 3,
+      "children": 2,
+      "image_path": "test_data/images/room2.jpg"
+    },
+    "invalid_room": {
+      "number": "",
+      "type": "",
+      "price": -100,
+      "status": "Available",
+      "adults": 0,
+      "children": -1
+    }
+  },
+  "bookings": {
+    "valid_booking": {
+      "guest_name": "Test Guest",
+      "guest_email": "test@example.com",
+      "guest_mobile": "9876543210",
+      "check_in": "2025-11-01",
+      "check_out": "2025-11-03",
+      "adults": 2,
+      "children": 1
+    },
+    "invalid_booking": {
+      "guest_name": "",
+      "guest_email": "invalid-email",
+      "guest_mobile": "123",
+      "check_in": "2025-10-01",
+      "check_out": "2025-10-01",
+      "adults": 0,
+      "children": -1
+    }
+  },
+  "users": {
+    "admin": {
+      "email": "admin@teqmates.com",
+      "password": "admin123"
+    },
+    "employee": {
+      "email": "employee@teqmates.com",
+      "password": "employee123"
+    }
+  }
+}

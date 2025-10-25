@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List, Optional
 from datetime import date
 from .user import UserOut
@@ -37,6 +37,15 @@ class BookingCreate(BaseModel):
     check_out: date
     adults: int
     children: int
+
+    @validator('check_out')
+    def validate_booking_duration(cls, v, values):
+        """Ensure minimum booking duration of 1 day"""
+        if 'check_in' in values:
+            check_in = values['check_in']
+            if v <= check_in:
+                raise ValueError('Check-out date must be at least 1 day after check-in date')
+        return v
 
 # This is the main output schema for displaying bookings
 class BookingOut(BaseModel):

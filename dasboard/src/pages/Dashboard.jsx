@@ -247,19 +247,19 @@ const Dashboard = () => {
         <li></li>
       </div>
 
-      <div className="relative max-w-[1400px] mx-auto px-4 py-6 space-y-6">
+      <div className="relative max-w-[1400px] mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Resort Admin Dashboard</h1>
-            <p className="text-gray-500">Overview of bookings, rooms, revenue, expenses & operations</p>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">Resort Admin Dashboard</h1>
+            <p className="text-sm sm:text-base text-gray-500">Overview of bookings, rooms, revenue, expenses & operations</p>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500">
             Last updated: {new Date().toLocaleString()}
           </div>
         </header>
 
         {/* KPI Cards */}
-        <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 sm:gap-4">
           <KPICard label="Total Revenue" value={fmtCurrency(revenue.total)} sub="All time" />
           <KPICard label="Today Revenue" value={fmtCurrency(revenue.today)} sub="Today" />
           <KPICard label="This Month Revenue" value={fmtCurrency(revenue.month)} sub="Month" />
@@ -270,7 +270,7 @@ const Dashboard = () => {
         </section>
 
         {/* Charts Row 1 */}
-        <section className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           <Card title="Revenue (Last 14 days)">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -565,16 +565,16 @@ const Dashboard = () => {
 
 /* ---------- Small UI bits ---------- */
 const KPICard = ({ label, value, sub }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-    <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
-    <div className="text-2xl font-bold text-gray-800 mt-1">{value}</div>
-    {sub && <div className="text-xs text-gray-400 mt-1">{sub}</div>}
+  <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4">
+    <div className="text-xs uppercase tracking-wide text-gray-500 truncate">{label}</div>
+    <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mt-1 truncate">{value}</div>
+    {sub && <div className="text-xs text-gray-400 mt-1 truncate">{sub}</div>}
   </div>
 );
 
 const Card = ({ title, children }) => (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-    <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
+  <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+    <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">{title}</h2>
     {children}
   </div>
 );
