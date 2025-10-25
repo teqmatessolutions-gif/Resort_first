@@ -27,12 +27,41 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 @router.get("", response_model=PaginatedBookingResponse)
 def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
-    # Simplified version to avoid complex joins that might cause issues
-    regular_bookings = db.query(Booking).all()
-    package_bookings = db.query(PackageBooking).all()
-    
-    # Since we have no data, return empty results
-    return {"total": 0, "bookings": []}
+    try:
+        # Get regular bookings with room details
+        regular_bookings = db.query(Booking).options(
+            joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
+            joinedload(Booking.user)
+        ).offset(skip).limit(limit).all()
+        
+        # Convert to BookingOut format
+        booking_results = []
+        for booking in regular_bookings:
+            booking_out = BookingOut(
+                id=booking.id,
+                guest_name=booking.guest_name,
+                guest_mobile=booking.guest_mobile,
+                guest_email=booking.guest_email,
+                status=booking.status,
+                check_in=booking.check_in,
+                check_out=booking.check_out,
+                adults=booking.adults,
+                children=booking.children,
+                id_card_image_url=getattr(booking, 'id_card_image_url', None),
+                guest_photo_url=getattr(booking, 'guest_photo_url', None),
+                user=booking.user,
+                is_package=False,
+                rooms=[br.room for br in booking.booking_rooms if br.room]
+            )
+            booking_results.append(booking_out)
+        
+        # Get total count
+        total_count = db.query(Booking).count()
+        
+        return {"total": total_count, "bookings": booking_results}
+    except Exception as e:
+        print(f"Error fetching bookings: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching bookings: {str(e)}")
 
 # ----------------------------------------------------------------
 # GET Detailed view for a SINGLE booking (regular or package)
