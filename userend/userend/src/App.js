@@ -1467,27 +1467,50 @@ export default function App() {
                                 <button onClick={() => setIsRoomBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
                             <form onSubmit={handleRoomBookingSubmit} className="p-6 space-y-4 overflow-y-auto">
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 <div className="space-y-2">
-                                    <label className={`block text-sm font-medium ${theme.textSecondary}`}>Select Room(s)</label>
+                                    <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
+                                    {bookingData.checkIn && bookingData.checkOut && (
+                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {bookingData.checkIn} to {bookingData.checkOut}</p>
+                                    )}
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').map(room => (
-                                            <div key={room.id} onClick={() => handleRoomSelection(room.id)}
-                                                className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
-                                            >
-                                                <img 
-                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
-                                                    alt={room.type} 
-                                                    className="w-full h-20 object-cover" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
-                                                <div className="p-2 text-center">
-                                                    <p className="font-semibold text-xs">Room {room.number}</p>
-                                                    <p className="text-xs opacity-80">{room.type}</p>
-                                                    <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                    <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
+                                            rooms.filter(r => r.status === 'Available').map(room => (
+                                                <div key={room.id} onClick={() => handleRoomSelection(room.id)}
+                                                    className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                >
+                                                    <img 
+                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        alt={room.type} 
+                                                        className="w-full h-20 object-cover" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                    <div className="p-2 text-center">
+                                                        <p className="font-semibold text-xs">Room {room.number}</p>
+                                                        <p className="text-xs opacity-80">{room.type}</p>
+                                                        <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                    </div>
                                                 </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
+                                                <p className="text-sm">
+                                                    {bookingData.checkIn && bookingData.checkOut 
+                                                        ? "No rooms available for the selected dates. Please try different dates." 
+                                                        : "Please select check-in and check-out dates first"}
+                                                </p>
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -1501,16 +1524,6 @@ export default function App() {
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Phone Number</label>
                                     <input type="tel" name="guest_mobile" value={bookingData.guest_mobile} onChange={handleRoomBookingChange} placeholder="Enter your mobile number" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                </div>
-                                <div className="flex space-x-4">
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                    </div>
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                    </div>
                                 </div>
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
@@ -1548,27 +1561,50 @@ export default function App() {
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
                                     <input type="number" name="package_id" value={packageBookingData.package_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
                                 </div>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 <div className="space-y-2">
-                                    <label className={`block text-sm font-medium ${theme.textSecondary}`}>Select Room(s) for Package</label>
+                                    <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
+                                    {packageBookingData.check_in && packageBookingData.check_out && (
+                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
+                                    )}
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').map(room => (
-                                            <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
-                                                className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
-                                            >
-                                                <img 
-                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
-                                                    alt={room.type} 
-                                                    className="w-full h-20 object-cover" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
-                                                <div className="p-2 text-center">
-                                                    <p className="font-semibold text-xs">Room {room.number}</p>
-                                                    <p className="text-xs opacity-80">{room.type}</p>
-                                                    <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                    <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
+                                            rooms.filter(r => r.status === 'Available').map(room => (
+                                                <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
+                                                    className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                >
+                                                    <img 
+                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        alt={room.type} 
+                                                        className="w-full h-20 object-cover" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                    <div className="p-2 text-center">
+                                                        <p className="font-semibold text-xs">Room {room.number}</p>
+                                                        <p className="text-xs opacity-80">{room.type}</p>
+                                                        <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
+                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                    </div>
                                                 </div>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
+                                                <p className="text-sm">
+                                                    {packageBookingData.check_in && packageBookingData.check_out 
+                                                        ? "No rooms available for the selected dates. Please try different dates." 
+                                                        : "Please select check-in and check-out dates first"}
+                                                </p>
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -1582,16 +1618,6 @@ export default function App() {
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Phone Number</label>
                                     <input type="tel" name="guest_mobile" value={packageBookingData.guest_mobile} onChange={handlePackageBookingChange} placeholder="Enter your mobile number" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                </div>
-                                <div className="flex space-x-4">
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                    </div>
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                    </div>
                                 </div>
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
