@@ -646,7 +646,9 @@ const Bookings = () => {
   }, [selectedRoomDetails]);
 
   const filteredBookings = useMemo(() => {
-    console.log("Filtering bookings - Status filter:", statusFilter);
+    console.log("=== FILTERING BOOKINGS ===");
+    console.log("Status filter selected:", statusFilter);
+    console.log("Total bookings:", bookings.length);
     console.log("Sample booking statuses:", bookings.slice(0, 5).map(b => ({ id: b.id, status: b.status, is_package: b.is_package })));
     
     return bookings
@@ -658,12 +660,18 @@ const Bookings = () => {
         
         // Debug logging for status mismatch
         if (statusFilter !== "All" && !statusMatch) {
-          console.log("Status mismatch:", {
+          console.log("❌ STATUS MISMATCH:", {
             id: b.id,
             bookingStatus: b.status,
             normalizedBookingStatus,
             filterStatus: statusFilter,
             normalizedFilterStatus,
+            is_package: b.is_package
+          });
+        } else if (statusFilter !== "All" && statusMatch) {
+          console.log("✅ STATUS MATCH:", {
+            id: b.id,
+            status: b.status,
             is_package: b.is_package
           });
         }
