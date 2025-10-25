@@ -145,7 +145,7 @@ const Rooms = () => {
 
   const fetchRooms = async () => {
     try {
-      const res = await API.get("/rooms/test?skip=0&limit=12");
+      const res = await API.get("/rooms/test?skip=0&limit=20");
       const dataWithTrend = res.data.map((r) => ({
         ...r,
         trend:
@@ -153,7 +153,7 @@ const Rooms = () => {
           Array.from({ length: 7 }, () => Math.floor(Math.random() * 1000)),
       }));
       setRooms(dataWithTrend || []);
-      setHasMore(res.data.length === 12);
+      setHasMore(res.data.length === 20);
       setPage(1);
     } catch (error) {
       console.error("Error fetching rooms:", error);
@@ -166,12 +166,12 @@ const Rooms = () => {
     setIsFetchingMore(true);
     try {
       const nextPage = page + 1;
-      const res = await API.get(`/rooms?skip=${(nextPage - 1) * 12}&limit=12`);
+      const res = await API.get(`/rooms?skip=${(nextPage - 1) * 20}&limit=20`);
       const newRooms = res.data || [];
       const dataWithTrend = newRooms.map((r) => ({ ...r, trend: Array.from({ length: 7 }, () => Math.floor(Math.random() * 1000)) }));
       setRooms(prev => [...prev, ...dataWithTrend]);
       setPage(nextPage);
-      setHasMore(newRooms.length === 12);
+      setHasMore(newRooms.length === 20);
     } catch (err) {
       console.error("Failed to load more rooms:", err);
     } finally {

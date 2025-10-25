@@ -54,7 +54,7 @@ const handleEdit = (user) => {
 
   const fetchUsers = async () => {
     try {
-      const res = await API.get("/users?skip=0&limit=10", {
+      const res = await API.get("/users?skip=0&limit=20", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -108,7 +108,7 @@ const handleEdit = (user) => {
     setIsFetchingMore(true);
     const nextPage = page + 1;
     try {
-      const res = await API.get(`/users?skip=${(nextPage - 1) * 10}&limit=10`, {
+      const res = await API.get(`/users?skip=${(nextPage - 1) * 20}&limit=20`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       const newUsers = res.data || [];

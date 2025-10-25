@@ -34,7 +34,7 @@ export default function FoodOrders() {
     try {
       // Fetch initial page of orders
       const [ordersRes, roomsRes, employeesRes, foodItemsRes] = await Promise.all([
-        api.get("/food-orders/?skip=0&limit=12"),
+        api.get("/food-orders/?skip=0&limit=20"),
         api.get("/rooms/"),
         api.get("/employees/"),
         api.get("/food-items/"),
@@ -54,11 +54,11 @@ export default function FoodOrders() {
     setIsFetchingMore(true);
     const nextPage = page + 1;
     try {
-      const res = await api.get(`/food-orders/?skip=${(nextPage - 1) * 12}&limit=12`);
+      const res = await api.get(`/food-orders/?skip=${(nextPage - 1) * 20}&limit=20`);
       const newOrders = res.data || [];
       setOrders(prev => [...prev, ...newOrders]);
       setPage(nextPage);
-      setHasMore(newOrders.length === 12);
+      setHasMore(newOrders.length === 20);
     } catch (err) {
       console.error("Failed to load more orders:", err);
     } finally {

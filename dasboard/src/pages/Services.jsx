@@ -47,7 +47,7 @@ const Services = () => {
     try {
       const [sRes, aRes, rRes, eRes] = await Promise.all([
         api.get("/services?limit=1000"),
-        api.get("/services/assigned?skip=0&limit=10"),
+        api.get("/services/assigned?skip=0&limit=20"),
         api.get("/rooms?limit=1000"),
         api.get("/employees"),
       ]);
@@ -73,11 +73,11 @@ const Services = () => {
     setIsFetchingMore(true);
     const nextPage = page + 1;
     try {
-      const res = await api.get(`/services/assigned?skip=${(nextPage - 1) * 10}&limit=10`);
+      const res = await api.get(`/services/assigned?skip=${(nextPage - 1) * 20}&limit=20`);
       const newAssigned = res.data || [];
       setAssignedServices(prev => [...prev, ...newAssigned]);
       setPage(nextPage);
-      setHasMore(newAssigned.length === 10);
+      setHasMore(newAssigned.length === 20);
     } catch (err) {
       console.error("Failed to load more assigned services:", err);
     } finally {
