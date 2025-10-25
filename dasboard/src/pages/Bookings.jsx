@@ -642,7 +642,17 @@ const Bookings = () => {
           return room ? { id: room.id, number: room.number, type: room.type } : null;
         }).filter(Boolean)
       };
-      setBookings(prev => [newPackageBooking, ...prev]); // Add to beginning of list
+      
+      // Use functional update to prevent duplicates
+      setBookings(prev => {
+        // Check if booking already exists
+        const exists = prev.some(b => b.id === newPackageBooking.id);
+        if (exists) {
+          console.log("Booking already exists, not adding duplicate:", newPackageBooking.id);
+          return prev;
+        }
+        return [newPackageBooking, ...prev]; // Add to beginning of list
+      });
     } catch (err) {
       console.error(err);
       const errorMessage = err.response?.data?.detail || "Failed to process package booking.";
@@ -829,7 +839,17 @@ const Bookings = () => {
           return room ? { id: room.id, number: room.number, type: room.type } : null;
         }).filter(Boolean)
       };
-      setBookings(prev => [newBooking, ...prev]); // Add to beginning of list
+      
+      // Use functional update to prevent duplicates
+      setBookings(prev => {
+        // Check if booking already exists
+        const exists = prev.some(b => b.id === newBooking.id);
+        if (exists) {
+          console.log("Booking already exists, not adding duplicate:", newBooking.id);
+          return prev;
+        }
+        return [newBooking, ...prev]; // Add to beginning of list
+      });
     } catch (err) {
       console.error("Booking creation error:", err);
       const errorMessage = err.response?.data?.message || "Error creating booking.";
