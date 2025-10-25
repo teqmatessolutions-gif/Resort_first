@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import API from "../services/api";
+import BannerMessage from "../components/BannerMessage";
 
 const Users = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -9,7 +10,17 @@ const Users = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [message, setMessage] = useState("");
+  const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
   const [hasMore, setHasMore] = useState(true);
+
+  // Function to show banner message
+  const showBannerMessage = (type, text) => {
+    setBannerMessage({ type, text });
+  };
+
+  const closeBannerMessage = () => {
+    setBannerMessage({ type: null, text: "" });
+  };
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [form, setForm] = useState({
@@ -53,7 +64,7 @@ const handleEdit = (user) => {
       setPage(1);
     } catch (err) {
       console.error("Error fetching users:", err);
-      setMessage("❌ Failed to load users.");
+      showBannerMessage("error", "Failed to load users.");
     }
   };
 
@@ -67,7 +78,7 @@ const handleEdit = (user) => {
       setRoles(res.data);
     } catch (err) {
       console.error("Error fetching roles:", err);
-      setMessage("❌ Failed to load roles.");
+      showBannerMessage("error", "Failed to load roles.");
     }
   };
 
@@ -83,12 +94,12 @@ const handleEdit = (user) => {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      setMessage("✅ User created successfully!");
+      showBannerMessage("success", "User created successfully!");
       setForm({ name: "", email: "", password: "", phone: "", role_id: "" });
       fetchUsers();
     } catch (err) {
       console.error("Create user error:", err);
-      setMessage("❌ Failed to create user.");
+      showBannerMessage("error", "Failed to create user.");
     }
   };
 
@@ -113,6 +124,12 @@ const handleEdit = (user) => {
 
   return (
     <DashboardLayout>
+      <BannerMessage 
+        message={bannerMessage} 
+        onClose={closeBannerMessage}
+        autoDismiss={true}
+        duration={5000}
+      />
       {showViewModal && selectedUser && (
   <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
     <div className="bg-white p-6 rounded-lg shadow-lg w-[400px]">
@@ -144,13 +161,6 @@ const handleEdit = (user) => {
 
       <div className="p-6 bg-white rounded-xl shadow">
         <h1 className="text-2xl font-bold mb-4">Users</h1>
-
-        {/* Message */}
-        {message && (
-          <div className="mb-4 p-3 rounded bg-yellow-100 text-yellow-700">
-            {message}
-          </div>
-        )}
 
         {/* Create User Form */}
         <form

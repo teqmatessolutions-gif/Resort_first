@@ -6,6 +6,7 @@ import { Calendar, User, DollarSign, Utensils, ConciergeBell, BedDouble, Package
 import * as XLSX from "xlsx";
 import { LineChart, Line, Tooltip, ResponsiveContainer } from "recharts";
 import CountUp from "react-countup";
+import BannerMessage from "../components/BannerMessage";
 
 const UserHistory = () => {
   const [users, setUsers] = useState([]);
@@ -260,6 +261,16 @@ const AttendanceTracking = () => {
   const [workLogs, setWorkLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
+
+  // Function to show banner message
+  const showBannerMessage = (type, text) => {
+    setBannerMessage({ type, text });
+  };
+
+  const closeBannerMessage = () => {
+    setBannerMessage({ type: null, text: "" });
+  };
 
   const [location, setLocation] = useState('Office'); // For live clock-in/out
   // State to manage which day's detailed logs are shown
@@ -276,7 +287,7 @@ const AttendanceTracking = () => {
         setWorkLogs(res.data);
       }).catch(err => {
         console.error("Failed to fetch data", err);
-        setMessage({ text: 'Failed to fetch employee records.', type: 'error' });
+        showBannerMessage("error", "Failed to fetch employee records.");
       }).finally(() => setLoading(false));
     } else {
       setWorkLogs([]);
@@ -284,8 +295,7 @@ const AttendanceTracking = () => {
   }, [selectedEmployeeId]);
 
   const showMessage = (text, type) => {
-    setMessage({ text, type });
-    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+    showBannerMessage(type, text);
   };
 
   const handleClockIn = async () => {
@@ -344,12 +354,16 @@ const AttendanceTracking = () => {
 
   return (
     <div className="space-y-6">
+      <BannerMessage 
+        message={bannerMessage} 
+        onClose={closeBannerMessage}
+        autoDismiss={true}
+        duration={5000}
+      />
       <select value={selectedEmployeeId} onChange={e => setSelectedEmployeeId(e.target.value)} className="w-full p-2 border rounded-md">
         <option value="">-- Select an Employee --</option>
         {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
       </select>
-
-      {message.text && <div className={`p-3 rounded-md text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>{message.text}</div>}
 
       {selectedEmployeeId && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
