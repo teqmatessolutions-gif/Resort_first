@@ -378,11 +378,13 @@ const Bookings = () => {
       const activeBookingsCount = allBookings.filter(b => b.status === "booked" || b.status === "checked-in").length;
       const cancelledBookingsCount = allBookings.filter(b => b.status === "cancelled").length;
       const availableRoomsCount = allRooms.filter(r => r.status === "Available").length;
+      
+      // Fix: Filter by actual dates and status for check-in/out KPIs
       const todaysGuestsCheckin = allBookings
-        .filter(b => b.check_in === todaysDate)
+        .filter(b => b.check_in === todaysDate && b.status !== 'cancelled')
         .reduce((sum, b) => sum + b.adults + b.children, 0);
       const todaysGuestsCheckout = allBookings
-        .filter(b => b.check_out === todaysDate)
+        .filter(b => b.check_out === todaysDate && b.status !== 'cancelled')
         .reduce((sum, b) => sum + b.adults + b.children, 0);
 
 
@@ -592,10 +594,40 @@ const Bookings = () => {
       .filter((b) => {
         const statusMatch = statusFilter === "All" || b.status.toLowerCase() === statusFilter.toLowerCase();
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
+        
+        // Fix: Apply date filter to both check-in and check-out dates
         const checkInDate = new Date(b.check_in);
+        const checkOutDate = new Date(b.check_out);
         const from = fromDate ? new Date(fromDate) : null;
         const to = toDate ? new Date(toDate) : null;
-        const dateMatch = (!from || checkInDate >= from) && (!to || checkInDate <= to);
+        
+        // Date match: booking is visible if its date range overlaps with the filter range
+        // OR if the date range includes either check-in or check-out date
+        let dateMatch = true;
+        if (from || to) {
+          dateMatch = false;
+          // Check if check-in date is in range
+          if (!from || checkInDate >= from) {
+            if (!to || checkInDate <= to) {
+              dateMatch = true;
+            }
+          }
+          // Check if check-out date is in range
+          if (!dateMatch) {
+            if (!from || checkOutDate >= from) {
+              if (!to || checkOutDate <= to) {
+                dateMatch = true;
+              }
+            }
+          }
+          // Check if booking spans the entire date range
+          if (!dateMatch && from && to) {
+            if (checkInDate <= from && checkOutDate >= to) {
+              dateMatch = true;
+            }
+          }
+        }
+        
         return statusMatch && roomNumberMatch && dateMatch;
       })
       .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)

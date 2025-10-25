@@ -18,37 +18,66 @@ const KpiCard = ({ title, value, icon, color }) => (
 );
 
 // Booking Modal for displaying booking data in table format
-const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter }) => {
-  // Apply status filter to bookings
-  const filteredBookings = filter === "all" 
-    ? bookings 
-    : bookings.filter(booking => booking.status === filter);
+const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter, checkinFilter, setCheckinFilter, checkoutFilter, setCheckoutFilter }) => {
+  // Apply filters to bookings
+  const filteredBookings = bookings.filter(booking => {
+    // Status filter
+    const statusMatch = filter === "all" || booking.status === filter;
+    
+    // Check-in date filter
+    const checkinMatch = !checkinFilter || booking.check_in === checkinFilter;
+    
+    // Check-out date filter
+    const checkoutMatch = !checkoutFilter || booking.check_out === checkoutFilter;
+    
+    return statusMatch && checkinMatch && checkoutMatch;
+  });
   
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-4xl w-full m-4 max-h-[80vh] overflow-hidden">
+      <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-5xl w-full m-4 max-h-[80vh] overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10 w-8 h-8 flex items-center justify-center"
         >
           &times;
         </button>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-bold">
+        <div className="pr-12 mb-4">
+          <h3 className="text-2xl font-bold mb-4">
             Booking History for Room {roomNumber}
           </h3>
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
-            >
-              <option value="all">All</option>
-              <option value="booked">Booked</option>
-              <option value="checked-in">Checked In</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-700 mb-1">Filter by Status:</label>
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
+              >
+                <option value="all">All</option>
+                <option value="booked">Booked</option>
+                <option value="checked-in">Checked In</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-700 mb-1">Check-in Date:</label>
+              <input
+                type="date"
+                value={checkinFilter}
+                onChange={(e) => setCheckinFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs font-medium text-gray-700 mb-1">Check-out Date:</label>
+              <input
+                type="date"
+                value={checkoutFilter}
+                onChange={(e) => setCheckoutFilter(e.target.value)}
+                className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all"
+              />
+            </div>
           </div>
         </div>
         {filteredBookings.length > 0 ? (
@@ -150,6 +179,8 @@ const Rooms = () => {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState({ type: "all", status: "all" });
   const [bookingFilter, setBookingFilter] = useState("booked"); // Filter for booking modal
+  const [bookingCheckinFilter, setBookingCheckinFilter] = useState(""); // Check-in date filter
+  const [bookingCheckoutFilter, setBookingCheckoutFilter] = useState(""); // Check-out date filter
 
   // Function to show banner message
   const showBannerMessage = (type, text) => {
@@ -215,6 +246,8 @@ const Rooms = () => {
       setBookings(roomBookings);
       setSelectedRoomNumber(roomNumber);
       setBookingFilter("booked"); // Reset to default filter
+      setBookingCheckinFilter(""); // Reset check-in filter
+      setBookingCheckoutFilter(""); // Reset check-out filter
       setShowBookingModal(true);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -610,6 +643,10 @@ const Rooms = () => {
           bookings={bookings}
           filter={bookingFilter}
           setFilter={setBookingFilter}
+          checkinFilter={bookingCheckinFilter}
+          setCheckinFilter={setBookingCheckinFilter}
+          checkoutFilter={bookingCheckoutFilter}
+          setCheckoutFilter={setBookingCheckoutFilter}
         />
       )}
 
