@@ -509,6 +509,8 @@ const formatUrl = (url) => {
 
 export default function App() {
     const [rooms, setRooms] = useState([]);
+    const [allRooms, setAllRooms] = useState([]); // Store all rooms for filtering
+    const [bookings, setBookings] = useState([]); // Store bookings for availability check
     const [services, setServices] = useState([]);
     const [foodItems, setFoodItems] = useState([]);
     const [packages, setPackages] = useState([]);
@@ -602,6 +604,7 @@ export default function App() {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
             const endpoints = {
                 rooms: '/rooms/test',  // Use working test endpoint for real room data
+                bookings: '/bookings?limit=10000', // Fetch all bookings for availability check
                 foodItems: '/food-items/',
                 packages: '/packages/',
                 resortInfo: '/resort-info/',
@@ -624,11 +627,13 @@ export default function App() {
                 const data = await Promise.all(responses.map(res => res.json()));
 
                 const [
-                    roomsData, foodItemsData, packagesData,
+                    roomsData, bookingsData, foodItemsData, packagesData,
                     resortInfoData, galleryData, reviewsData, bannerData
                 ] = data;
 
+                setAllRooms(roomsData);
                 setRooms(roomsData);
+                setBookings(bookingsData.bookings || []); // Store bookings for availability filtering
                 setServices([]); // Set empty array since services endpoint is not available
                 setFoodItems(foodItemsData);
                 setPackages(packagesData);
@@ -719,6 +724,70 @@ export default function App() {
             }
         }));
     };
+
+    // Filter rooms based on date availability for room booking
+    useEffect(() => {
+        if (bookingData.checkIn && bookingData.checkOut && allRooms.length > 0) {
+            const availableRooms = allRooms.filter(room => {
+                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
+                const hasConflict = bookings.some(booking => {
+                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
+                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
+                    
+                    const bookingCheckIn = new Date(booking.check_in);
+                    const bookingCheckOut = new Date(booking.check_out);
+                    const requestedCheckIn = new Date(bookingData.checkIn);
+                    const requestedCheckOut = new Date(bookingData.checkOut);
+                    
+                    // Check if room is part of this booking
+                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+                    if (!isRoomInBooking) return false;
+                    
+                    // Check for date overlap
+                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+                });
+                
+                return !hasConflict;
+            });
+            
+            setRooms(availableRooms);
+        } else if (!bookingData.checkIn || !bookingData.checkOut) {
+            // If no dates selected, show all available rooms
+            setRooms(allRooms.filter((r) => r.status === "Available"));
+        }
+    }, [bookingData.checkIn, bookingData.checkOut, allRooms, bookings]);
+
+    // Filter rooms based on date availability for package booking
+    useEffect(() => {
+        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0) {
+            const availableRooms = allRooms.filter(room => {
+                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
+                const hasConflict = bookings.some(booking => {
+                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
+                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
+                    
+                    const bookingCheckIn = new Date(booking.check_in);
+                    const bookingCheckOut = new Date(booking.check_out);
+                    const requestedCheckIn = new Date(packageBookingData.check_in);
+                    const requestedCheckOut = new Date(packageBookingData.check_out);
+                    
+                    // Check if room is part of this booking
+                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+                    if (!isRoomInBooking) return false;
+                    
+                    // Check for date overlap
+                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+                });
+                
+                return !hasConflict;
+            });
+            
+            setRooms(availableRooms);
+        } else if (!packageBookingData.check_in || !packageBookingData.check_out) {
+            // If no dates selected, show all available rooms
+            setRooms(allRooms.filter((r) => r.status === "Available"));
+        }
+    }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings]);
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
@@ -1436,11 +1505,11 @@ export default function App() {
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                 </div>
                                 <div className="flex space-x-4">
@@ -1517,11 +1586,11 @@ export default function App() {
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                 </div>
                                 <div className="flex space-x-4">
