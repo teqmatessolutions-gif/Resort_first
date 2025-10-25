@@ -77,7 +77,7 @@ def book_package(db: Session, booking: PackageBookingCreate):
             .join(PackageBooking)
             .filter(
                 PackageBookingRoom.room_id == room_id,
-                PackageBooking.status == "booked",
+                PackageBooking.status.in_(["booked", "checked-in"]),  # Only check for active bookings
                 or_(
                     and_(
                         PackageBooking.check_in <= booking.check_in,
@@ -97,7 +97,8 @@ def book_package(db: Session, booking: PackageBookingCreate):
         )
 
         if conflict:
-            raise HTTPException(status_code=400, detail=f"Room {room_id} is not available")
+            room = db.query(Room).filter(Room.id == room_id).first()
+            raise HTTPException(status_code=400, detail=f"Room {room.number if room else room_id} is not available for the selected dates.")
         
         # --- FIX: Update the room's status to 'Booked' ---
         room_to_update = db.query(Room).filter(Room.id == room_id).first()

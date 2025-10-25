@@ -399,9 +399,9 @@ const Bookings = () => {
       let availableRooms = allRooms;
       if (formData.checkIn && formData.checkOut) {
         availableRooms = allRooms.filter(room => {
-          // Check if room has any conflicting bookings
+          // Check if room has any conflicting bookings (ignore cancelled and checked-out)
           const hasConflict = allBookings.some(booking => {
-            if (booking.status === "cancelled") return false;
+            if (booking.status === "cancelled" || booking.status === "checked-out") return false;
             
             const bookingCheckIn = new Date(booking.check_in);
             const bookingCheckOut = new Date(booking.check_out);
@@ -451,9 +451,9 @@ const Bookings = () => {
   useEffect(() => {
     if (formData.checkIn && formData.checkOut && allRooms.length > 0) {
       const availableRooms = allRooms.filter(room => {
-        // Check if room has any conflicting bookings
+        // Check if room has any conflicting bookings (ignore cancelled and checked-out)
         const hasConflict = bookings.some(booking => {
-          if (booking.status === "cancelled") return false;
+          if (booking.status === "cancelled" || booking.status === "checked-out") return false;
           
           const bookingCheckIn = new Date(booking.check_in);
           const bookingCheckOut = new Date(booking.check_out);
@@ -482,9 +482,9 @@ const Bookings = () => {
   useEffect(() => {
     if (packageBookingForm.check_in && packageBookingForm.check_out && allRooms.length > 0) {
       const availableRooms = allRooms.filter(room => {
-        // Check if room has any conflicting bookings
+        // Check if room has any conflicting bookings (ignore cancelled and checked-out)
         const hasConflict = bookings.some(booking => {
-          if (booking.status === "cancelled") return false;
+          if (booking.status === "cancelled" || booking.status === "checked-out") return false;
           
           const bookingCheckIn = new Date(booking.check_in);
           const bookingCheckOut = new Date(booking.check_out);

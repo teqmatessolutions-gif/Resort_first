@@ -150,6 +150,23 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
 
+    # Check if rooms are available for the requested dates
+    for room_id in booking.room_ids:
+        # Check if room is already booked for overlapping dates (only check active bookings, not cancelled or checked-out)
+        conflicting_booking = db.query(BookingRoom).join(Booking).filter(
+            BookingRoom.room_id == room_id,
+            Booking.status.in_(['booked', 'checked-in']),  # Only check for active bookings
+            Booking.check_in < booking.check_out,
+            Booking.check_out > booking.check_in
+        ).first()
+        
+        if conflicting_booking:
+            room = db.query(Room).filter(Room.id == room_id).first()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Room {room.number if room else room_id} is not available for the selected dates."
+            )
+
     db_booking = Booking(
         guest_name=guest_name_to_use,
         guest_mobile=booking.guest_mobile,
@@ -163,7 +180,7 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
     db.commit()
     db.refresh(db_booking)
 
-    # Create BookingRoom links
+    # Create BookingRoom links and update room status
     for room_id in booking.room_ids:
         room = db.query(Room).filter(Room.id == room_id).first()
         if room:
