@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.database import SessionLocal
 from app.schemas.room import RoomCreate, RoomOut
 from app.curd import room as crud_room
@@ -203,7 +204,7 @@ def update_room_statuses_endpoint(db: Session = Depends(get_db)):
 def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
         # Test database connection first
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         
         # Query rooms with proper error handling
         rooms = db.query(Room).offset(skip).limit(limit).all()
