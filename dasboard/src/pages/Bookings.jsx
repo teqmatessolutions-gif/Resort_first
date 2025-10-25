@@ -599,7 +599,7 @@ const Bookings = () => {
         return;
       }
 
-      await API.post(
+      const response = await API.post(
         "/bookings",
         {
           room_ids: roomIds,
@@ -626,7 +626,16 @@ const Bookings = () => {
         adults: 1,
         children: 0,
       });
-      fetchData();
+      // Add the new booking to the state instead of refetching all data
+      const newBooking = {
+        ...response.data,
+        is_package: false,
+        rooms: formData.roomNumbers.map(roomNumber => {
+          const room = rooms.find(r => r.number === roomNumber);
+          return room ? { id: room.id, number: room.number, type: room.type } : null;
+        }).filter(Boolean)
+      };
+      setBookings(prev => [newBooking, ...prev]); // Add to beginning of list
     } catch (err) {
       console.error("Booking creation error:", err);
       const errorMessage = err.response?.data?.message || "Error creating booking.";
@@ -646,13 +655,13 @@ const Bookings = () => {
         {},
         authHeader()
       );
-      setFeedback({ message: "✅ Booking checkout extended successfully!", type: "success" });
+      showBannerMessage("success", "Booking checkout extended successfully!");
       setBookingToExtend(null);
       fetchData();
     } catch (err) {
       console.error("Booking extension error:", err);
       const errorMessage = err.response?.data?.message || "Failed to extend booking.";
-      setFeedback({ message: `❌ ${errorMessage}`, type: "error" });
+      showBannerMessage("error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -687,13 +696,13 @@ const Bookings = () => {
         )
       );
 
-      setFeedback({ message: "✅ Guest checked in successfully!", type: "success" });
+      showBannerMessage("success", "Guest checked in successfully!");
       setBookingToCheckIn(null);
       // fetchData(); // No longer need to refetch everything
     } catch (err) {
       console.error("Check-in error:", err);
       const errorMessage = err.response?.data?.detail || "Failed to check in guest.";
-      setFeedback({ message: `❌ ${errorMessage}`, type: "error" });
+      showBannerMessage("error", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -710,7 +719,7 @@ const Bookings = () => {
       setModalBooking(response.data); // Update the modal with full, fresh data
     } catch (err) {
       console.error("Failed to fetch booking details:", err);
-      setFeedback({ message: "❌ Could not load booking details.", type: "error" });
+      showBannerMessage("error", "Could not load booking details.");
       // Close modal on error
       setModalBooking(null);
     }
@@ -720,7 +729,7 @@ const Bookings = () => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
       const response = await API.put(`/bookings/${id}/cancel?is_package=${is_package}`, {}, authHeader());
-      setFeedback({ message: "✅ Booking cancelled successfully.", type: "success" });
+      showBannerMessage("success", "Booking cancelled successfully.");
       // Update the booking in state instead of refetching everything
       setBookings(prevBookings =>
         prevBookings.map(b =>
@@ -729,7 +738,7 @@ const Bookings = () => {
       );
     } catch (err) {
       console.error("Failed to cancel booking:", err);
-      setFeedback({ message: "❌ Failed to cancel booking.", type: "error" });
+      showBannerMessage("error", "Failed to cancel booking.");
     }
   };
 
@@ -1071,9 +1080,9 @@ const Bookings = () => {
                     <td className="p-4">
                       {b.rooms && b.rooms.length > 0 ? b.rooms.map(room => `${room.number} (${room.type})`).join(", ") : "N/A"}
                     </td>
-                    <td className="p-4 text-gray-600">{b.check_in}</td>
-                    <td className="p-4 text-gray-600">{b.check_out}</td>
-                    <td className="p-4 text-gray-600">{b.adults} A, {b.children} C</td>
+                    <td className="p-4 text-gray-800">{b.check_in}</td>
+                    <td className="p-4 text-gray-800">{b.check_out}</td>
+                    <td className="p-4 text-gray-800">{b.adults} A, {b.children} C</td>
                     <td className="p-4">
                       <BookingStatusBadge status={b.status || "Pending"} />
                     </td>
