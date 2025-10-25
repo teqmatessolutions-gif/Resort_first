@@ -736,7 +736,9 @@ const EmployeeListAndForm = () => {
     // Build full URL for the preview image
     if (emp.image_url) {
       const baseURL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
-      setPreviewImage(`${baseURL}/${emp.image_url}`);
+      // Remove leading slash if present to avoid double slashes
+      const imagePath = emp.image_url.startsWith('/') ? emp.image_url.substring(1) : emp.image_url;
+      setPreviewImage(`${baseURL}/${imagePath}`);
     } else {
       setPreviewImage(null);
     }
@@ -860,7 +862,7 @@ const EmployeeListAndForm = () => {
                 <td className="p-1 sm:p-2 border">
                   {emp.image_url ? (
                     <img 
-                      src={`${process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000'}/${emp.image_url}`} 
+                      src={`${process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000'}/${emp.image_url.startsWith('/') ? emp.image_url.substring(1) : emp.image_url}`} 
                       alt="Profile" 
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" 
                     />
