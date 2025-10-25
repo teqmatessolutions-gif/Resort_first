@@ -190,8 +190,34 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
     db.commit()
 
     db.refresh(db_booking)
-
-    return db_booking   # ✅ just return ORM
+    
+    # Reload with room details for response
+    booking_with_rooms = (
+        db.query(Booking)
+        .options(joinedload(Booking.booking_rooms).joinedload(BookingRoom.room))
+        .filter(Booking.id == db_booking.id)
+        .first()
+    )
+    
+    # Convert to BookingOut format with rooms
+    booking_out = BookingOut(
+        id=booking_with_rooms.id,
+        guest_name=booking_with_rooms.guest_name,
+        guest_mobile=booking_with_rooms.guest_mobile,
+        guest_email=booking_with_rooms.guest_email,
+        status=booking_with_rooms.status,
+        check_in=booking_with_rooms.check_in,
+        check_out=booking_with_rooms.check_out,
+        adults=booking_with_rooms.adults,
+        children=booking_with_rooms.children,
+        id_card_image_url=getattr(booking_with_rooms, 'id_card_image_url', None),
+        guest_photo_url=getattr(booking_with_rooms, 'guest_photo_url', None),
+        user=booking_with_rooms.user,
+        is_package=False,
+        rooms=[br.room for br in booking_with_rooms.booking_rooms if br.room]
+    )
+    
+    return booking_out
 
 @router.post("/guest", response_model=BookingOut, summary="Create a booking as a guest")
 def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
