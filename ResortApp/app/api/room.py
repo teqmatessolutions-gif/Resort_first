@@ -202,43 +202,8 @@ def update_room_statuses_endpoint(db: Session = Depends(get_db)):
 @router.get("/", response_model=list[RoomOut])
 def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
+        # Simplified version - just return rooms without complex status updates
         rooms = db.query(Room).offset(skip).limit(limit).all()
-        
-        # Update room status based on current bookings
-        today = date.today()
-        
-        for room in rooms:
-            # Check if room has active bookings (currently occupied)
-            active_booking = db.query(BookingRoom).join(Booking).filter(
-                BookingRoom.room_id == room.id,
-                Booking.status.in_(['booked', 'checked-in']),
-                Booking.check_in <= today,
-                Booking.check_out > today
-            ).first()
-            
-            if active_booking:
-                room.status = "Occupied"
-            else:
-                # Check if room has future bookings (booked but not yet occupied)
-                future_booking = db.query(BookingRoom).join(Booking).filter(
-                    BookingRoom.room_id == room.id,
-                    Booking.status.in_(['booked', 'checked-in']),
-                    Booking.check_in > today
-                ).first()
-                
-                if future_booking:
-                    room.status = "Booked"
-                elif room.status in ["Booked", "Occupied"]:
-                    # Check if booking has ended
-                    past_booking = db.query(BookingRoom).join(Booking).filter(
-                        BookingRoom.room_id == room.id,
-                        Booking.status.in_(['booked', 'checked-in']),
-                        Booking.check_out <= today
-                    ).first()
-                    
-                    if past_booking:
-                        room.status = "Available"
-        
         return rooms
     except Exception as e:
         print(f"Error fetching rooms: {e}")
