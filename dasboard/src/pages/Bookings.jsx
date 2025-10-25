@@ -646,15 +646,6 @@ const Bookings = () => {
   }, [selectedRoomDetails]);
 
   const filteredBookings = useMemo(() => {
-    console.log("Filtering bookings:", {
-      totalBookings: bookings.length,
-      statusFilter,
-      roomNumberFilter,
-      fromDate,
-      toDate,
-      sampleBooking: bookings[0]
-    });
-    
     return bookings
       .filter((b) => {
         // Normalize status values to handle both hyphens and underscores - remove ALL special characters
@@ -693,38 +684,7 @@ const Bookings = () => {
           }
         }
         
-        const matches = statusMatch && roomNumberMatch && dateMatch;
-        
-        // Debug log for all bookings when status filter is not "All"
-        if (statusFilter !== "All") {
-          console.log("Filter check:", {
-            id: b.id,
-            status: b.status,
-            normalizedBookingStatus,
-            normalizedFilterStatus,
-            statusMatch,
-            roomNumberMatch,
-            dateMatch,
-            matches
-          });
-        }
-        
-        if (!matches && (fromDate || toDate)) {
-          console.log("Booking filtered out:", {
-            id: b.id,
-            statusMatch,
-            roomNumberMatch,
-            dateMatch,
-            status: b.status,
-            statusFilter,
-            check_in: b.check_in,
-            check_out: b.check_out,
-            fromDate,
-            toDate
-          });
-        }
-        
-        return matches;
+        return statusMatch && roomNumberMatch && dateMatch;
       })
       .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
   }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
