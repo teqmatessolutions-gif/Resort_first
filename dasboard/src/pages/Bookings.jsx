@@ -498,10 +498,19 @@ const Bookings = () => {
         children: parseInt(packageBookingForm.children),
         room_ids: packageBookingForm.room_ids.map(id => parseInt(id))
       };
-      await API.post("/packages/book", bookingData, authHeader());
+      const response = await API.post("/packages/book", bookingData, authHeader());
       showBannerMessage("success", "Package booked successfully!");
       setPackageBookingForm({ package_id: "", guest_name: "", guest_email: "", guest_mobile: "", check_in: "", check_out: "", adults: 2, children: 0, room_ids: [] });
-      fetchData();
+      // Add the new package booking to the state instead of refetching all data
+      const newPackageBooking = {
+        ...response.data,
+        is_package: true,
+        rooms: packageBookingForm.room_ids.map(roomId => {
+          const room = rooms.find(r => r.id === parseInt(roomId));
+          return room ? { id: room.id, number: room.number, type: room.type } : null;
+        }).filter(Boolean)
+      };
+      setBookings(prev => [newPackageBooking, ...prev]); // Add to beginning of list
     } catch (err) {
       console.error(err);
       const errorMessage = err.response?.data?.detail || "Failed to process package booking.";
@@ -818,9 +827,8 @@ const Bookings = () => {
         {/* Booking Form & Chart Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <motion.div
-            onSubmit={handleSubmit}
             className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col"
-            initial={{ opacity: 0, y: 20 }} // This should be on the form itself
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
@@ -957,7 +965,6 @@ const Bookings = () => {
 
           {/* Package Booking Form */}
           <motion.div
-            onSubmit={handlePackageBookingSubmit}
             className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg flex flex-col"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
