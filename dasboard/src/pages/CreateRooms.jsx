@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { motion } from "framer-motion";
+import BannerMessage from "../components/BannerMessage";
 
 // KPI Card for quick stats
 const KpiCard = ({ title, value, icon, color }) => (
@@ -93,7 +94,7 @@ const Rooms = () => {
     image: null,
   });
   const [previewImage, setPreviewImage] = useState(null);
-  const [message, setMessage] = useState("");
+  const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
   const [bookings, setBookings] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editRoomId, setEditRoomId] = useState(null);
@@ -104,6 +105,15 @@ const Rooms = () => {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState({ type: "all", status: "all" });
+
+  // Function to show banner message
+  const showBannerMessage = (type, text) => {
+    setBannerMessage({ type, text });
+  };
+
+  const closeBannerMessage = () => {
+    setBannerMessage({ type: null, text: "" });
+  };
 
   useEffect(() => {
     fetchRooms();
@@ -141,7 +151,7 @@ const Rooms = () => {
       setPage(1);
     } catch (error) {
       console.error("Error fetching rooms:", error);
-      setMessage("❌ Error fetching rooms");
+      showBannerMessage("error", "Error fetching rooms");
     }
   };
 
@@ -184,11 +194,11 @@ const Rooms = () => {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setMessage(`✅ Room status updated to ${newStatus}!`);
+      showBannerMessage("success", `Room status updated to ${newStatus}!`);
       fetchRooms();
     } catch (err) {
       console.error("PUT /rooms error:", err);
-      setMessage("❌ Error updating room status");
+      showBannerMessage("error", "Error updating room status");
     }
   };
 
@@ -200,14 +210,14 @@ const Rooms = () => {
         // Check file size (5MB limit)
         const maxSize = 5 * 1024 * 1024; // 5MB in bytes
         if (file.size > maxSize) {
-          setMessage("❌ Image file is too large. Please select an image smaller than 5MB.");
+          showBannerMessage("error", "Image file is too large. Please select an image smaller than 5MB.");
           return;
         }
         
         // Check file type
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         if (!allowedTypes.includes(file.type)) {
-          setMessage("❌ Please select a valid image file (JPEG, PNG, or WebP).");
+          showBannerMessage("error", "Please select a valid image file (JPEG, PNG, or WebP).");
           return;
         }
       }
@@ -234,7 +244,7 @@ const Rooms = () => {
         await API.put(`/rooms/${editRoomId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMessage("✅ Room updated successfully!");
+        showBannerMessage("success", "Room updated successfully!");
         setIsEditing(false);
         setEditRoomId(null);
       } else {
@@ -251,7 +261,7 @@ const Rooms = () => {
         await API.post("/rooms/test", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
-        setMessage("✅ Room created successfully!");
+        showBannerMessage("success", "Room created successfully!");
       }
 
       setForm({
@@ -267,7 +277,7 @@ const Rooms = () => {
       fetchRooms();
     } catch (err) {
       console.error("API error:", err);
-      setMessage(`❌ Error ${isEditing ? "updating" : "creating"} room`);
+      showBannerMessage("error", `Error ${isEditing ? "updating" : "creating"} room`);
     }
   };
 
@@ -284,7 +294,7 @@ const Rooms = () => {
       image: null,
     });
     setPreviewImage(room.image_url ? `https://www.teqmates.com${room.image_url}` : null);
-    setMessage("");
+    setBannerMessage({ type: null, text: "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -292,11 +302,11 @@ const Rooms = () => {
     if (window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
       try {
         await API.delete(`/rooms/test/${roomId}`);
-        setMessage("✅ Room deleted successfully!");
+        showBannerMessage("success", "Room deleted successfully!");
         fetchRooms();
       } catch (error) {
         console.error("Error deleting room:", error);
-        setMessage("❌ Error deleting room");
+        showBannerMessage("error", "Error deleting room");
       }
     }
   };
@@ -317,12 +327,13 @@ const Rooms = () => {
 
   return (
     <DashboardLayout>
+      <BannerMessage 
+        message={bannerMessage} 
+        onClose={closeBannerMessage}
+        autoDismiss={true}
+        duration={5000}
+      />
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Room Management</h1>
-      {message && (
-        <div className="mb-4 p-3 rounded-lg bg-blue-50 text-blue-800">
-          {message}
-        </div>
-      )}
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -458,7 +469,7 @@ const Rooms = () => {
                   image: null,
                 });
                 setPreviewImage(null);
-                setMessage("");
+                setBannerMessage({ type: null, text: "" });
               }}
               className="w-full bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg hover:bg-gray-600 transition"
             >
