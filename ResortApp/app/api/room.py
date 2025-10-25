@@ -202,11 +202,25 @@ def update_room_statuses_endpoint(db: Session = Depends(get_db)):
 @router.get("/", response_model=list[RoomOut])
 def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
-        # Simplified version - just return rooms without complex status updates
+        # Test database connection first
+        db.execute("SELECT 1")
+        
+        # Query rooms with proper error handling
         rooms = db.query(Room).offset(skip).limit(limit).all()
+        
+        # Return the rooms directly - SQLAlchemy should handle serialization
         return rooms
+        
     except Exception as e:
         print(f"Error fetching rooms: {e}")
+        print(f"Error type: {type(e)}")
+        
+        # Try to rollback any pending transaction
+        try:
+            db.rollback()
+        except Exception as rollback_error:
+            print(f"Rollback error: {rollback_error}")
+        
         raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
 
 
