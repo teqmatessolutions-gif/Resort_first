@@ -362,19 +362,29 @@ const Bookings = () => {
         return;
       }
 
-      const [roomsRes, bookingsRes, packageRes] = await Promise.all([
+      const [roomsRes, bookingsRes, packageBookingsRes, packageRes] = await Promise.all([
         API.get("/rooms/", authHeader()),
         API.get("/bookings?skip=0&limit=20&order_by=id&order=desc", authHeader()), // Order by latest first
+        API.get("/packages/bookingsall?skip=0&limit=10000", authHeader()), // Fetch all package bookings
         API.get("/packages/", authHeader()),
       ]);
 
       const allRooms = roomsRes.data;
       const { bookings: initialBookings, total } = bookingsRes.data;
+      const packageBookings = packageBookingsRes.data || [];
       const todaysDate = new Date().toISOString().split("T")[0];
 
       // We need all bookings for accurate KPIs. This is a trade-off.
       const allBookingsRes = await API.get("/bookings?limit=10000&order_by=id&order=desc", authHeader()); // Fetch all for KPIs with ordering
-      const allBookings = allBookingsRes.data.bookings;
+      const allRegularBookings = allBookingsRes.data.bookings;
+      
+      // Combine regular bookings and package bookings
+      const allPackageBookings = packageBookings.map(pb => ({
+        ...pb,
+        is_package: true,
+        rooms: pb.rooms || []
+      }));
+      const allBookings = [...allRegularBookings, ...allPackageBookings];
 
       const activeBookingsCount = allBookings.filter(b => b.status === "booked" || b.status === "checked-in").length;
       const cancelledBookingsCount = allBookings.filter(b => b.status === "cancelled").length;
@@ -425,10 +435,17 @@ const Bookings = () => {
       }
       
       setRooms(availableRooms);
-      setBookings(initialBookings);
+      
+      // Combine initial regular bookings with package bookings, sorted by ID descending
+      const combinedBookings = [
+        ...initialBookings.map(b => ({ ...b, is_package: false })),
+        ...packageBookings.map(pb => ({ ...pb, is_package: true, rooms: pb.rooms || [] }))
+      ].sort((a, b) => b.id - a.id);
+      
+      setBookings(combinedBookings);
       setPackages(packageRes.data || []);
-      setTotalBookings(total);
-      setHasMoreBookings(initialBookings.length < total);
+      setTotalBookings(total + (packageBookings?.length || 0));
+      setHasMoreBookings(combinedBookings.length < (total + (packageBookings?.length || 0)));
       setKpis({
         activeBookings: activeBookingsCount,
         cancelledBookings: cancelledBookingsCount,
