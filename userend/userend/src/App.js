@@ -528,6 +528,18 @@ export default function App() {
     const [isChatLoading, setIsChatLoading] = useState(false);
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
+    // Banner Message State
+    const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
+
+    // Function to show banner message with auto-dismiss
+    const showBannerMessage = (type, text) => {
+        setBannerMessage({ type, text });
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            setBannerMessage({ type: null, text: "" });
+        }, 5000);
+    };
+
     // Booking Modals State
     const [isRoomBookingFormOpen, setIsRoomBookingFormOpen] = useState(false);
     const [isPackageBookingFormOpen, setIsPackageBookingFormOpen] = useState(false);
@@ -721,9 +733,23 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
 
         if (bookingData.room_ids.length === 0) {
-            setBookingMessage({ type: "error", text: "Please select at least one room before booking." });
+            showBannerMessage("error", "Please select at least one room before booking.");
             setIsBookingLoading(false);
             return;
+        }
+
+        // --- MINIMUM BOOKING DURATION VALIDATION ---
+        if (bookingData.check_in && bookingData.check_out) {
+            const checkInDate = new Date(bookingData.check_in);
+            const checkOutDate = new Date(bookingData.check_out);
+            const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+            const daysDiff = timeDiff / (1000 * 3600 * 24);
+            
+            if (daysDiff < 1) {
+                showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+                setIsBookingLoading(false);
+                return;
+            }
         }
 
         // --- CAPACITY VALIDATION ---
@@ -732,10 +758,7 @@ export default function App() {
         const totalCapacity = selectedRoomDetails.reduce((sum, room) => sum + (room.adults || 0) + (room.children || 0), 0);
 
         if (totalGuests > totalCapacity) {
-            setBookingMessage({
-                type: "error",
-                text: `Guest count (${totalGuests}) exceeds the total capacity (${totalCapacity}) of the selected rooms.`
-            });
+            showBannerMessage("error", `Guest count (${totalGuests}) exceeds the total capacity (${totalCapacity}) of the selected rooms.`);
             setIsBookingLoading(false);
             return;
         }
@@ -750,7 +773,7 @@ export default function App() {
             });
 
             if (response.ok) {
-                setBookingMessage({ type: "success", text: "Room booking successful! We look forward to your stay." });
+                showBannerMessage("success", "Room booking successful! We look forward to your stay.");
                 setBookingData({ room_ids: [], guest_name: "", guest_mobile: "", guest_email: "", check_in: "", check_out: "", adults: 1, children: 0 });
                 // Close the booking form after successful booking
                 setTimeout(() => {
@@ -758,11 +781,16 @@ export default function App() {
                 }, 2000);
             } else {
                 const errorData = await response.json();
-                setBookingMessage({ type: "error", text: `Booking failed: ${errorData.detail || "An unexpected error occurred."}` });
+                // Check if it's a validation error from the backend
+                if (errorData.detail && errorData.detail.includes("Check-out date must be at least 1 day")) {
+                    showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+                } else {
+                    showBannerMessage("error", `Booking failed: ${errorData.detail || "An unexpected error occurred."}`);
+                }
             }
         } catch (err) {
             console.error("Booking API Error:", err);
-            setBookingMessage({ type: "error", text: "An error occurred while booking. Please try again." });
+            showBannerMessage("error", "An error occurred while booking. Please try again.");
         } finally {
             setIsBookingLoading(false);
         }
@@ -780,9 +808,23 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
 
         if (packageBookingData.room_ids.length === 0) {
-            setBookingMessage({ type: "error", text: "Please select at least one room for the package." });
+            showBannerMessage("error", "Please select at least one room for the package.");
             setIsBookingLoading(false);
             return;
+        }
+
+        // --- MINIMUM BOOKING DURATION VALIDATION ---
+        if (packageBookingData.check_in && packageBookingData.check_out) {
+            const checkInDate = new Date(packageBookingData.check_in);
+            const checkOutDate = new Date(packageBookingData.check_out);
+            const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+            const daysDiff = timeDiff / (1000 * 3600 * 24);
+            
+            if (daysDiff < 1) {
+                showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+                setIsBookingLoading(false);
+                return;
+            }
         }
 
         // --- CAPACITY VALIDATION ---
@@ -791,10 +833,7 @@ export default function App() {
         const totalCapacity = selectedRoomDetails.reduce((sum, room) => sum + (room.adults || 0) + (room.children || 0), 0);
 
         if (totalGuests > totalCapacity) {
-            setBookingMessage({
-                type: "error",
-                text: `Guest count (${totalGuests}) exceeds the total capacity (${totalCapacity}) of the selected rooms for this package.`
-            });
+            showBannerMessage("error", `Guest count (${totalGuests}) exceeds the total capacity (${totalCapacity}) of the selected rooms for this package.`);
             setIsBookingLoading(false);
             return;
         }
@@ -813,15 +852,24 @@ export default function App() {
             });
 
             if (response.ok) {
-                setBookingMessage({ type: "success", text: "Package booking successful! We look forward to your stay." });
+                showBannerMessage("success", "Package booking successful! We look forward to your stay.");
                 setPackageBookingData({ package_id: null, room_ids: [], guest_name: "", guest_mobile: "", guest_email: "", check_in: "", check_out: "", adults: 1, children: 0 });
+                // Close the booking form after successful booking
+                setTimeout(() => {
+                    setIsPackageBookingFormOpen(false);
+                }, 2000);
             } else {
                 const errorData = await response.json();
-                setBookingMessage({ type: "error", text: `Package booking failed: ${errorData.detail || "An unexpected error occurred."}` });
+                // Check if it's a validation error from the backend
+                if (errorData.detail && errorData.detail.includes("Check-out date must be at least 1 day")) {
+                    showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+                } else {
+                    showBannerMessage("error", `Package booking failed: ${errorData.detail || "An unexpected error occurred."}`);
+                }
             }
         } catch (err) {
             console.error("Package Booking API Error:", err);
-            setBookingMessage({ type: "error", text: "An error occurred while booking the package. Please try again." });
+            showBannerMessage("error", "An error occurred while booking the package. Please try again.");
         } finally {
             setIsBookingLoading(false);
         }
@@ -1018,7 +1066,20 @@ export default function App() {
 
             <div className={`relative ${theme.bgPrimary} ${theme.textPrimary} font-sans min-h-screen transition-colors duration-500`}>
                 <BackgroundAnimation theme={theme} />
-                <header className={`fixed top-0 left-0 right-0 z-50 ${theme.bgSecondary} bg-opacity-80 backdrop-blur-sm`}>
+                
+                {/* Banner Message */}
+                {bannerMessage.text && (
+                    <div className={`fixed top-0 left-0 right-0 z-[60] p-4 ${bannerMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-center font-medium shadow-lg transform transition-transform duration-300`}>
+                        <div className="flex items-center justify-center">
+                            <span className="mr-2">
+                                {bannerMessage.type === 'success' ? '✅' : '❌'}
+                            </span>
+                            {bannerMessage.text}
+                        </div>
+                    </div>
+                )}
+                
+                <header className={`fixed left-0 right-0 z-50 ${theme.bgSecondary} bg-opacity-80 backdrop-blur-sm ${bannerMessage.text ? 'top-16' : 'top-0'}`}>
                     <div className="container mx-auto px-2 sm:px-4 md:px-12 py-2 sm:py-4 flex items-center justify-between">
                         <div className="flex items-center space-x-1 sm:space-x-2">
                             <BedDouble className={`w-6 h-6 sm:w-8 sm:h-8 ${theme.textAccent}`} />
