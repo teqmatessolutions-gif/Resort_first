@@ -646,12 +646,27 @@ const Bookings = () => {
   }, [selectedRoomDetails]);
 
   const filteredBookings = useMemo(() => {
+    console.log("Filtering bookings - Status filter:", statusFilter);
+    console.log("Sample booking statuses:", bookings.slice(0, 5).map(b => ({ id: b.id, status: b.status, is_package: b.is_package })));
+    
     return bookings
       .filter((b) => {
         // Normalize status values to handle both hyphens and underscores - remove ALL special characters
         const normalizedBookingStatus = b.status?.toLowerCase().replace(/[-_]/g, '');
         const normalizedFilterStatus = statusFilter?.toLowerCase().replace(/[-_]/g, '');
         const statusMatch = statusFilter === "All" || normalizedBookingStatus === normalizedFilterStatus;
+        
+        // Debug logging for status mismatch
+        if (statusFilter !== "All" && !statusMatch) {
+          console.log("Status mismatch:", {
+            id: b.id,
+            bookingStatus: b.status,
+            normalizedBookingStatus,
+            filterStatus: statusFilter,
+            normalizedFilterStatus,
+            is_package: b.is_package
+          });
+        }
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
         // Fix: Apply date filter to both check-in and check-out dates
