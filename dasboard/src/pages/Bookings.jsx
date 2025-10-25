@@ -842,11 +842,16 @@ const Bookings = () => {
               </div>
               <div className={`text-sm ${selectedRoomNumbers.includes(room.number) ? 'text-indigo-200' : 'text-gray-500'}`}>
                 <p>Capacity: {room.adults} Adults, {room.children} Children</p>
+                <p className="font-medium">₹{room.price}/night</p>
               </div>
             </motion.div>
           ))
         ) : (
-          <span className="text-gray-500 italic text-sm">No rooms available for this type.</span>
+          <div className="w-full text-center py-8 text-gray-500">
+            <div className="text-lg mb-2">🚫</div>
+            <p className="font-medium">No rooms available for the selected dates</p>
+            <p className="text-sm mt-1">Please try different dates or room type</p>
+          </div>
         )}
       </div>
     );
@@ -941,6 +946,25 @@ const Bookings = () => {
                 </div>
 
                 <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">Check-in Date</label>
+                  <input
+                    type="date" name="checkIn" value={formData.checkIn}
+                    onChange={handleChange} min={today}
+                    className="w-full border-gray-300 rounded-lg shadow-sm p-2 transition-colors focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-700 mb-1">Check-out Date</label>
+                  <input
+                    type="date" name="checkOut" value={formData.checkOut}
+                    onChange={handleChange} min={formData.checkIn || today}
+                    className="w-full border-gray-300 rounded-lg shadow-sm p-2 transition-colors focus:border-indigo-500 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col">
                   <label className="text-sm font-medium text-gray-700 mb-1">Room Type</label>
                   <select
                     name="roomTypes" value={formData.roomTypes[0] || ""}
@@ -955,7 +979,14 @@ const Bookings = () => {
                   </select>
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">Room Number(s)</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1">
+                    Available Rooms for Selected Dates
+                    {formData.checkIn && formData.checkOut && (
+                      <span className="text-xs text-gray-500 ml-2">
+                        ({formData.checkIn} to {formData.checkOut})
+                      </span>
+                    )}
+                  </label>
                   <AnimatePresence mode="wait">
                     {formData.roomTypes.length > 0 && (
                       <motion.div
@@ -973,25 +1004,12 @@ const Bookings = () => {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">Check-in Date</label>
-                  <input
-                    type="date" name="checkIn" value={formData.checkIn}
-                    onChange={handleChange} min={today}
-                    className="w-full border-gray-300 rounded-lg shadow-sm p-2 transition-colors focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-700 mb-1">Check-out Date</label>
-                  <input
-                    type="date" name="checkOut" value={formData.checkOut}
-                    onChange={handleChange} min={formData.checkIn || today}
-                    className="w-full border-gray-300 rounded-lg shadow-sm p-2 transition-colors focus:border-indigo-500 focus:ring-indigo-500"
-                    required
-                  />
+                  {!formData.checkIn || !formData.checkOut ? (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      <p>Please select check-in and check-out dates first</p>
+                      <p className="text-xs mt-1">Available rooms will be shown here</p>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col">
