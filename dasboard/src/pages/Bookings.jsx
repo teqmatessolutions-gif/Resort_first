@@ -315,6 +315,7 @@ const Bookings = () => {
     room_ids: []
   });
   const [rooms, setRooms] = useState([]);
+  const [allRooms, setAllRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [statusFilter, setStatusFilter] = useState("All");
   const [roomNumberFilter, setRoomNumberFilter] = useState("All");
@@ -385,7 +386,38 @@ const Bookings = () => {
         .reduce((sum, b) => sum + b.adults + b.children, 0);
 
 
-      setRooms(allRooms.filter((r) => r.status === "Available"));
+      // Store all rooms for filtering
+      setAllRooms(allRooms);
+      
+      // Filter rooms based on date availability if dates are selected
+      let availableRooms = allRooms;
+      if (formData.checkIn && formData.checkOut) {
+        availableRooms = allRooms.filter(room => {
+          // Check if room has any conflicting bookings
+          const hasConflict = allBookings.some(booking => {
+            if (booking.status === "cancelled") return false;
+            
+            const bookingCheckIn = new Date(booking.check_in);
+            const bookingCheckOut = new Date(booking.check_out);
+            const requestedCheckIn = new Date(formData.checkIn);
+            const requestedCheckOut = new Date(formData.checkOut);
+            
+            // Check if room is part of this booking
+            const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+            if (!isRoomInBooking) return false;
+            
+            // Check for date overlap
+            return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+          });
+          
+          return !hasConflict;
+        });
+      } else {
+        // If no dates selected, show all available rooms
+        availableRooms = allRooms.filter((r) => r.status === "Available");
+      }
+      
+      setRooms(availableRooms);
       setBookings(initialBookings);
       setPackages(packageRes.data || []);
       setTotalBookings(total);
@@ -408,6 +440,37 @@ const Bookings = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Refilter rooms when check-in/check-out dates change
+  useEffect(() => {
+    if (formData.checkIn && formData.checkOut && allRooms.length > 0) {
+      const availableRooms = allRooms.filter(room => {
+        // Check if room has any conflicting bookings
+        const hasConflict = bookings.some(booking => {
+          if (booking.status === "cancelled") return false;
+          
+          const bookingCheckIn = new Date(booking.check_in);
+          const bookingCheckOut = new Date(booking.check_out);
+          const requestedCheckIn = new Date(formData.checkIn);
+          const requestedCheckOut = new Date(formData.checkOut);
+          
+          // Check if room is part of this booking
+          const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+          if (!isRoomInBooking) return false;
+          
+          // Check for date overlap
+          return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+        });
+        
+        return !hasConflict;
+      });
+      
+      setRooms(availableRooms);
+    } else if (!formData.checkIn || !formData.checkOut) {
+      // If no dates selected, show all available rooms
+      setRooms(allRooms.filter((r) => r.status === "Available"));
+    }
+  }, [formData.checkIn, formData.checkOut, allRooms, bookings]);
 
   const loadMoreBookings = async () => {
     if (!hasMoreBookings) return;

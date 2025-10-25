@@ -206,6 +206,10 @@ def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
         # Test database connection first
         db.execute(text("SELECT 1"))
         
+        # Update room statuses before fetching
+        from app.utils.room_status import update_room_statuses
+        update_room_statuses(db)
+        
         # Query rooms with proper error handling
         rooms = db.query(Room).offset(skip).limit(limit).all()
         

@@ -175,8 +175,16 @@ const Rooms = () => {
 
   const fetchBookings = async (roomNumber) => {
     try {
-      const response = await API.get(`/bookings?room_number=${roomNumber}`);
-      setBookings(response.data);
+      // Get all bookings and filter by room number
+      const response = await API.get("/bookings?limit=1000");
+      const allBookings = response.data.bookings || [];
+      
+      // Filter bookings that include this room
+      const roomBookings = allBookings.filter(booking => {
+        return booking.rooms && booking.rooms.some(room => room.number === roomNumber);
+      });
+      
+      setBookings(roomBookings);
       setSelectedRoomNumber(roomNumber);
       setShowBookingModal(true);
     } catch (error) {

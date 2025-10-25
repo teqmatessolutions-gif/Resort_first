@@ -889,15 +889,19 @@ export default function App() {
             });
 
             if (response.ok) {
-                setBookingMessage({ type: "success", text: "Service booking successful! Our staff will be with you shortly." });
+                showBannerMessage("success", "Service booking successful! Our staff will be with you shortly.");
                 setServiceBookingData({ service_id: null, guest_name: "", guest_mobile: "", guest_email: "", room_id: null });
+                // Close the booking form after successful booking
+                setTimeout(() => {
+                    setIsServiceBookingFormOpen(false);
+                }, 2000);
             } else {
                 const errorData = await response.json();
-                setBookingMessage({ type: "error", text: `Service booking failed: ${errorData.detail || "An unexpected error occurred."}` });
+                showBannerMessage("error", `Service booking failed: ${errorData.detail || "An unexpected error occurred."}`);
             }
         } catch (err) {
             console.error("Service Booking API Error:", err);
-            setBookingMessage({ type: "error", text: "An error occurred while booking the service. Please try again." });
+            showBannerMessage("error", "An error occurred while booking the service. Please try again.");
         } finally {
             setIsBookingLoading(false);
         }
@@ -913,7 +917,7 @@ export default function App() {
                                 .map(([food_item_id, quantity]) => ({ food_item_id: parseInt(food_item_id), quantity }));
         
         if (itemsPayload.length === 0) {
-            setBookingMessage({ type: "error", text: "Please select at least one food item." });
+            showBannerMessage("error", "Please select at least one food item.");
             setIsBookingLoading(false);
             return;
         }
@@ -935,15 +939,19 @@ export default function App() {
             });
 
             if (response.ok) {
-                setBookingMessage({ type: "success", text: "Food order placed successfully! Your meal will be delivered shortly." });
+                showBannerMessage("success", "Food order placed successfully! Your meal will be delivered shortly.");
                 setFoodOrderData({ room_id: null, items: {} });
+                // Close the booking form after successful order
+                setTimeout(() => {
+                    setIsFoodOrderFormOpen(false);
+                }, 2000);
             } else {
                 const errorData = await response.json();
-                setBookingMessage({ type: "error", text: `Food order failed: ${errorData.detail || "An unexpected error occurred."}` });
+                showBannerMessage("error", `Food order failed: ${errorData.detail || "An unexpected error occurred."}`);
             }
         } catch (err) {
             console.error("Food Order API Error:", err);
-            setBookingMessage({ type: "error", text: "An error occurred while placing the food order. Please try again." });
+            showBannerMessage("error", "An error occurred while placing the food order. Please try again.");
         } finally {
             setIsBookingLoading(false);
         }
