@@ -20,7 +20,7 @@ import logo from '../assets/logo.jpeg';
 // For a real project, move this to a separate file like `src/services/api.js`
 // and import it here and in other components.
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://localhost:8000",
 });
 
 // 1. Request Interceptor: Attaches the token to every request
