@@ -590,6 +590,15 @@ const Bookings = () => {
   }, [selectedRoomDetails]);
 
   const filteredBookings = useMemo(() => {
+    console.log("Filtering bookings:", {
+      totalBookings: bookings.length,
+      statusFilter,
+      roomNumberFilter,
+      fromDate,
+      toDate,
+      sampleBooking: bookings[0]
+    });
+    
     return bookings
       .filter((b) => {
         const statusMatch = statusFilter === "All" || b.status.toLowerCase() === statusFilter.toLowerCase();
@@ -625,7 +634,23 @@ const Bookings = () => {
           }
         }
         
-        return statusMatch && roomNumberMatch && dateMatch;
+        const matches = statusMatch && roomNumberMatch && dateMatch;
+        if (!matches && (fromDate || toDate)) {
+          console.log("Booking filtered out:", {
+            id: b.id,
+            statusMatch,
+            roomNumberMatch,
+            dateMatch,
+            status: b.status,
+            statusFilter,
+            check_in: b.check_in,
+            check_out: b.check_out,
+            fromDate,
+            toDate
+          });
+        }
+        
+        return matches;
       })
       .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
   }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
