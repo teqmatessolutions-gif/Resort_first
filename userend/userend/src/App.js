@@ -711,6 +711,12 @@ export default function App() {
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
         e.preventDefault();
+        
+        // Prevent multiple submissions
+        if (isBookingLoading) {
+            return;
+        }
+        
         setIsBookingLoading(true);
         setBookingMessage({ type: null, text: "" });
 
@@ -746,6 +752,10 @@ export default function App() {
             if (response.ok) {
                 setBookingMessage({ type: "success", text: "Room booking successful! We look forward to your stay." });
                 setBookingData({ room_ids: [], guest_name: "", guest_mobile: "", guest_email: "", check_in: "", check_out: "", adults: 1, children: 0 });
+                // Close the booking form after successful booking
+                setTimeout(() => {
+                    setIsRoomBookingFormOpen(false);
+                }, 2000);
             } else {
                 const errorData = await response.json();
                 setBookingMessage({ type: "error", text: `Booking failed: ${errorData.detail || "An unexpected error occurred."}` });
@@ -760,6 +770,12 @@ export default function App() {
 
     const handlePackageBookingSubmit = async (e) => {
         e.preventDefault();
+        
+        // Prevent multiple submissions
+        if (isBookingLoading) {
+            return;
+        }
+        
         setIsBookingLoading(true);
         setBookingMessage({ type: null, text: "" });
 
