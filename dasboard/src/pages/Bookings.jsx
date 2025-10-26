@@ -437,17 +437,17 @@ const Bookings = () => {
       setRooms(availableRooms);
       
       // Combine initial regular bookings with package bookings, sorted by ID descending
-      // Use a Map to deduplicate by ID (in case of duplicates between regular and package bookings)
+      // Use a Map with composite keys to prevent ID collisions between regular and package bookings
       const bookingsMap = new Map();
       
-      // Add regular bookings first
+      // Add regular bookings with type prefix
       initialBookings.forEach(b => {
-        bookingsMap.set(b.id, { ...b, is_package: false });
+        bookingsMap.set(`regular_${b.id}`, { ...b, is_package: false });
       });
       
-      // Add package bookings (will overwrite duplicates if they exist)
+      // Add package bookings with type prefix
       packageBookings.forEach(pb => {
-        bookingsMap.set(pb.id, { ...pb, is_package: true, rooms: pb.rooms || [] });
+        bookingsMap.set(`package_${pb.id}`, { ...pb, is_package: true, rooms: pb.rooms || [] });
       });
       
       // Convert Map to array and sort by ID descending
@@ -623,6 +623,33 @@ const Bookings = () => {
         }
       }
 
+      // Calculate capacity for selected rooms in package booking
+      const selectedPackageRooms = packageBookingForm.room_ids
+        .map(id => rooms.find(r => r.id === id))
+        .filter(room => room !== null);
+      
+      const packageCapacity = {
+        adults: selectedPackageRooms.reduce((sum, room) => sum + room.adults, 0),
+        children: selectedPackageRooms.reduce((sum, room) => sum + room.children, 0)
+      };
+      
+      const adultsRequested = parseInt(packageBookingForm.adults);
+      const childrenRequested = parseInt(packageBookingForm.children);
+      
+      // Validate adults capacity
+      if (adultsRequested > packageCapacity.adults) {
+        showBannerMessage("error", `The number of adults (${adultsRequested}) exceeds the total adult capacity of the selected rooms (${packageCapacity.adults} adults max). Please select additional rooms or reduce the number of adults.`);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Validate children capacity
+      if (childrenRequested > packageCapacity.children) {
+        showBannerMessage("error", `The number of children (${childrenRequested}) exceeds the total children capacity of the selected rooms (${packageCapacity.children} children max). Please select additional rooms or reduce the number of children.`);
+        setIsSubmitting(false);
+        return;
+      }
+
       const bookingData = {
         ...packageBookingForm,
         package_id: parseInt(packageBookingForm.package_id),
@@ -643,8 +670,8 @@ const Bookings = () => {
       
       // Use functional update to prevent duplicates
       setBookings(prev => {
-        // Check if booking already exists
-        const exists = prev.some(b => b.id === newPackageBooking.id);
+        // Check if booking already exists (only check package bookings, not regular)
+        const exists = prev.some(b => b.is_package && b.id === newPackageBooking.id);
         if (exists) {
           console.log("Booking already exists, not adding duplicate:", newPackageBooking.id);
           return prev;
@@ -661,7 +688,11 @@ const Bookings = () => {
   };
 
   const totalCapacity = useMemo(() => {
-    return selectedRoomDetails.reduce((sum, room) => sum + (room.adults + room.children), 0);
+    return {
+      adults: selectedRoomDetails.reduce((sum, room) => sum + room.adults, 0),
+      children: selectedRoomDetails.reduce((sum, room) => sum + room.children, 0),
+      total: selectedRoomDetails.reduce((sum, room) => sum + (room.adults + room.children), 0)
+    };
   }, [selectedRoomDetails]);
 
   const filteredBookings = useMemo(() => {
@@ -784,8 +815,19 @@ const Bookings = () => {
         return;
       }
 
-      if (totalGuests > totalCapacity) {
-        showBannerMessage("error", `The total number of guests (${totalGuests}) exceeds the capacity of the selected rooms (${totalCapacity}).`);
+      const adultsRequested = parseInt(formData.adults);
+      const childrenRequested = parseInt(formData.children);
+      
+      // Validate adults capacity
+      if (adultsRequested > totalCapacity.adults) {
+        showBannerMessage("error", `The number of adults (${adultsRequested}) exceeds the total adult capacity of the selected rooms (${totalCapacity.adults} adults max). Please select additional rooms or reduce the number of adults.`);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Validate children capacity
+      if (childrenRequested > totalCapacity.children) {
+        showBannerMessage("error", `The number of children (${childrenRequested}) exceeds the total children capacity of the selected rooms (${totalCapacity.children} children max). Please select additional rooms or reduce the number of children.`);
         setIsSubmitting(false);
         return;
       }
@@ -837,8 +879,8 @@ const Bookings = () => {
       
       // Use functional update to prevent duplicates
       setBookings(prev => {
-        // Check if booking already exists
-        const exists = prev.some(b => b.id === newBooking.id);
+        // Check if booking already exists (only check regular bookings, not packages)
+        const exists = prev.some(b => !b.is_package && b.id === newBooking.id);
         if (exists) {
           console.log("Booking already exists, not adding duplicate:", newBooking.id);
           return prev;

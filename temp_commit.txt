@@ -1,0 +1,1 @@
+Update Bookings.jsx with capacity validation and deduplication fixes
