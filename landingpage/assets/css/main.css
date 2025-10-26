@@ -917,6 +917,7 @@ section,
 }
 
 .hero .btn-watch-video {
+  display: none; /* Hide the process video button */
   font-size: 16px;
   transition: 0.5s;
   color: var(--default-color);

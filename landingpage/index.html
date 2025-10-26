@@ -86,8 +86,7 @@
             <h1 data-aos="fade-up">Innovative Software Solutions for Your Business</h1>
             <p data-aos="fade-up" data-aos-delay="100">Your technology partner for Custom Software, Digital Marketing, Web & Mobile Apps, UI/UX Design, Cloud & DevOps, and ongoing support.</p>
             <div class="d-flex flex-column flex-md-row" data-aos="fade-up" data-aos-delay="200">
-              <a href="#about" class="btn-get-started">Get Started <i class="bi bi-arrow-right"></i></a>
-              <a href="https://www.youtube.com/watch?v=LXb3EKWsInQ" class="glightbox btn-watch-video d-flex align-items-center justify-content-center ms-0 ms-md-4 mt-4 mt-md-0"><i class="bi bi-play-circle"></i><span>Our Process</span></a>
+              <a href="#getStartedModal" class="btn-get-started" data-bs-toggle="modal">Get Started <i class="bi bi-arrow-right"></i></a>
             </div>
           </div>
           <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out">
@@ -526,7 +525,7 @@
           </div>
 
           <div class="col-lg-6">
-            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+            <form id="contactForm" method="post" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
                 <div class="col-md-6">
@@ -546,9 +545,9 @@
                 </div>
 
                 <div class="col-12 text-center">
-                  <div class="loading">Loading</div>
-                  <div class="error-message"></div>
-                  <div class="sent-message">Your message has been sent. Thank you!</div>
+                  <div class="loading" style="display: none;">Loading</div>
+                  <div class="error-message" style="display: none;"></div>
+                  <div class="sent-message" style="display: none;">Your message has been sent. Thank you!</div>
 
                   <button type="submit">Send Message</button>
                 </div>
@@ -641,31 +640,42 @@
   <!-- Get Started Modal -->
   <div class="modal fade" id="getStartedModal" tabindex="-1" aria-labelledby="getStartedModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="getStartedModalLabel">Request a Call Back</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-content" style="border-radius: 20px; overflow: hidden;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 2rem;">
+          <div class="text-center text-white w-100">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📞✨</div>
+            <h5 class="modal-title text-white fw-bold mb-2" id="getStartedModalLabel">We'd Love to Hear from You!</h5>
+            <p class="mb-0" style="opacity: 0.9;">Fill in your details and we'll call you back soon</p>
+          </div>
+          <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
-          <form action="forms/callback.php" method="post" class="php-email-form">
+        <div class="modal-body" style="padding: 2rem;">
+          <form id="callbackForm" method="post">
             <div class="row gy-4">
               <div class="col-md-12">
-                <input type="text" name="name" class="form-control" placeholder="Your Name" required>
+                <label class="form-label fw-semibold mb-2">Your Name <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control form-control-lg" placeholder="Enter your full name" required style="border-radius: 10px; border: 2px solid #e9ecef; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e9ecef'">
               </div>
               <div class="col-md-12">
-                <input type="email" class="form-control" name="email" placeholder="Your Email" required>
+                <label class="form-label fw-semibold mb-2">Your Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control form-control-lg" name="email" placeholder="Enter your email address" required style="border-radius: 10px; border: 2px solid #e9ecef; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e9ecef'">
               </div>
               <div class="col-md-12">
-                <input type="text" class="form-control" name="phone" placeholder="Your Phone" required>
+                <label class="form-label fw-semibold mb-2">Your Phone <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-lg" name="phone" placeholder="Enter your phone number" required style="border-radius: 10px; border: 2px solid #e9ecef; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e9ecef'">
               </div>
               <div class="col-md-12">
-                <input type="text" class="form-control" name="callback_time" placeholder="Preferred Call Back Time (e.g., Tomorrow 10 AM)">
+                <label class="form-label fw-semibold mb-2">Preferred Call Back Time</label>
+                <input type="text" class="form-control form-control-lg" name="callback_time" placeholder="e.g., Tomorrow at 10 AM" style="border-radius: 10px; border: 2px solid #e9ecef; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e9ecef'">
               </div>
-              <div class="col-12 text-center">
-                <div class="loading">Loading</div>
-                <div class="error-message"></div>
-                <div class="sent-message">Your request has been sent. We will call you back shortly!</div>
-                <button type="submit">Arrange Call</button>
+              <div class="col-12 text-center mt-4">
+                <div class="loading" style="display: none; color: #667eea; font-weight: 600;">⏳ Processing your request...</div>
+                <div class="error-message" style="display: none; color: #dc3545; padding: 1rem; background: #f8d7da; border-radius: 10px; margin-top: 1rem;"></div>
+                <div class="sent-message" style="display: none; color: #28a745; font-weight: 600; padding: 1rem; background: #d4edda; border-radius: 10px; margin-top: 1rem;">✅ Awesome! Check your email - we'll call you soon!</div>
+                <button type="submit" class="btn btn-lg w-100 mt-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 15px; padding: 1rem; font-weight: 700; font-size: 1.1rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
+                  📱 Request Call Back
+                </button>
+                <p class="text-muted mt-3 mb-0" style="font-size: 0.9rem;">✨ We'll get back to you within 24 hours</p>
               </div>
             </div>
           </form>
@@ -692,6 +702,91 @@
 
   <!-- Main JS File -->
   <script src="assets/js/main.js"></script>
+
+  <!-- Form Handlers -->
+  <script>
+    // Callback Form Handler
+    document.getElementById('callbackForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const form = this;
+      const loading = form.querySelector('.loading');
+      const errorMessage = form.querySelector('.error-message');
+      const sentMessage = form.querySelector('.sent-message');
+      
+      // Hide previous messages
+      errorMessage.style.display = 'none';
+      sentMessage.style.display = 'none';
+      loading.style.display = 'block';
+      
+      // Get form data
+      const name = form.querySelector('[name="name"]').value;
+      const email = form.querySelector('[name="email"]').value;
+      const phone = form.querySelector('[name="phone"]').value;
+      const callbackTime = form.querySelector('[name="callback_time"]').value || 'Not specified';
+      
+      // Create email content
+      const subject = `New Call Back Request from ${name}`;
+      const body = `Hello,\n\nI would like to request a call back.\n\nName: ${name}\nEmail: ${email}\nPhone: ${phone}\nPreferred Call Back Time: ${callbackTime}\n\nThank you!`;
+      
+      // Encode for mailto
+      const encodedSubject = encodeURIComponent(subject);
+      const encodedBody = encodeURIComponent(body);
+      const mailtoUrl = `mailto:solutions@teqmates.com?subject=${encodedSubject}&body=${encodedBody}`;
+      
+      // Open Gmail
+      window.location.href = mailtoUrl;
+      
+      // Show success message
+      loading.style.display = 'none';
+      sentMessage.style.display = 'block';
+      form.reset();
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('getStartedModal'));
+        if (modal) modal.hide();
+      }, 2000);
+    });
+    
+    // Contact Form Handler
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const form = this;
+      const loading = form.querySelector('.loading');
+      const errorMessage = form.querySelector('.error-message');
+      const sentMessage = form.querySelector('.sent-message');
+      
+      // Hide previous messages
+      errorMessage.style.display = 'none';
+      sentMessage.style.display = 'none';
+      loading.style.display = 'block';
+      
+      // Get form data
+      const name = form.querySelector('[name="name"]').value;
+      const email = form.querySelector('[name="email"]').value;
+      const subject = form.querySelector('[name="subject"]').value;
+      const message = form.querySelector('[name="message"]').value;
+      
+      // Create email content
+      const emailSubject = subject;
+      const emailBody = `Hello,\n\nI have a message for you.\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}\n\nThank you!`;
+      
+      // Encode for mailto
+      const encodedSubject = encodeURIComponent(emailSubject);
+      const encodedBody = encodeURIComponent(emailBody);
+      const mailtoUrl = `mailto:teqmatessolutions@gmail.com?subject=${encodedSubject}&body=${encodedBody}`;
+      
+      // Open Gmail
+      window.location.href = mailtoUrl;
+      
+      // Show success message
+      loading.style.display = 'none';
+      sentMessage.style.display = 'block';
+      form.reset();
+    });
+  </script>
 
 </body>
 
