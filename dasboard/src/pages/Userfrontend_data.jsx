@@ -249,7 +249,9 @@ export default function ResortCMS() {
             setModalState({ isOpen: false, config: null, initialData: null });
         } catch (error) {
             console.error(`Failed to ${isEditing ? 'update' : 'add'} ${config.title}:`, error.response?.data || error.message);
-            toast.error(`Failed to save ${config.title}.`);
+            const errorMsg = error.response?.data?.detail;
+            const message = typeof errorMsg === 'string' ? errorMsg : `Failed to save ${config.title}.`;
+            toast.error(message);
         }
     };
 

@@ -227,7 +227,9 @@ const Packages = () => {
       fetchData();
     } catch (err) {
       console.error(err);
-      toast.error("Failed to create package");
+      const errorMsg = err.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to create package';
+      toast.error(message);
     }
   };
   const handleDeletePackage = async id => {
@@ -238,7 +240,9 @@ const Packages = () => {
         fetchData();
       } catch (err) {
         console.error(err);
-        toast.error("Failed to delete package");
+        const errorMsg = err.response?.data?.detail;
+        const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to delete package';
+        toast.error(message);
       }
     }
   };
@@ -275,7 +279,9 @@ const Packages = () => {
       fetchData();
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.detail || "Failed to process booking");
+      const errorMsg = err.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to process booking';
+      toast.error(message);
     }
   };
   const handleEditBooking = booking => {
