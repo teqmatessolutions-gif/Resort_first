@@ -1449,7 +1449,7 @@ export default function App() {
 
                             {/* Packages Grid */}
                             {packages.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {packages.map((pkg) => {
                                         const imgIndex = packageImageIndex[pkg.id] || 0;
                                         const currentImage = pkg.images && pkg.images[imgIndex];
@@ -1534,7 +1534,7 @@ export default function App() {
 
                             {/* Villa Grid */}
                             {rooms.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {rooms.filter(room => room.status === "Available").slice(0, 6).map((room, index) => (
                                         <div 
                                             key={room.id} 
@@ -1647,7 +1647,7 @@ export default function App() {
 
                             {/* Services Grid */}
                             {services.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {services.map((service) => (
                                         <div 
                                             key={service.id}
@@ -1708,14 +1708,14 @@ export default function App() {
 
                             {/* Services Grid - 2 Column Layout */}
                             {services.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {services.slice(0, 4).map((service) => (
                                         <div 
                                             key={service.id}
                                             className="group relative bg-gradient-to-br from-white to-neutral-50 rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
                                             {/* Icon */}
-                                            <div className="flex items-start gap-6 mb-6">
+                                            <div className="flex items-start gap-4 mb-6">
                                                 <div className="relative">
                                                     <div className="absolute inset-0 bg-amber-500/20 rounded-2xl blur-xl"></div>
                                                     <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-4 rounded-2xl">
@@ -1782,7 +1782,7 @@ export default function App() {
 
                             {/* Food Items Grid */}
                             {foodItems.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                     {foodItems.map((food) => (
                                         <div 
                                             key={food.id}
@@ -1855,7 +1855,7 @@ export default function App() {
 
                             {/* Gallery Grid */}
                             {galleryImages.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {galleryImages.slice(0, 9).map((image, index) => (
                                         <div 
                                             key={image.id} 
@@ -1901,7 +1901,7 @@ export default function App() {
                             <Quote className={`inline-block mr-3 mb-1 ${iconStyle}`} /> What Our Guests Say
                         </h2>
                         <div className="w-full overflow-hidden" >
-                           <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_90s_linear_infinite] hover:[animation-play-state:paused]" >
+                           <div className="flex gap-4 animate-[auto-scroll-bobbing-reverse_90s_linear_infinite] hover:[animation-play-state:paused]" >
                                 {reviews.length > 0 ? [...reviews, ...reviews].map((review, index) => (
                                     <div key={`${review.id}-${index}`} className={`group flex-none w-80 md:w-96 ${theme.bgCard} rounded-2xl p-4 shadow-2xl border ${theme.border}`} >
                                         <div className="flex justify-center mb-4" >
