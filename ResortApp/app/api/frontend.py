@@ -38,7 +38,7 @@ async def create_header_banner(
         title=title,
         subtitle=subtitle,
         is_active=is_active,
-        image_url=file_path.replace("\\", "/")
+        image_url=f"/{file_path.replace('\\', '/')}"
     )
     return crud.create(db, models.HeaderBanner, obj)
 
@@ -59,7 +59,7 @@ async def update_header_banner(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        image_url = file_path.replace("\\", "/")
+        image_url = f"/{file_path.replace('\\', '/')}"
 
     obj = schemas.HeaderBannerUpdate(
         title=title,
@@ -117,7 +117,7 @@ async def create_gallery(
     obj = schemas.GalleryCreate(
         caption=caption,
         is_active=is_active,
-        image_url=f"/{file_path}"
+        image_url=f"/{file_path.replace('\\', '/')}"
     )
     return crud.create(db, models.Gallery, obj)
 
@@ -136,7 +136,7 @@ async def update_gallery(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        image_url = f"/{file_path}"
+        image_url = f"/{file_path.replace('\\', '/')}"
 
     obj = schemas.GalleryCreate(
         caption=caption,
