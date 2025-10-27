@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -7,7 +7,8 @@ class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
-    permissions = Column(ARRAY(String), nullable=True)
+    # Use Text for SQLite compatibility, JSON for PostgreSQL
+    permissions = Column(Text, nullable=True)
 
     users = relationship("User", back_populates="role")
 

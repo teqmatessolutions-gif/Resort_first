@@ -4,8 +4,9 @@ from app.schemas.user import RoleCreate
 import json
 
 def create_role(db: Session, role: RoleCreate):
-    permissions_list = json.loads(role.permissions) if role.permissions else []
-    db_role = Role(name=role.name, permissions=permissions_list)
+    # Store permissions as JSON string
+    permissions_str = role.permissions if role.permissions else json.dumps([])
+    db_role = Role(name=role.name, permissions=permissions_str)
     db.add(db_role)
     db.commit()
     db.refresh(db_role)
@@ -17,10 +18,11 @@ def update_role(db: Session, role_id: int, role_data: RoleCreate):
         return None
     
     db_role.name = role_data.name
+    # Store permissions as JSON string
     if role_data.permissions:
-        db_role.permissions = json.loads(role_data.permissions)
+        db_role.permissions = role_data.permissions
     else:
-        db_role.permissions = []
+        db_role.permissions = json.dumps([])
         
     db.commit()
     db.refresh(db_role)
