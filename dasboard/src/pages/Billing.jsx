@@ -16,12 +16,10 @@ import logo from '../assets/logo.jpeg';
 // In your actual project, you would remove this and use your own DashboardLayout component.
 
 
-// --- Placeholder for api service ---
-// This is the recommended way to set up your API service.
-// For a real project, move this to a separate file like `src/services/api.js`
-// and import it here and in other components.
+// --- API service ---
+// Using the same API service setup as other pages
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://localhost:8000",
+  baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api",
 });
 
 // 1. Request Interceptor: Attaches the token to every request
