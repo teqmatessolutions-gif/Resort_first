@@ -601,7 +601,7 @@ export default function App() {
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const endpoints = {
                 rooms: '/rooms/test',  // Use working test endpoint for real room data
                 bookings: '/bookings?limit=10000', // Fetch all bookings for availability check

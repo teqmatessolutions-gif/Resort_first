@@ -59,7 +59,7 @@
     "typescript": "^5.3.3"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set PORT=3002 && react-scripts start",
     "build": "react-scripts build && npm run copy-assets",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
