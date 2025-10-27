@@ -614,7 +614,7 @@ export default function App() {
                 gallery: '/gallery/',
                 reviews: '/reviews/',
                 banners: '/header-banner/',
-                services: '/service/' // Fetch services
+                services: '/services/' // Fetch services (note: plural)
             };
 
             try {
