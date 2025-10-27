@@ -206,7 +206,9 @@ const Billing = () => {
       setBillData(res.data);
       showBannerMessage("success", "Bill for the entire booking retrieved successfully.");
     } catch (error) {
-      showBannerMessage("error", `Error: ${error.response?.data?.detail || error.message}`);
+      const errorMsg = error.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : (error.message || 'Unknown error');
+      showBannerMessage("error", `Error: ${message}`);
     } finally {
       setLoading(false);
     }
