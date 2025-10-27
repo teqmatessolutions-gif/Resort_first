@@ -1581,19 +1581,61 @@ export default function App() {
                         </div>
                     </section>
 
-                    {/* Gallery Section */}
-                    <section className="mt-12">
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <ImageIcon className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Gallery
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                            <div className="flex gap-6 animate-[auto-scroll_75s_linear_infinite] hover:[animation-play-state:paused]">
-                                {galleryImages.length > 0 ? [...galleryImages, ...galleryImages].map((image, index) => (
-                                    <div key={`${image.id}-${index}`} className="flex-none w-64 h-48 md:w-80 md:h-64 rounded-2xl overflow-hidden shadow-2xl transition duration-500 hover:scale-105">
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No images available.</p>}
+                    {/* Premium Gallery Section - Mountain Shadows Style */}
+                    <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Captured Moments ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    EXPLORE THE TIMELESS BEAUTY
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Witness the charm of our resort's stunning views and unforgettable experiences
+                                </p>
                             </div>
+
+                            {/* Gallery Grid */}
+                            {galleryImages.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {galleryImages.slice(0, 9).map((image, index) => (
+                                        <div 
+                                            key={image.id} 
+                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                                            style={{ height: index % 3 === 1 ? '400px' : '300px' }}
+                                        >
+                                            <img 
+                                                src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
+                                                alt={image.caption || 'Gallery image'} 
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            
+                                            {/* Overlay on Hover */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center p-6">
+                                                {image.caption && (
+                                                    <p className="text-white text-lg font-semibold drop-shadow-lg">
+                                                        {image.caption}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center py-12 text-gray-500">No gallery images available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {galleryImages.length > 9 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
+                                        View All Photos
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </section>
                     
