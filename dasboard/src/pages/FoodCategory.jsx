@@ -4,6 +4,14 @@ import API from "../services/api";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 
+// Helper function to get correct image URL based on environment
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image';
+  if (imagePath.startsWith('http')) return imagePath;
+  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
+  return imagePath.startsWith('/') ? `${baseUrl}${imagePath}` : `${baseUrl}/${imagePath}`;
+};
+
 // KPI Card for quick stats
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={`p-6 rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
@@ -103,7 +111,7 @@ const FoodManagement = () => {
     setPrice(item.price);
     setSelectedCategory(item.category_id);
     setAvailable(item.available);
-    setImagePreviews(item.images?.map((img) => `http://localhost:8000/${img.image_url}`) || []);
+    setImagePreviews(item.images?.map((img) => getImageUrl(img.image_url)) || []);
     setImages([]);
   };
 
@@ -209,7 +217,7 @@ const FoodManagement = () => {
 
     try {
       if (editCategoryId) {
-        await API.put(`http://localhost:8000/food-categories/${editCategoryId}`, formData, {
+        await API.put(`/food-categories/${editCategoryId}`, formData, {
           headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
         });
         setEditCategoryId(null);
@@ -219,7 +227,7 @@ const FoodManagement = () => {
           toast.error("Please select an image for the new category.");
           return;
         }
-        await API.post("http://localhost:8000/food-categories", formData, {
+        await API.post("/food-categories", formData, {
           headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
         });
         toast.success("Category added successfully!");
@@ -239,7 +247,7 @@ const FoodManagement = () => {
   const handleCategoryEdit = (cat) => {
     setEditCategoryId(cat.id);
     setCategoryName(cat.name);
-    setCategoryPreviewUrl(`http://localhost:8000/static/food_categories/${cat.image}`);
+    setCategoryPreviewUrl(getImageUrl(`static/food_categories/${cat.image}`));
     setCategoryImageFile(null);
   };
 
@@ -247,7 +255,7 @@ const FoodManagement = () => {
     if (!window.confirm("Are you sure you want to delete this category?")) return;
     setIsLoading(true);
     try {
-      await API.delete(`http://localhost:8000/food-categories/${id}`, {
+      await API.delete(`/food-categories/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchCategories();
@@ -445,7 +453,7 @@ const FoodManagement = () => {
                 >
                   <div className="relative">
                     <img
-                      src={item.images?.[0] ? `http://localhost:8000/${item.images[0].image_url}` : 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image'}
+                      src={item.images?.[0] ? getImageUrl(item.images[0].image_url) : 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image'}
                       alt={item.name}
                       className="h-48 w-full object-cover rounded-t-2xl"
                     />
@@ -542,7 +550,7 @@ const FoodManagement = () => {
                   whileHover={{ y: -5 }}
                 >
                   <img
-                    src={`http://localhost:8000/static/food_categories/${cat.image}`}
+                    src={getImageUrl(`static/food_categories/${cat.image}`)}
                     alt={cat.name}
                     className="w-24 h-24 object-cover rounded-full mb-3 border-4 border-white shadow-lg"
                   />
