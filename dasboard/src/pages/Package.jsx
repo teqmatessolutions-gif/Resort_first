@@ -137,6 +137,7 @@ const Packages = () => {
   const [bookingFilter, setBookingFilter] = useState({ guestName: "", status: "all", checkIn: "", checkOut: "" });
   const [createForm, setCreateForm] = useState({ title: "", description: "", price: "", images: [] });
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [selectedPackageImages, setSelectedPackageImages] = useState(null); // For image gallery modal
   const [bookingForm, setBookingForm] = useState({
     package_id: "",
     guest_name: "",
@@ -447,7 +448,14 @@ const Packages = () => {
             filteredPackages.map(pkg => (
               <motion.div key={pkg.id} whileHover={{ y: -5 }} className="bg-gray-50 rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col">
                 {pkg.images && pkg.images.length > 0 ? (
-                  <img className="h-48 w-full object-cover" src={getImageUrl(pkg.images[0].image_url)} alt={pkg.title} />
+                  <div className="relative">
+                    <img className="h-48 w-full object-cover cursor-pointer" src={getImageUrl(pkg.images[0].image_url)} alt={pkg.title} onClick={() => setSelectedPackageImages(pkg)} />
+                    {pkg.images.length > 1 && (
+                      <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        +{pkg.images.length - 1} more
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="h-48 w-full bg-gray-200 flex items-center justify-center"><span className="text-gray-500">No Image</span></div>
                 )}
