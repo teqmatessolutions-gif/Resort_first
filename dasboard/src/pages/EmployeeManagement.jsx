@@ -384,6 +384,17 @@ const AttendanceTracking = () => {
           {/* Live Clock-in/Out Section */}
           <div className="bg-gray-50 p-4 rounded-lg space-y-4">
             <h3 className="text-lg font-semibold">Live Attendance</h3>
+            
+            {/* Status Indicator */}
+            {(() => {
+              const hasOpenClockIn = workLogs.some(log => log.check_out_time === null || log.check_out_time === undefined);
+              return (
+                <div className={`p-2 rounded-md text-center text-sm font-semibold ${hasOpenClockIn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  Status: {hasOpenClockIn ? '🟢 Clocked In' : '⚪ Not Clocked In'}
+                </div>
+              );
+            })()}
+            
             <div className="space-y-2">
               <label htmlFor="location-select" className="block text-sm font-medium text-gray-700">Location</label>
               <select id="location-select" value={location} onChange={e => setLocation(e.target.value)} className="w-full p-2 border rounded-md">
