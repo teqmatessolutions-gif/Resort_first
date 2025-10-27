@@ -256,7 +256,7 @@ const Services = () => {
                 <option value="">Select Room</option>
                 {rooms.filter(r => {
                   const normalizedStatus = r.status?.toLowerCase().replace(/[-_\s]/g, '');
-                  return normalizedStatus === 'booked' || normalizedStatus === 'checkedin';
+                  return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
                 }).map((r) => (
                   <option key={r.id} value={r.id}>Room {r.number}</option>
                 ))}

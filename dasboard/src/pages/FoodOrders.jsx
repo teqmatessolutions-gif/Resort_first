@@ -218,14 +218,14 @@ export default function FoodOrders() {
   <option value="">Select Room</option>
   {rooms.filter((room) => {
     const normalizedStatus = room.status?.toLowerCase().replace(/[-_\s]/g, '');
-    return normalizedStatus === 'booked' || normalizedStatus === 'checkedin';
+    return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
   }).length === 0 ? (
-    <option disabled>No booked rooms available</option>
+    <option disabled>No checked-in rooms available</option>
   ) : (
     rooms
       .filter((room) => {
         const normalizedStatus = room.status?.toLowerCase().replace(/[-_\s]/g, '');
-        return normalizedStatus === 'booked' || normalizedStatus === 'checkedin';
+        return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
       })
       .map((room) => (
         <option key={room.id} value={room.id}>
