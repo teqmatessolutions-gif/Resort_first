@@ -848,7 +848,7 @@ export default function App() {
         // -------------------------
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/bookings/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -923,7 +923,7 @@ export default function App() {
         // -------------------------
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const payload = {
                 ...packageBookingData,
                 room_ids: packageBookingData.room_ids.map(id => parseInt(id)),
@@ -964,7 +964,7 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/services/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1014,7 +1014,7 @@ export default function App() {
         };
         
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/food-orders/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1325,7 +1325,7 @@ export default function App() {
                            <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_70s_linear_infinite] hover:[animation-play-state:paused]">
                                 {rooms.length > 0 ? [...rooms, ...rooms].map((room, index) => (
                                     <div key={`${room.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                         <div className="p-6">
                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{room.type}</h3>
                                             <p className={`text-sm mb-1 ${textSecondary}`}>Room Number: {room.number}</p>
@@ -1371,7 +1371,7 @@ export default function App() {
                            <div className="flex gap-6 animate-[auto-scroll-reverse_80s_linear_infinite] hover:[animation-play-state:paused]">
                                 {foodItems.length > 0 ? [...foodItems, ...foodItems].map((food, index) => (
                                     <div key={`${food.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://localhost:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                         <div className="p-6">
                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{food.name}</h3>
                                             <p className={`mb-1 ${priceStyle}`}>₹{food.price}</p>
@@ -1392,7 +1392,7 @@ export default function App() {
                             <div className="flex gap-6 animate-[auto-scroll_75s_linear_infinite] hover:[animation-play-state:paused]">
                                 {galleryImages.length > 0 ? [...galleryImages, ...galleryImages].map((image, index) => (
                                     <div key={`${image.id}-${index}`} className="flex-none w-64 h-48 md:w-80 md:h-64 rounded-2xl overflow-hidden shadow-2xl transition duration-500 hover:scale-105">
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://127.0.0.1:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
+                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
                                     </div>
                                 )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No images available.</p>}
                             </div>
@@ -1529,7 +1529,7 @@ export default function App() {
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1623,7 +1623,7 @@ export default function App() {
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1742,7 +1742,7 @@ export default function App() {
                                     {foodItems.map(item => (
                                         <div key={item.id} className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4">
-                                                <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
+                                                <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://localhost:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
                                                 <div>
                                                     <p className={`font-semibold ${theme.textPrimary}`}>{item.name}</p>
                                                     <p className={`text-sm ${theme.textSecondary}`}>₹{item.price}</p>
