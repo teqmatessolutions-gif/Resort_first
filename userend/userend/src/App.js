@@ -530,6 +530,9 @@ export default function App() {
     const [isChatLoading, setIsChatLoading] = useState(false);
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
 
+    // Package image slider state
+    const [packageImageIndex, setPackageImageIndex] = useState({});
+
     // Banner Message State
     const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
 
@@ -610,7 +613,8 @@ export default function App() {
                 resortInfo: '/resort-info/',
                 gallery: '/gallery/',
                 reviews: '/reviews/',
-                banners: '/header-banner/'
+                banners: '/header-banner/',
+                services: '/service/' // Fetch services
             };
 
             try {
@@ -628,13 +632,13 @@ export default function App() {
 
                 const [
                     roomsData, bookingsData, foodItemsData, packagesData,
-                    resortInfoData, galleryData, reviewsData, bannerData
+                    resortInfoData, galleryData, reviewsData, bannerData, servicesData
                 ] = data;
 
                 setAllRooms(roomsData);
                 setRooms(roomsData);
                 setBookings(bookingsData.bookings || []); // Store bookings for availability filtering
-                setServices([]); // Set empty array since services endpoint is not available
+                setServices(servicesData || []); // Fetch services from backend
                 setFoodItems(foodItemsData);
                 setPackages(packagesData);
                 setResortInfo(resortInfoData.length > 0 ? resortInfoData[0] : null);
@@ -652,6 +656,16 @@ export default function App() {
 
         fetchResortData();
     }, []); // Empty dependency array ensures this runs only once on mount
+
+    // Auto-rotate banner images
+    useEffect(() => {
+        if (bannerData.length > 0) {
+            const interval = setInterval(() => {
+                setCurrentBannerIndex((prev) => (prev + 1) % bannerData.length);
+            }, 5000); // Change image every 5 seconds
+            return () => clearInterval(interval);
+        }
+    }, [bannerData.length]);
 
     const toggleChat = () => setIsChatOpen(!isChatOpen);
     const changeTheme = (themeId) => setCurrentTheme(themeId);
@@ -1206,7 +1220,8 @@ export default function App() {
             {bannerData.map((banner, index) => (
                 <img
                     key={banner.id}
-                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://127.0.0.1:8000${banner.image_url}`}
+                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://localhost:8000${banner.image_url}`}
+                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; console.error('Banner image failed to load:', banner.image_url); }}
                     alt={banner.title}
                     className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
                 />
@@ -1261,17 +1276,42 @@ export default function App() {
                         </h2>
                         <div className="w-full overflow-hidden">
                             <div className="flex gap-6 animate-[auto-scroll_80s_linear_infinite] hover:[animation-play-state:paused]">
-                                {packages.length > 0 ? [...packages, ...packages].map((pkg, index) => (
-                                    <div key={`${pkg.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${pkg.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${pkg.images?.[0]?.image_url}`} alt={pkg.title} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{pkg.title}</h3>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{pkg.price}</p>
-                                            <p className={`text-sm ${textSecondary}`}>{pkg.description}</p>
-                                            <button onClick={() => handleOpenPackageBookingForm(pkg.id)} className={buttonStyle}>Book Package <ChevronRight className="ml-1 w-4 h-4" /></button>
+                                {packages.length > 0 ? [...packages, ...packages].map((pkg, index) => {
+                                    const imgIndex = packageImageIndex[pkg.id] || 0;
+                                    const currentImage = pkg.images && pkg.images[imgIndex];
+                                    return (
+                                        <div key={`${pkg.id}-${index}`} className={`group ${cardStyle}`}>
+                                            <div className="relative">
+                                                <img 
+                                                    src={currentImage ? (process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${currentImage.image_url}` : `http://localhost:8000${currentImage.image_url}`) : ITEM_PLACEHOLDER} 
+                                                    alt={pkg.title} 
+                                                    className="w-full h-56 md:h-64 object-cover" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                {pkg.images && pkg.images.length > 1 && (
+                                                    <div className="absolute bottom-2 right-2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full">
+                                                        {pkg.images.map((_, imgIdx) => (
+                                                            <button
+                                                                key={imgIdx}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                }}
+                                                                className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/50'}`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="p-6">
+                                                <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{pkg.title}</h3>
+                                                <p className={`mb-1 ${priceStyle}`}>₹{pkg.price}</p>
+                                                <p className={`text-sm ${textSecondary}`}>{pkg.description}</p>
+                                                <button onClick={() => handleOpenPackageBookingForm(pkg.id)} className={buttonStyle}>Book Package <ChevronRight className="ml-1 w-4 h-4" /></button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No packages available.</p>}
+                                    );
+                                }) : <p className={`flex-none w-full text-center ${textSecondary}`}>No packages available.</p>}
                             </div>
                         </div>
                     </section>
