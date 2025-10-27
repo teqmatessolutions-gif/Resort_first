@@ -542,23 +542,71 @@ const BackgroundAnimation = ({ theme }) => {
                     }
                 }
                 
-                /* Smaller card styles */
+                /* Luxury Mountain Shadows Premium Styling */
                 .luxury-card {
                     border-radius: 1rem;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                
+                .luxury-card:hover {
+                    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2), 0 10px 10px -5px rgba(245, 158, 11, 0.1);
+                    transform: translateY(-4px) scale(1.01);
+                }
+                
+                .premium-gradient {
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+                }
+                
+                .premium-text-gradient {
+                    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                
+                .luxury-overlay {
+                    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+                }
+                
+                .section-badge {
+                    display: inline-block;
+                    padding: 0.5rem 1.5rem;
+                    background: rgba(245, 158, 11, 0.1);
+                    color: #d97706;
+                    font-weight: 600;
+                    letter-spacing: 0.1em;
+                    border-radius: 9999px;
+                    border: 1px solid rgba(245, 158, 11, 0.2);
+                    backdrop-filter: blur(10px);
+                }
+                
+                .luxury-shadow {
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(245, 158, 11, 0.05);
                 }
                 
                 .card-image {
                     max-height: 200px;
+                    object-fit: cover;
+                    filter: brightness(1) saturate(1.1);
+                    transition: all 0.5s ease;
+                }
+                
+                .luxury-card:hover .card-image {
+                    filter: brightness(1.05) saturate(1.2);
                 }
                 
                 .card-title {
                     font-size: 1.125rem;
                     margin-bottom: 0.5rem;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
                 }
                 
                 .card-description {
                     font-size: 0.875rem;
-                    line-height: 1.4;
+                    line-height: 1.5;
+                    color: #6b7280;
                 }
                 
                 @keyframes slow-pan { 
@@ -1490,7 +1538,7 @@ export default function App() {
                                     {rooms.filter(room => room.status === "Available").slice(0, 6).map((room, index) => (
                                         <div 
                                             key={room.id} 
-                                            className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2"
                                         >
                                             {/* Image Container with Overlay */}
                                             <div className="relative h-48 overflow-hidden">
@@ -1603,7 +1651,7 @@ export default function App() {
                                     {services.map((service) => (
                                         <div 
                                             key={service.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
                                             {/* Icon/Icon Placeholder */}
                                             <div className="relative h-48 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 flex items-center justify-center overflow-hidden">
@@ -1738,7 +1786,7 @@ export default function App() {
                                     {foodItems.map((food) => (
                                         <div 
                                             key={food.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
                                             {/* Image */}
                                             <div className="relative h-40 overflow-hidden">
