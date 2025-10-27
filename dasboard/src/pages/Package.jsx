@@ -333,8 +333,9 @@ const Packages = () => {
       toast.success("Guest checked in successfully!", { id: toastId });
       setBookingToCheckIn(null);
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || "Failed to check in guest.";
-      toast.error(errorMessage, { id: toastId });
+      const errorMsg = err.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to check in guest.';
+      toast.error(message, { id: toastId });
       console.error("Check-in error:", err);
     } finally {
       setIsSubmitting(false);
