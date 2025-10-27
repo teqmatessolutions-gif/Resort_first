@@ -497,7 +497,9 @@ const MonthlyReport = () => {
     const fetchReport = async () => {
         if (!selectedEmployeeId) return;
         setLoading(true);
-        const [year, month] = date.split('-');
+        const [yearStr, monthStr] = date.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
         try {
             const response = await api.get(`/attendance/monthly-report/${selectedEmployeeId}`, {
                 params: { year, month }
@@ -505,6 +507,9 @@ const MonthlyReport = () => {
             setReport(response.data);
         } catch (error) {
             console.error("Failed to fetch monthly report", error);
+            const errorMsg = error.response?.data?.detail;
+            const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to load monthly report';
+            console.error(message);
             setReport(null);
         } finally {
             setLoading(false);
@@ -532,13 +537,13 @@ const MonthlyReport = () => {
 
             {report && !loading && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                    <h3 className="text-xl font-bold">Monthly Report for {new Date(report.year, report.month - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                    <h3 className="text-xl font-bold">Monthly Report for {report.year && report.month ? new Date(report.year, report.month - 1).toLocaleString('default', { month: 'long', year: 'numeric' }) : date}</h3>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <ReportCard title="Total Days" value={report.total_days} colorClass="bg-blue-100 text-blue-800" />
-                        <ReportCard title="Present Days" value={report.present_days} colorClass="bg-green-100 text-green-800" />
-                        <ReportCard title="Paid Leaves" value={report.paid_leaves_taken} colorClass="bg-yellow-100 text-yellow-800" />
-                        <ReportCard title="Unpaid/Absent" value={report.unpaid_leaves} colorClass="bg-red-100 text-red-800" />
+                        <ReportCard title="Total Days" value={report.total_days || 0} colorClass="bg-blue-100 text-blue-800" />
+                        <ReportCard title="Present Days" value={report.present_days || 0} colorClass="bg-green-100 text-green-800" />
+                        <ReportCard title="Paid Leaves" value={report.paid_leaves_taken || 0} colorClass="bg-yellow-100 text-yellow-800" />
+                        <ReportCard title="Unpaid/Absent" value={report.unpaid_leaves || 0} colorClass="bg-red-100 text-red-800" />
                     </div>
 
                     <div className="bg-white p-4 rounded-lg shadow">
@@ -546,11 +551,11 @@ const MonthlyReport = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <p className="font-medium">Paid Leave</p>
-                                <p>Balance: <span className="font-bold">{report.paid_leave_balance}</span> / {report.total_paid_leaves_year}</p>
+                                <p>Balance: <span className="font-bold">{report.paid_leave_balance || 0}</span> / {report.total_paid_leaves_year || 0}</p>
                             </div>
                             <div>
                                 <p className="font-medium">Sick Leave</p>
-                                <p>Balance: <span className="font-bold">{report.sick_leave_balance}</span> / {report.total_sick_leaves_year}</p>
+                                <p>Balance: <span className="font-bold">{report.sick_leave_balance || 0}</span> / {report.total_sick_leaves_year || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -559,13 +564,13 @@ const MonthlyReport = () => {
                         <h4 className="font-semibold mb-2">Salary Calculation for the Month</h4>
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">₹{report.base_salary.toFixed(2)}</p>
+                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">₹{(report.base_salary || 0).toFixed(2)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- ₹{report.deductions.toFixed(2)}</p>
+                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- ₹{(report.deductions || 0).toFixed(2)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">₹{report.net_salary.toFixed(2)}</p>
+                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">₹{(report.net_salary || 0).toFixed(2)}</p>
                             </div>
                         </div>
                     </div>
