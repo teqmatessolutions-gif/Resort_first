@@ -1634,24 +1634,76 @@ export default function App() {
                         </div>
                     </section>
 
-                    {/* Food Items Section */}
-                    <section>
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <Coffee className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Gourmet Cuisine
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                           <div className="flex gap-6 animate-[auto-scroll-reverse_80s_linear_infinite] hover:[animation-play-state:paused]">
-                                {foodItems.length > 0 ? [...foodItems, ...foodItems].map((food, index) => (
-                                    <div key={`${food.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://localhost:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{food.name}</h3>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{food.price}</p>
-                                            <p className={`font-semibold text-sm ${food.available ? "text-green-400" : "text-red-400"}`}>{food.available ? "Available" : "Unavailable"}</p>
-                                        </div>
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No food items available.</p>}
+                    {/* Premium Cuisine Section - Mountain Shadows Style */}
+                    <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Savor the Art ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    SAVOR THE ART OF CUISINE
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Experience the art of cuisine at our luxury resort. Enjoy a diverse menu featuring international favorites and authentic local flavors, crafted to delight every palate.
+                                </p>
                             </div>
+
+                            {/* Food Items Grid */}
+                            {foodItems.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {foodItems.map((food) => (
+                                        <div 
+                                            key={food.id}
+                                            className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                        >
+                                            {/* Image */}
+                                            <div className="relative h-64 overflow-hidden">
+                                                <img 
+                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://localhost:8000/${food.images?.[0]?.image_url}`} 
+                                                    alt={food.name} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                
+                                                {/* Availability Badge */}
+                                                <div className="absolute top-4 right-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-lg ${food.available ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+                                                        {food.available ? "Available" : "Unavailable"}
+                                                    </span>
+                                                </div>
+
+                                                {/* Price on Image */}
+                                                <div className="absolute bottom-4 left-4 right-4">
+                                                    <span className="inline-block px-4 py-2 bg-white/95 backdrop-blur-sm text-amber-600 font-bold rounded-full text-lg shadow-lg">
+                                                        ₹{food.price}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-5">
+                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors mb-2 line-clamp-2">
+                                                    {food.name}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center py-12 text-gray-500">No food items available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {foodItems.length > 8 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
+                                        View Full Menu
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </section>
 
