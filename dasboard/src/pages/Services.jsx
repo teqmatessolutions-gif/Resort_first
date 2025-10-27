@@ -254,7 +254,10 @@ const Services = () => {
                 className="w-full border p-3 rounded-lg"
               >
                 <option value="">Select Room</option>
-                {rooms.filter(r => ['Booked', 'Checked-in'].includes(r.status)).map((r) => (
+                {rooms.filter(r => {
+                  const normalizedStatus = r.status?.toLowerCase().replace(/[-_\s]/g, '');
+                  return normalizedStatus === 'booked' || normalizedStatus === 'checkedin';
+                }).map((r) => (
                   <option key={r.id} value={r.id}>Room {r.number}</option>
                 ))}
               </select>
