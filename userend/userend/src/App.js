@@ -1304,67 +1304,96 @@ export default function App() {
     )}
 </div>
 
-                    {/* Premium Luxury Section - Inspired by Mountain Shadows */}
-                    <section className="bg-gradient-to-b from-neutral-50 to-white py-20">
+                    {/* Exclusive Deals Section - Mountain Shadows Style */}
+                    <section id="packages" className="bg-white py-20">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ Exclusive Deals ✦
                                 </span>
                                 <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                                    Packages for Memorable Experiences
+                                    Exclusive Deals for Memorable Experiences
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                                    Discover our curated luxury packages designed to create unforgettable moments
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Discover our curated luxury packages designed to create unforgettable moments with your loved ones
                                 </p>
                             </div>
-                        </div>
-                    </section>
 
-                    {/* Packages Section */}
-                    <section id="packages" className="bg-white py-16">
-                        <h2 className={`group text-center ${sectionTitleStyle}`}>
-                            <Package className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Luxury Packages
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                            <div className="flex gap-6 animate-[auto-scroll_80s_linear_infinite] hover:[animation-play-state:paused]">
-                                {packages.length > 0 ? [...packages, ...packages].map((pkg, index) => {
-                                    const imgIndex = packageImageIndex[pkg.id] || 0;
-                                    const currentImage = pkg.images && pkg.images[imgIndex];
-                                    return (
-                                        <div key={`${pkg.id}-${index}`} className={`group ${cardStyle}`}>
-                                            <div className="relative">
-                                                <img 
-                                                    src={currentImage ? (process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${currentImage.image_url}` : `http://localhost:8000${currentImage.image_url}`) : ITEM_PLACEHOLDER} 
-                                                    alt={pkg.title} 
-                                                    className="w-full h-56 md:h-64 object-cover" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
-                                                {pkg.images && pkg.images.length > 1 && (
-                                                    <div className="absolute bottom-2 right-2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full">
-                                                        {pkg.images.map((_, imgIdx) => (
-                                                            <button
-                                                                key={imgIdx}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
-                                                                }}
-                                                                className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/50'}`}
-                                                            />
-                                                        ))}
+                            {/* Packages Grid */}
+                            {packages.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {packages.map((pkg) => {
+                                        const imgIndex = packageImageIndex[pkg.id] || 0;
+                                        const currentImage = pkg.images && pkg.images[imgIndex];
+                                        return (
+                                            <div 
+                                                key={pkg.id} 
+                                                className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                                            >
+                                                {/* Image Container */}
+                                                <div className="relative h-80 overflow-hidden">
+                                                    <img 
+                                                        src={currentImage ? (process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${currentImage.image_url}` : `http://localhost:8000${currentImage.image_url}`) : ITEM_PLACEHOLDER} 
+                                                        alt={pkg.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                                    
+                                                    {/* Image Slider Dots */}
+                                                    {pkg.images && pkg.images.length > 1 && (
+                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full">
+                                                            {pkg.images.map((_, imgIdx) => (
+                                                                <button
+                                                                    key={imgIdx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                    }}
+                                                                    className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Package Content */}
+                                                <div className="p-6 space-y-4">
+                                                    <div>
+                                                        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors mb-2">
+                                                            {pkg.title}
+                                                        </h3>
+                                                        <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                                                            {pkg.description}
+                                                        </p>
                                                     </div>
-                                                )}
+
+                                                    {/* Pricing */}
+                                                    <div className="flex items-baseline justify-between pt-4 border-t border-gray-200">
+                                                        <div>
+                                                            <p className="text-3xl font-extrabold text-amber-600">
+                                                                ₹{pkg.price}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* CTA Button */}
+                                                    <button 
+                                                        onClick={() => handleOpenPackageBookingForm(pkg.id)} 
+                                                        className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50 flex items-center justify-center gap-2"
+                                                    >
+                                                        Know More
+                                                        <ChevronRight className="w-5 h-5" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="p-6">
-                                                <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{pkg.title}</h3>
-                                                <p className={`mb-1 ${priceStyle}`}>₹{pkg.price}</p>
-                                                <p className={`text-sm ${textSecondary}`}>{pkg.description}</p>
-                                                <button onClick={() => handleOpenPackageBookingForm(pkg.id)} className={buttonStyle}>Book Package <ChevronRight className="ml-1 w-4 h-4" /></button>
-                                            </div>
-                                        </div>
-                                    );
-                                }) : <p className={`flex-none w-full text-center ${textSecondary}`}>No packages available.</p>}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="text-center py-12 text-gray-500">No packages available at the moment.</p>
+                            )}
                         </div>
                     </section>
                     
