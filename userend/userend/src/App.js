@@ -491,16 +491,33 @@ const BackgroundAnimation = ({ theme }) => {
                     --color-neutral-50: #fafafa;
                 }
                 
+                * {
+                    max-width: 100%;
+                }
+                
                 body {
                     font-family: var(--font-body);
                     font-weight: 400;
                     letter-spacing: 0.01em;
+                    overflow-x: hidden;
                 }
                 
                 h1, h2, h3, h4, h5, h6 {
                     font-family: var(--font-display);
                     font-weight: 700;
                     letter-spacing: -0.02em;
+                    max-width: 100%;
+                    word-wrap: break-word;
+                }
+                
+                section {
+                    width: 100%;
+                    overflow-x: hidden;
+                }
+                
+                img {
+                    max-width: 100%;
+                    height: auto;
                 }
                 
                 @keyframes slow-pan { 
@@ -1249,7 +1266,7 @@ export default function App() {
                     </div>
                 </header>
 
-                <main className="w-full pt-0 space-y-0 relative z-10 overflow-hidden">
+                <main className="w-full max-w-full pt-0 space-y-0 relative z-10 overflow-hidden">
                   {/* Luxury Hero Banner Section */}
 <div
   ref={bannerRef}
