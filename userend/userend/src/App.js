@@ -65,13 +65,13 @@ const themes = {
         bgCard: "bg-white",
         textPrimary: "text-neutral-900",
         textSecondary: "text-neutral-600",
-        textAccent: "text-purple-600",
-        textTitleGradient: "from-neutral-700 via-neutral-900 to-black",
+        textAccent: "text-amber-600",
+        textTitleGradient: "from-amber-600 via-amber-700 to-neutral-900",
         border: "border-neutral-300",
-        borderHover: "hover:border-purple-600/50",
-        buttonBg: "bg-purple-600",
+        borderHover: "hover:border-amber-500/50",
+        buttonBg: "bg-gradient-to-r from-amber-500 to-amber-600",
         buttonText: "text-white",
-        buttonHover: "hover:bg-purple-500",
+        buttonHover: "hover:from-amber-400 hover:to-amber-500",
         placeholderBg: "bg-neutral-100",
         placeholderText: "text-neutral-500",
         chatBg: "bg-white",
@@ -79,7 +79,7 @@ const themes = {
         chatInputBorder: "border-neutral-200",
         chatInputBg: "bg-neutral-100",
         chatInputPlaceholder: "placeholder-neutral-500",
-        chatUserBg: "bg-purple-600",
+        chatUserBg: "bg-gradient-to-r from-amber-500 to-amber-600",
         chatUserText: "text-white",
         chatModelBg: "bg-neutral-100",
         chatModelText: "text-neutral-900",
@@ -479,6 +479,30 @@ const BackgroundAnimation = ({ theme }) => {
     return (
         <>
             <style>{`
+                /* Mountain Shadows Luxury Typography & Colors */
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+                
+                :root {
+                    --font-display: 'Playfair Display', serif;
+                    --font-body: 'Inter', sans-serif;
+                    --color-amber-primary: #f59e0b;
+                    --color-amber-gold: #d97706;
+                    --color-neutral-900: #171717;
+                    --color-neutral-50: #fafafa;
+                }
+                
+                body {
+                    font-family: var(--font-body);
+                    font-weight: 400;
+                    letter-spacing: 0.01em;
+                }
+                
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: var(--font-display);
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                }
+                
                 @keyframes slow-pan { 
                     0% { transform: translate(0, 0) scale(1); }
                     50% { transform: translate(-3%, 3%) scale(1.05); }
@@ -489,12 +513,12 @@ const BackgroundAnimation = ({ theme }) => {
                     to { opacity: 1; transform: translateY(0); }
                 }
                 @keyframes gentle-glow {
-                    0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(251, 191, 36, 0.3)); }
-                    50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5)); }
+                    0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
+                    50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
                 }
                 @keyframes gentle-pulse {
-                    0%, 100% { box-shadow: 0 10px 40px rgba(251, 191, 36, 0.3); }
-                    50% { box-shadow: 0 15px 60px rgba(251, 191, 36, 0.6); }
+                    0%, 100% { box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3); }
+                    50% { box-shadow: 0 15px 60px rgba(245, 158, 11, 0.6); }
                 }
                 @keyframes bubble-up { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(20px, -25vh) rotate(45deg); } 50% { transform: translate(-20px, -50vh) rotate(90deg); } 75% { transform: translate(20px, -75vh) rotate(135deg); } 100% { transform: translate(0, -110vh) rotate(180deg); } }
                 @keyframes bubble-down { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-20px, 25vh) rotate(-45deg); } 50% { transform: translate(20px, 50vh) rotate(-90deg); } 75% { transform: translate(-20px, 75vh) rotate(-135deg); } 100% { transform: translate(0, 110vh) rotate(-180deg); } }
