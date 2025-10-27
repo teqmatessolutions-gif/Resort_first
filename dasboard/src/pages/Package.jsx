@@ -9,6 +9,17 @@ import { motion } from "framer-motion";
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, PointElement, LineElement);
 
+// Helper function to construct image URLs
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image';
+  if (imagePath.startsWith('http')) return imagePath;
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://www.teqmates.com' 
+    : 'http://localhost:8000';
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${baseUrl}${path}`;
+};
+
 // KPI Card
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={`p-6 rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
@@ -429,7 +440,7 @@ const Packages = () => {
             filteredPackages.map(pkg => (
               <motion.div key={pkg.id} whileHover={{ y: -5 }} className="bg-gray-50 rounded-xl shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col">
                 {pkg.images && pkg.images.length > 0 ? (
-                  <img className="h-48 w-full object-cover" src={`${api.defaults.baseURL}/${pkg.images[0].image_url}`} alt={pkg.title} />
+                  <img className="h-48 w-full object-cover" src={getImageUrl(pkg.images[0].image_url)} alt={pkg.title} />
                 ) : (
                   <div className="h-48 w-full bg-gray-200 flex items-center justify-center"><span className="text-gray-500">No Image</span></div>
                 )}

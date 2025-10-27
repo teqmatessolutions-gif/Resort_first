@@ -33,10 +33,13 @@ async def create_package_api(
 ):
     image_urls = []
     for img in images:
-        file_path = os.path.join(UPLOAD_DIR, img.filename)
-        with open(file_path, "wb") as f:
-            f.write(await img.read())
-        image_urls.append(file_path)
+        # Generate unique filename
+        filename = f"pkg_{uuid.uuid4().hex}_{img.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(img.file, buffer)
+        # Store with leading slash for proper URL construction
+        image_urls.append(f"/{file_path.replace('\\', '/')}")
 
     return crud_package.create_package(db, title, description, price, image_urls)
 

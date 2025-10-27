@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.curd import food_item
 from app.schemas.food_item import FoodItemCreate
 from app.models.user import User
-import os, shutil
+import os, shutil, uuid
 from app.utils.auth import get_db, get_current_user
 
 router = APIRouter(prefix="/food-items", tags=["FoodItem"])
@@ -26,10 +26,13 @@ async def create_item(
 ):
     image_paths = []
     for image in images:
-        path = os.path.join(UPLOAD_DIR, image.filename)
+        # Generate unique filename
+        filename = f"food_{uuid.uuid4().hex}_{image.filename}"
+        path = os.path.join(UPLOAD_DIR, filename)
         with open(path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        web_path = f"uploads/food_items/{image.filename}".replace("\\", "/")
+        # Store with leading slash for proper URL construction
+        web_path = f"/{UPLOAD_DIR}/{filename}".replace("\\", "/")
         image_paths.append(web_path)
 
     item_data = FoodItemCreate(
