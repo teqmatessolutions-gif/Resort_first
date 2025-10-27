@@ -1297,6 +1297,7 @@ export default function App() {
                                     Discover our curated luxury packages designed to create unforgettable moments
                                 </p>
                             </div>
+                        </div>
                     </section>
 
                     {/* Packages Section */}
