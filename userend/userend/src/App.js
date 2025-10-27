@@ -1653,34 +1653,51 @@ export default function App() {
                                             key={service.id}
                                             className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
-                                            {/* Icon/Icon Placeholder */}
-                                            <div className="relative h-48 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 flex items-center justify-center overflow-hidden">
-                                                <div className="absolute inset-0 bg-amber-200/10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(251, 191, 36, 0.3) 1px, transparent 0)', backgroundSize: '40px 40px'}}></div>
-                                                <ConciergeBell className="w-16 h-16 text-amber-500 group-hover:scale-110 transition-transform duration-500 relative z-10" />
+                                            {/* Image Container with Multiple Images Support */}
+                                            <div className="relative h-40 overflow-hidden">
+                                                {service.images && service.images.length > 0 ? (
+                                                    <img 
+                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${service.images[0].image_url}` : `http://localhost:8000${service.images[0].image_url}`} 
+                                                        alt={service.name} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 flex items-center justify-center">
+                                                        <ConciergeBell className="w-12 h-12 text-amber-500" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                                                
+                                                {/* Multiple Images Indicator */}
+                                                {service.images && service.images.length > 1 && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded-full">
+                                                            +{service.images.length - 1}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Content */}
-                                            <div className="p-4 space-y-3">
-                                                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+                                            <div className="p-4 space-y-2">
+                                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
                                                     {service.name}
                                                 </h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                                                <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
                                                     {service.description}
                                                 </p>
                                                 
                                                 {/* Charges */}
-                                                <div className="pt-4 border-t border-gray-100">
+                                                <div className="pt-2 border-t border-gray-100">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-gray-500">Starting from</span>
-                                                        <span className="text-2xl font-extrabold text-amber-600">
+                                                        <span className="text-xs text-gray-500">From</span>
+                                                        <span className="text-xl font-extrabold text-amber-600">
                                                             ₹{service.charges}
                                                         </span>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Hover Effect Overlay */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-transparent transition-all duration-500 pointer-events-none" />
                                         </div>
                                     ))}
                                 </div>
@@ -1895,6 +1912,93 @@ export default function App() {
                         </div>
                     </section>
                     
+                    {/* Premium Wedding Destination Section - Mountain Shadows */}
+                    <section className="bg-gradient-to-b from-neutral-50 to-white py-20">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            <div className="text-center mb-12">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Perfect Venue ✦
+                                </span>
+                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
+                                    THE PERFECT BEST WEDDING DESTINATION IN KERALA
+                                </h2>
+                            </div>
+
+                            <div className="bg-white rounded-3xl overflow-hidden luxury-shadow max-w-5xl mx-auto">
+                                <div className="grid md:grid-cols-2 gap-0">
+                                    {/* Left: Image */}
+                                    <div className="relative h-64 md:h-auto overflow-hidden">
+                                        <img 
+                                            src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800" 
+                                            alt="Wedding venue" 
+                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent"></div>
+                                    </div>
+
+                                    {/* Right: Content */}
+                                    <div className="p-8 md:p-12 flex items-center bg-gradient-to-br from-amber-50 to-white">
+                                        <div>
+                                            <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-6">
+                                                Nestled on a serene island with breathtaking views of the lake and forest, our resort provides the perfect backdrop for your dream wedding. The tabletop lawn overlooks the forest and lake, offering a stunning setting. The resort blends luxury and nature to create unforgettable moments in Kerala's most enchanting location.
+                                            </p>
+                                            <button className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105">
+                                                Plan Your Wedding
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Nearby Attractions Section */}
+                    <section className="bg-white py-20">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            <div className="text-center mb-12">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Explore ✦
+                                </span>
+                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
+                                    NEARBY ATTRACTIONS
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                                    Discover the beautiful surroundings and attractions near our luxury resort
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {['Waterfalls', 'Hill Stations', 'Wildlife Sanctuary'].map((attraction, index) => (
+                                    <div 
+                                        key={index}
+                                        className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transform hover:-translate-y-2"
+                                    >
+                                        <div className="relative h-48 overflow-hidden">
+                                            <img 
+                                                src={`https://images.unsplash.com/photo-${1507350223404 + index}aef8e6e3b5c?w=400`} 
+                                                alt={attraction} 
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                            <div className="absolute bottom-4 left-4 right-4">
+                                                <h3 className="text-xl font-bold text-white">{attraction}</h3>
+                                            </div>
+                                        </div>
+                                        <div className="p-4">
+                                            <p className="text-gray-600 text-sm">
+                                                Experience the natural beauty of {attraction} with our guided tours and packages.
+                                            </p>
+                                            <button className="mt-4 text-amber-600 font-semibold hover:text-amber-700 transition-colors">
+                                                Learn More →
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Reviews Section */}
                     <section>
                         <h2 className={`group ${sectionTitleStyle}`}>
