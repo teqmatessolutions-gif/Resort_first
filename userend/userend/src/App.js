@@ -479,6 +479,23 @@ const BackgroundAnimation = ({ theme }) => {
     return (
         <>
             <style>{`
+                @keyframes slow-pan { 
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(-3%, 3%) scale(1.05); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes gentle-glow {
+                    0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(251, 191, 36, 0.3)); }
+                    50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(251, 191, 36, 0.5)); }
+                }
+                @keyframes gentle-pulse {
+                    0%, 100% { box-shadow: 0 10px 40px rgba(251, 191, 36, 0.3); }
+                    50% { box-shadow: 0 15px 60px rgba(251, 191, 36, 0.6); }
+                }
                 @keyframes bubble-up { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(20px, -25vh) rotate(45deg); } 50% { transform: translate(-20px, -50vh) rotate(90deg); } 75% { transform: translate(20px, -75vh) rotate(135deg); } 100% { transform: translate(0, -110vh) rotate(180deg); } }
                 @keyframes bubble-down { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-20px, 25vh) rotate(-45deg); } 50% { transform: translate(20px, 50vh) rotate(-90deg); } 75% { transform: translate(-20px, 75vh) rotate(-135deg); } 100% { transform: translate(0, 110vh) rotate(-180deg); } }
                 @keyframes bubble-left { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-25vw, 20px) rotate(45deg); } 50% { transform: translate(-50vw, -20px) rotate(90deg); } 75% { transform: translate(-75vw, 20px) rotate(135deg); } 100% { transform: translate(-110vw, 0) rotate(180deg); } }
@@ -1216,14 +1233,18 @@ export default function App() {
 >
     {bannerData.length > 0 ? (
         <>
-            {/* Banner Images with Fade Transition */}
+            {/* Banner Images with Fade Transition and Slow Movement */}
             {bannerData.map((banner, index) => (
                 <img
                     key={banner.id}
                     src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://localhost:8000${banner.image_url}`}
                     onError={(e) => { e.target.src = ITEM_PLACEHOLDER; console.error('Banner image failed to load:', banner.image_url); }}
                     alt={banner.title}
-                    className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentBannerIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
+                    style={{
+                        animationDelay: `${index * 2}s`,
+                        animationDirection: index % 2 === 0 ? 'alternate' : 'alternate-reverse'
+                    }}
                 />
             ))}
 
@@ -1232,21 +1253,21 @@ export default function App() {
                 <div className="relative w-full max-w-5xl">
                     {bannerData.map((banner, index) => (
                         <div key={banner.id} className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                            <div className="mb-4 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30">
+                            <div className="mb-4 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
                                 <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
                                     ✦ Luxury Experience ✦
                                 </span>
                             </div>
-                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight drop-shadow-2xl text-white mb-6">
-                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight drop-shadow-2xl text-white mb-6 animate-[fadeInUp_1.2s_ease-out]">
+                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent inline-block animate-[gentle-glow_3s_ease-in-out_infinite]">
                                     {banner.title}
                                 </span>
                             </h1>
-                            <p className="mt-4 text-xl md:text-2xl text-neutral-100 max-w-4xl mx-auto leading-relaxed drop-shadow-lg px-4">
+                            <p className="mt-4 text-xl md:text-2xl text-neutral-100 max-w-4xl mx-auto leading-relaxed drop-shadow-lg px-4 animate-[fadeInUp_1.4s_ease-out]">
                                 {banner.subtitle}
                             </p>
-                            <div className="mt-10 flex flex-wrap justify-center gap-4">
-                                <a href="#rooms-section" className="group px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50">
+                            <div className="mt-10 flex flex-wrap justify-center gap-4 animate-[fadeInUp_1.6s_ease-out]">
+                                <a href="#rooms-section" className="group px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50 animate-[gentle-pulse_2s_ease-in-out_infinite]">
                                     <span className="flex items-center gap-2">
                                         Book Your Stay
                                         <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
