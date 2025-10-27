@@ -12,7 +12,9 @@ const getImageUrl = (imagePath) => {
   const baseUrl = process.env.NODE_ENV === 'production' 
     ? 'https://www.teqmates.com' 
     : 'http://localhost:8000';
-  return `${baseUrl}${imagePath}`;
+  // Ensure imagePath starts with / for proper URL construction
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${baseUrl}${path}`;
 };
 
 const API_URL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
