@@ -1211,25 +1211,25 @@ export default function App() {
                     </div>
                 )}
                 
-                <header className={`fixed left-0 right-0 z-50 ${theme.bgSecondary} bg-opacity-80 backdrop-blur-sm ${bannerMessage.text ? 'top-16' : 'top-0'}`}>
-                    <div className="container mx-auto px-2 sm:px-4 md:px-12 py-2 sm:py-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-1 sm:space-x-2">
-                            <BedDouble className={`w-6 h-6 sm:w-8 sm:h-8 ${theme.textAccent}`} />
-                            <span className="text-lg sm:text-xl font-bold tracking-tight">Elysian Retreat</span>
+                <header className={`fixed left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
+                    <div className="container mx-auto px-4 sm:px-6 md:px-12 py-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <BedDouble className={`w-8 h-8 text-amber-600`} />
+                            <span className="text-2xl font-bold text-gray-900 tracking-tight">Elysian Retreat</span>
                         </div>
-                        <nav className="flex items-center space-x-2 sm:space-x-4">
+                        <nav className="flex items-center space-x-4">
                             <div className="relative">
                                 <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-1 sm:p-2 rounded-full transition-colors duration-300 ${theme.textSecondary} hover:${theme.textAccent}`}
+                                    className={`p-2 rounded-lg transition-colors duration-300 text-gray-700 hover:text-amber-600 hover:bg-amber-50`}
                                     title="Change Theme">
                                     {themes[currentTheme].icon}
                                 </button>
                                 {isThemeDropdownOpen && (
-                                    <div className={`absolute right-0 mt-2 w-40 sm:w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
-                                        <div className="p-2 grid grid-cols-3 sm:grid-cols-4 gap-1">
+                                    <div className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50`}>
+                                        <div className="p-2 grid grid-cols-4 gap-1">
                                             {Object.values(themes).map((t) => (
                                                 <button key={t.id} onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `${t.buttonBg} ${t.buttonText}` : `${theme.textSecondary} hover:${t.textAccent} hover:${theme.bgSecondary}`}`}
+                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `bg-amber-500 text-white` : `text-gray-600 hover:bg-amber-50 hover:text-amber-600`}`}
                                                     title={t.name}>
                                                     {t.icon}
                                                 </button>
@@ -1241,7 +1241,7 @@ export default function App() {
 
                             <button 
                                 onClick={() => setIsGeneralBookingOpen(true)} 
-                                className={`px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base ${theme.buttonBg} ${theme.buttonText} font-bold rounded-full shadow-lg ${theme.buttonHover} transition-colors`}
+                                className={`px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105`}
                             >
                                 Book Now
                             </button>
