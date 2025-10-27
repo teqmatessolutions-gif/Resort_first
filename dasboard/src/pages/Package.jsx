@@ -137,6 +137,7 @@ const Packages = () => {
   const [bookingFilter, setBookingFilter] = useState({ guestName: "", status: "all", checkIn: "", checkOut: "" });
   const [createForm, setCreateForm] = useState({ title: "", description: "", price: "", images: [] });
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [selectedFiles, setSelectedFiles] = useState([]); // Store the actual File objects
   const [selectedPackageImages, setSelectedPackageImages] = useState(null); // For image gallery modal
   const [bookingForm, setBookingForm] = useState({
     package_id: "",
@@ -210,8 +211,12 @@ const Packages = () => {
   const handleCreateChange = e => setCreateForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   const handleCreateImageChange = e => {
     const files = Array.from(e.target.files);
-    setCreateForm(prev => ({ ...prev, images: files }));
-    setImagePreviews(files.map(f => URL.createObjectURL(f)));
+    setSelectedFiles(prev => [...prev, ...files]);
+    setImagePreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+  };
+  const handleRemoveImage = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
   const handleCreateSubmit = async e => {
     e.preventDefault();
@@ -220,11 +225,12 @@ const Packages = () => {
       data.append("title", createForm.title);
       data.append("description", createForm.description);
       data.append("price", createForm.price);
-      createForm.images.forEach(img => data.append("images", img));
+      selectedFiles.forEach(img => data.append("images", img));
       await api.post("/packages/", data, { headers: { "Content-Type": "multipart/form-data" } });
       toast.success("Package created successfully!");
       setCreateForm({ title: "", description: "", price: "", images: [] });
       setImagePreviews([]);
+      setSelectedFiles([]);
       fetchData();
     } catch (err) {
       console.error(err);
@@ -521,16 +527,35 @@ const Packages = () => {
             <textarea name="description" placeholder="Package Description" value={createForm.description} onChange={handleCreateChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" rows="4" required />
             <input type="number" name="price" placeholder="Price (₹)" value={createForm.price} onChange={handleCreateChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
             <label className="block">
-              <span className="text-gray-600 font-medium">Package Images:</span>
-              <input type="file" multiple onChange={handleCreateImageChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all" />
+              <span className="text-gray-600 font-medium">Package Images (Select multiple):</span>
+              <input type="file" multiple accept="image/*" onChange={handleCreateImageChange} className="mt-2 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all" />
+              {selectedFiles.length > 0 && (
+                <p className="mt-2 text-sm text-gray-500">
+                  {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''} selected
+                </p>
+              )}
             </label>
             {imagePreviews.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4">
-                {imagePreviews.map((src, index) => (
-                  <div key={index} className="relative w-full aspect-square rounded-lg overflow-hidden shadow-md">
-                    <img src={src} alt={`Preview ${index}`} className="absolute inset-0 w-full h-full object-cover" />
-                  </div>
-                ))}
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 font-medium mb-2">Image Previews:</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {imagePreviews.map((src, index) => (
+                    <div key={index} className="relative group">
+                      <img src={src} alt={`Preview ${index + 1}`} className="w-full h-32 object-cover rounded-lg shadow-md" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        title="Remove image"
+                      >
+                        ×
+                      </button>
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                        {index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:-translate-y-1">Create Package 🚀</button>
