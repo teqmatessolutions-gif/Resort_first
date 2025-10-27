@@ -542,6 +542,25 @@ const BackgroundAnimation = ({ theme }) => {
                     }
                 }
                 
+                /* Smaller card styles */
+                .luxury-card {
+                    border-radius: 1rem;
+                }
+                
+                .card-image {
+                    max-height: 200px;
+                }
+                
+                .card-title {
+                    font-size: 1.125rem;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .card-description {
+                    font-size: 0.875rem;
+                    line-height: 1.4;
+                }
+                
                 @keyframes slow-pan { 
                     0% { transform: translate(0, 0) scale(1); }
                     50% { transform: translate(-3%, 3%) scale(1.05); }
@@ -1392,7 +1411,7 @@ export default function App() {
                                                 className="group relative bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500"
                                             >
                                                 {/* Image Container - Full Width */}
-                                                <div className="relative h-96 overflow-hidden">
+                                                <div className="relative h-56 overflow-hidden">
                                                     <img 
                                                         src={currentImage ? (process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${currentImage.image_url}` : `http://localhost:8000${currentImage.image_url}`) : ITEM_PLACEHOLDER} 
                                                         alt={pkg.title} 
@@ -1474,7 +1493,7 @@ export default function App() {
                                             className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
                                         >
                                             {/* Image Container with Overlay */}
-                                            <div className="relative h-72 overflow-hidden">
+                                            <div className="relative h-48 overflow-hidden">
                                                 <img 
                                                     src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
                                                     alt={room.type} 
@@ -1502,7 +1521,7 @@ export default function App() {
                                             </div>
 
                                             {/* Content */}
-                                            <div className="p-6 space-y-4">
+                                            <div className="p-4 space-y-4">
                                                 <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
                                                     {room.type}
                                                 </h3>
@@ -1593,7 +1612,7 @@ export default function App() {
                                             </div>
 
                                             {/* Content */}
-                                            <div className="p-6 space-y-3">
+                                            <div className="p-4 space-y-3">
                                                 <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
                                                     {service.name}
                                                 </h3>
@@ -1645,7 +1664,7 @@ export default function App() {
                                     {services.slice(0, 4).map((service) => (
                                         <div 
                                             key={service.id}
-                                            className="group relative bg-gradient-to-br from-white to-neutral-50 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className="group relative bg-gradient-to-br from-white to-neutral-50 rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
                                             {/* Icon */}
                                             <div className="flex items-start gap-6 mb-6">
@@ -1722,7 +1741,7 @@ export default function App() {
                                             className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
                                             {/* Image */}
-                                            <div className="relative h-64 overflow-hidden">
+                                            <div className="relative h-40 overflow-hidden">
                                                 <img 
                                                     src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://localhost:8000/${food.images?.[0]?.image_url}`} 
                                                     alt={food.name} 
@@ -1836,7 +1855,7 @@ export default function App() {
                         <div className="w-full overflow-hidden" >
                            <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_90s_linear_infinite] hover:[animation-play-state:paused]" >
                                 {reviews.length > 0 ? [...reviews, ...reviews].map((review, index) => (
-                                    <div key={`${review.id}-${index}`} className={`group flex-none w-80 md:w-96 ${theme.bgCard} rounded-3xl p-8 shadow-2xl border ${theme.border}`} >
+                                    <div key={`${review.id}-${index}`} className={`group flex-none w-80 md:w-96 ${theme.bgCard} rounded-2xl p-4 shadow-2xl border ${theme.border}`} >
                                         <div className="flex justify-center mb-4" >
                                             {[...Array(review.rating)].map((_, i) => <Star key={i} className={`w-5 h-5 fill-current ${theme.textAccent}`} />)}
                                             {[...Array(5 - review.rating)].map((_, i) => <Star key={i + review.rating} className={`${theme.textSecondary} w-5 h-5`} />)}
@@ -1906,7 +1925,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Start Your Booking</h3>
                                 <button onClick={() => setIsGeneralBookingOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <div className="p-6 space-y-4">
+                            <div className="p-4 space-y-4">
                                 <p className={`${theme.textSecondary} text-center`}>How would you like to book your stay?</p>
                                 <button 
                                     onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
@@ -1935,7 +1954,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Room</h3>
                                 <button onClick={() => setIsRoomBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleRoomBookingSubmit} className="p-6 space-y-4 overflow-y-auto">
+                            <form onSubmit={handleRoomBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
@@ -2025,7 +2044,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><Package className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Package</h3>
                                 <button onClick={() => setIsPackageBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handlePackageBookingSubmit} className="p-6 space-y-4 overflow-y-auto">
+                            <form onSubmit={handlePackageBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
                                     <input type="number" name="package_id" value={packageBookingData.package_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
@@ -2119,7 +2138,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><ConciergeBell className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Service</h3>
                                 <button onClick={() => setIsServiceBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleServiceBookingSubmit} className="p-6 space-y-4">
+                            <form onSubmit={handleServiceBookingSubmit} className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Service ID</label>
                                     <input type="number" name="service_id" value={serviceBookingData.service_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
@@ -2161,7 +2180,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><Coffee className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Place a Food Order</h3>
                                 <button onClick={() => setIsFoodOrderFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleFoodOrderSubmit} className="p-6 space-y-4">
+                            <form onSubmit={handleFoodOrderSubmit} className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Room ID</label>
                                     <input type="number" name="room_id" value={foodOrderData.room_id || ''} onChange={(e) => setFoodOrderData(prev => ({ ...prev, room_id: parseInt(e.target.value) || '' }))} placeholder="Enter your room ID" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
