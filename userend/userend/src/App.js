@@ -520,6 +520,28 @@ const BackgroundAnimation = ({ theme }) => {
                     height: auto;
                 }
                 
+                .container-custom {
+                    max-width: 95%;
+                    margin-left: auto;
+                    margin-right: auto;
+                    padding-left: 1rem;
+                    padding-right: 1rem;
+                }
+                
+                @media (min-width: 640px) {
+                    .container-custom {
+                        max-width: 98%;
+                        padding-left: 1.5rem;
+                        padding-right: 1.5rem;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .container-custom {
+                        max-width: 1400px;
+                    }
+                }
+                
                 @keyframes slow-pan { 
                     0% { transform: translate(0, 0) scale(1); }
                     50% { transform: translate(-3%, 3%) scale(1.05); }
@@ -1347,7 +1369,7 @@ export default function App() {
 
                     {/* Exclusive Deals Section - Mountain Shadows Style */}
                     <section id="packages" className="bg-gradient-to-b from-neutral-50 to-white py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
@@ -1429,7 +1451,7 @@ export default function App() {
                     
                     {/* Luxury Villa Showcase Section */}
                     <section id="rooms-section" className="bg-gradient-to-b from-white to-neutral-50 py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
@@ -1542,7 +1564,7 @@ export default function App() {
 
                     {/* Premium Experiences Section - Mountain Shadows Style */}
                     <section className="bg-white py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
@@ -1603,7 +1625,7 @@ export default function App() {
 
                     {/* Premium Services Showcase Section */}
                     <section className="bg-white py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
@@ -1677,7 +1699,7 @@ export default function App() {
 
                     {/* Premium Cuisine Section - Mountain Shadows Style */}
                     <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
@@ -1750,7 +1772,7 @@ export default function App() {
 
                     {/* Premium Gallery Section - Mountain Shadows Style */}
                     <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
