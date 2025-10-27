@@ -5,7 +5,17 @@ import { toast } from "react-hot-toast";
 import { FaStar, FaTrashAlt, FaPencilAlt, FaPlus, FaTimes } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 
-const API_URL = "http://localhost:8000";
+// Get the correct base URL based on environment
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://www.teqmates.com' 
+    : 'http://localhost:8000';
+  return `${baseUrl}${imagePath}`;
+};
+
+const API_URL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
 
 // --- Reusable Components ---
 
@@ -40,7 +50,7 @@ const FormModal = ({ isOpen, onClose, onSubmit, fields, initialData, title, isMu
         if (initialData) {
             setFormState(initialData);
             if (initialData.image_url) {
-                setImagePreview(`${API_URL}${initialData.image_url}`);
+                setImagePreview(getImageUrl(initialData.image_url));
             }
         } else {
             setFormState({});
@@ -232,7 +242,7 @@ export default function ResortCMS() {
                     <ManagementSection title="Header Banners" onAdd={() => openModal(sectionConfigs.banners)} isLoading={isLoading}>
                         {resortData.banners.length > 0 ? resortData.banners.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={`${API_URL}${item.image_url}`} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
                                 <h3 className="font-bold text-gray-800">{item.title}</h3>
                                 <p className="text-xs text-gray-600">{item.subtitle}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
@@ -247,7 +257,7 @@ export default function ResortCMS() {
                     <ManagementSection title="Gallery" onAdd={() => openModal(sectionConfigs.gallery)} isLoading={isLoading}>
                         {resortData.gallery.length > 0 ? resortData.gallery.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={`${API_URL}${item.image_url}`} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <img src={getImageUrl(item.image_url)} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
                                 <p className="text-xs text-gray-600">{item.caption}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.gallery, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
