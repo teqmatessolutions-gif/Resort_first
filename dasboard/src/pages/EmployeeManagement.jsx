@@ -284,10 +284,16 @@ const AttendanceTracking = () => {
     if (selectedEmployeeId) {
       setLoading(true);
       api.get(`/attendance/work-logs/${selectedEmployeeId}`).then(res => { // This endpoint provides duration_hours
-        setWorkLogs(res.data);
+        setWorkLogs(res.data || []);
+        if (!res.data || res.data.length === 0) {
+          console.log("No work logs found for this employee");
+        }
       }).catch(err => {
         console.error("Failed to fetch data", err);
-        showBannerMessage("error", "Failed to fetch employee records.");
+        const errorMsg = err.response?.data?.detail;
+        const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to fetch employee records';
+        showBannerMessage("error", message);
+        setWorkLogs([]);
       }).finally(() => setLoading(false));
     } else {
       setWorkLogs([]);
@@ -412,6 +418,14 @@ const AttendanceTracking = () => {
           {/* Calculated Attendance Report */}
           <div className="bg-white p-4 rounded-lg space-y-4 lg:col-span-2">
             <h3 className="text-lg font-semibold">Calculated Daily Attendance</h3>
+            {loading && <p className="text-center text-gray-500">Loading attendance records...</p>}
+            {!loading && workLogs.length === 0 && (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-600">No attendance records found for this employee.</p>
+                <p className="text-sm text-gray-500 mt-2">Use the Clock In button above to create attendance records.</p>
+              </div>
+            )}
+            {!loading && workLogs.length > 0 && (
             <div className="max-h-96 overflow-y-auto">
               <table className="min-w-full bg-white text-sm">
                 <thead className="bg-gray-200 sticky top-0">
@@ -470,6 +484,7 @@ const AttendanceTracking = () => {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
         </div>
       )}
