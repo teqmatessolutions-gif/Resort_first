@@ -157,8 +157,7 @@ const Billing = () => {
   const fetchInitialData = async () => {
     try {
       // Fetch all necessary data in parallel for dashboard and checkout functionality
-      const [roomsRes, checkoutsRes, kpiRes, chartsRes, activeRoomsRes] = await Promise.all([
-        api.get("/rooms"), // Assuming a general rooms endpoint exists
+      const [checkoutsRes, kpiRes, chartsRes, activeRoomsRes] = await Promise.all([
         api.get("/bill/checkouts?skip=0&limit=20"),
         api.get("/dashboard/kpis"), // API call for KPI data
         api.get("/dashboard/charts"), // API call for Chart data
@@ -169,13 +168,30 @@ const Billing = () => {
       // The API returns an array with one object, so we extract the first element.
       if (kpiRes.data && Array.isArray(kpiRes.data) && kpiRes.data.length > 0) {
         setKpiData(kpiRes.data[0]);
+      } else if (kpiRes.data && typeof kpiRes.data === 'object') {
+        // Handle case where API returns object instead of array
+        setKpiData(kpiRes.data);
       }
-      setChartData(chartsRes.data); // Set Chart data from the API response
-      setHasMoreCheckouts(checkoutsRes.data.length === 20);
+      setChartData(chartsRes.data || { revenue_breakdown: [], weekly_performance: [] }); // Set Chart data from the API response
+      setHasMoreCheckouts(checkoutsRes.data && checkoutsRes.data.length === 20);
     } catch (err) {
       console.error("Error fetching initial dashboard data:", err);
-      showBannerMessage("error", "Could not fetch dashboard data. Please refresh.");
+      console.error("Error details:", err.response?.data);
+      showBannerMessage("error", `Could not fetch dashboard data: ${err.message || 'Unknown error'}. Please refresh.`);
       setCheckouts([]);
+      // Set default values to prevent undefined errors
+      setKpiData({
+        checkouts_today: 0,
+        checkouts_total: 0,
+        available_rooms: 0,
+        booked_rooms: 0,
+        food_revenue_today: 0,
+        package_bookings_today: 0,
+      });
+      setChartData({
+        revenue_breakdown: [],
+        weekly_performance: []
+      });
     }
   };
 
