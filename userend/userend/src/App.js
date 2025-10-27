@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 // Lucide React is used for elegant icons
-import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
+import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, ChevronDown, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
 
 // Custom hook to detect if an element is in the viewport
 const useOnScreen = (ref, rootMargin = "0px") => {
@@ -1912,43 +1912,56 @@ export default function App() {
                         </div>
                     </section>
                     
-                    {/* Premium Wedding Destination Section - Mountain Shadows */}
-                    <section className="bg-gradient-to-b from-neutral-50 to-white py-20">
-                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
-                            <div className="text-center mb-12">
-                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
-                                    ✦ Perfect Venue ✦
-                                </span>
-                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
-                                    THE PERFECT BEST WEDDING DESTINATION IN KERALA
+                    {/* Premium Wedding Destination Section - Full Screen Moving Banner */}
+                    <section className="relative w-full h-screen overflow-hidden">
+                        {/* Background Image with Parallax Effect */}
+                        <div className="absolute inset-0">
+                            <img 
+                                src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920" 
+                                alt="Wedding venue" 
+                                className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
+                            />
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
+                        </div>
+
+                        {/* Content Overlay */}
+                        <div className="relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
+                            <div className="max-w-5xl mx-auto text-center text-white">
+                                {/* Badge */}
+                                <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                    <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                        ✦ Perfect Venue ✦
+                                    </span>
+                                </div>
+
+                                {/* Main Title */}
+                                <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
+                                    THE PERFECT BEST<br/>
+                                    <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                        WEDDING DESTINATION
+                                    </span><br/>
+                                    IN KERALA
                                 </h2>
-                            </div>
 
-                            <div className="bg-white rounded-3xl overflow-hidden luxury-shadow max-w-5xl mx-auto">
-                                <div className="grid md:grid-cols-2 gap-0">
-                                    {/* Left: Image */}
-                                    <div className="relative h-64 md:h-auto overflow-hidden">
-                                        <img 
-                                            src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800" 
-                                            alt="Wedding venue" 
-                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent"></div>
-                                    </div>
+                                {/* Description */}
+                                <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
+                                    Nestled on a serene island with breathtaking views of the lake and forest, our resort provides the perfect backdrop for your dream wedding. The tabletop lawn overlooks the forest and lake, offering a stunning setting.
+                                </p>
 
-                                    {/* Right: Content */}
-                                    <div className="p-8 md:p-12 flex items-center bg-gradient-to-br from-amber-50 to-white">
-                                        <div>
-                                            <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-6">
-                                                Nestled on a serene island with breathtaking views of the lake and forest, our resort provides the perfect backdrop for your dream wedding. The tabletop lawn overlooks the forest and lake, offering a stunning setting. The resort blends luxury and nature to create unforgettable moments in Kerala's most enchanting location.
-                                            </p>
-                                            <button className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105">
-                                                Plan Your Wedding
-                                            </button>
-                                        </div>
-                                    </div>
+                                {/* CTA Button */}
+                                <div className="animate-[fadeInUp_1.6s_ease-out]">
+                                    <button className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50 animate-[gentle-pulse_2s_ease-in-out_infinite]">
+                                        Plan Your Wedding
+                                        <ChevronRight className="inline-block ml-2 w-6 h-6" />
+                                    </button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Scroll Indicator */}
+                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+                            <ChevronDown className="w-8 h-8 text-white/60" />
                         </div>
                     </section>
 
