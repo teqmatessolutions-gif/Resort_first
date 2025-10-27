@@ -163,40 +163,90 @@ export default function ResortCMS() {
 
     const handleDelete = async (endpoint, id, name) => {
         if (window.confirm(`Are you sure you want to delete this ${name}?`)) {
+            // Optimistically remove from UI immediately
+            setResortData(prev => {
+                if (endpoint.includes('header-banner')) {
+                    return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
+                } else if (endpoint.includes('gallery')) {
+                    return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
+                } else if (endpoint.includes('reviews')) {
+                    return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
+                } else if (endpoint.includes('resort-info')) {
+                    return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
+                }
+                return prev;
+            });
+            
             try {
                 await api.delete(`${endpoint}/${id}`);
                 toast.success(`${name} deleted successfully!`);
+                // Optionally refresh to sync with server
                 fetchAll();
             } catch (err) {
                 console.error("Delete error:", err);
                 toast.error(`Failed to delete ${name}.`);
+                // Re-fetch to restore original state if delete failed
+                fetchAll();
             }
         }
     };
 
-    const handleFormSubmit = async (config, data, file) => {
-        const isEditing = data && data.id;
-        const endpoint = isEditing ? `${config.endpoint}/${data.id}` : config.endpoint;
+    const handleFormSubmit = async (config, initialData, formData, file) => {
+        const isEditing = initialData && initialData.id;
+        const endpoint = isEditing ? `${config.endpoint}/${initialData.id}` : config.endpoint;
         const method = isEditing ? 'put' : 'post';
 
-        let payload = data;
+        let payload = formData;
         if (config.isMultipart) {
-            const formData = new FormData();
-            Object.keys(data).forEach(key => {
-                if (key !== 'image') formData.append(key, data[key]);
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (key !== 'image') data.append(key, formData[key]);
             });
-            if (file) formData.append('image', file);
-            payload = formData;
+            if (file) data.append('image', file);
+            payload = data;
         }
 
         try {
-            await api({
+            const response = await api({
                 method: method,
                 url: endpoint,
                 data: payload,
             });
             toast.success(`${config.title} ${isEditing ? 'updated' : 'added'} successfully!`);
-            fetchAll();
+            
+            // Optimistically update the UI
+            if (config.endpoint.includes('header-banner')) {
+                setResortData(prev => ({
+                    ...prev,
+                    banners: isEditing 
+                        ? prev.banners.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.banners]
+                }));
+            } else if (config.endpoint.includes('gallery')) {
+                setResortData(prev => ({
+                    ...prev,
+                    gallery: isEditing
+                        ? prev.gallery.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.gallery]
+                }));
+            } else if (config.endpoint.includes('reviews')) {
+                setResortData(prev => ({
+                    ...prev,
+                    reviews: isEditing
+                        ? prev.reviews.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.reviews]
+                }));
+            } else if (config.endpoint.includes('resort-info')) {
+                setResortData(prev => ({
+                    ...prev,
+                    resortInfo: isEditing
+                        ? prev.resortInfo.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.resortInfo]
+                }));
+            }
+            
+            // Close modal after successful save
+            setModalState({ isOpen: false, config: null, initialData: null });
         } catch (error) {
             console.error(`Failed to ${isEditing ? 'update' : 'add'} ${config.title}:`, error.response?.data || error.message);
             toast.error(`Failed to save ${config.title}.`);
@@ -233,7 +283,7 @@ export default function ResortCMS() {
                 <FormModal
                     isOpen={modalState.isOpen}
                     onClose={() => setModalState({ isOpen: false, config: null, initialData: null })}
-                    onSubmit={(data, file) => handleFormSubmit(modalState.config, data, file)}
+                    onSubmit={(data, file) => handleFormSubmit(modalState.config, modalState.initialData, data, file)}
                     fields={modalState.config?.fields || []}
                     initialData={modalState.initialData}
                     title={`${modalState.initialData ? 'Edit' : 'Add'} ${modalState.config?.title}`}
