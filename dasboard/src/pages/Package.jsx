@@ -404,6 +404,42 @@ const Packages = () => {
 
   return (
     <DashboardLayout>
+      {/* Image Gallery Modal */}
+      {selectedPackageImages && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedPackageImages(null)}>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">{selectedPackageImages.title}</h2>
+                <button onClick={() => setSelectedPackageImages(null)} className="text-gray-500 hover:text-gray-800">
+                  <i className="fas fa-times text-2xl"></i>
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {selectedPackageImages.images.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img
+                      src={getImageUrl(img.image_url)}
+                      alt={`${selectedPackageImages.title} - Image ${idx + 1}`}
+                      className="w-full h-64 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => window.open(getImageUrl(img.image_url), '_blank')}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center text-gray-600">
+                <p>Click on any image to view in full size</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Package Management</h1>
 
       {/* KPI Section */}
