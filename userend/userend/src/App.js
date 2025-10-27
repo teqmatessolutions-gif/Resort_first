@@ -1368,28 +1368,116 @@ export default function App() {
                         </div>
                     </section>
                     
-                    {/* Rooms Section */}
-                    <section id="rooms-section">
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <BedDouble className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Our Rooms
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                           <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_70s_linear_infinite] hover:[animation-play-state:paused]">
-                                {rooms.length > 0 ? [...rooms, ...rooms].map((room, index) => (
-                                    <div key={`${room.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{room.type}</h3>
-                                            <p className={`text-sm mb-1 ${textSecondary}`}>Room Number: {room.number}</p>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{room.price}</p>
-                                            <p className={`font-semibold text-sm ${room.status === "Available" ? "text-green-400" : "text-red-400"}`}>{room.status}</p>
-                                            <button onClick={() => handleOpenRoomBookingForm(room.id)} className={`${buttonStyle} disabled:opacity-50 disabled:cursor-not-allowed`} disabled={room.status !== "Available"}>
-                                                Book Now <ChevronRight className="ml-1 w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No rooms available.</p>}
+                    {/* Luxury Villa Showcase Section */}
+                    <section id="rooms-section" className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ LUXURY ACCOMMODATION ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    Sustainable Luxury Cottages with Unforgettable Views
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Experience the perfect blend of luxury and sustainability in our eco-friendly cottages with panoramic lake and forest views
+                                </p>
                             </div>
+
+                            {/* Villa Grid */}
+                            {rooms.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {rooms.filter(room => room.status === "Available").slice(0, 6).map((room, index) => (
+                                        <div 
+                                            key={room.id} 
+                                            className="group relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                                        >
+                                            {/* Image Container with Overlay */}
+                                            <div className="relative h-72 overflow-hidden">
+                                                <img 
+                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
+                                                    alt={room.type} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                                                
+                                                {/* Luxury Badge */}
+                                                <div className="absolute top-4 left-4">
+                                                    <span className="px-4 py-2 bg-amber-500 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg">
+                                                        Premium Villa
+                                                    </span>
+                                                </div>
+
+                                                {/* Status Badge */}
+                                                <div className="absolute top-4 right-4">
+                                                    <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-lg ${room.status === "Available" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+                                                        {room.status}
+                                                    </span>
+                                                </div>
+
+                                                {/* Hover Effect Overlay */}
+                                                <div className="absolute inset-0 bg-amber-500/0 group-hover:bg-amber-500/10 transition-all duration-500" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-6 space-y-4">
+                                                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+                                                    {room.type}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <BedDouble className="w-5 h-5 text-amber-500" />
+                                                    <span>Room #{room.number}</span>
+                                                </div>
+                                                
+                                                {/* Features */}
+                                                <div className="flex items-center gap-4 text-sm">
+                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                                        Lake View
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                                        Balcony
+                                                    </span>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className="flex items-baseline justify-between pt-2 border-t border-gray-200">
+                                                    <div>
+                                                        <p className="text-sm text-gray-500">Starting from</p>
+                                                        <p className="text-3xl font-extrabold text-amber-600">
+                                                            ₹{room.price}
+                                                            <span className="text-sm text-gray-500 font-normal">/night</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* CTA Button */}
+                                                <button 
+                                                    onClick={() => handleOpenRoomBookingForm(room.id)} 
+                                                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+                                                    disabled={room.status !== "Available"}
+                                                >
+                                                    Book Now
+                                                    <ChevronRight className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${textSecondary}`}>No villas available at the moment.</p>
+                            )}
+
+                            {/* View All Button */}
+                            {rooms.length > 6 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
+                                        View All Villas
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </section>
 
