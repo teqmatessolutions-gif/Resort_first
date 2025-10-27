@@ -1208,11 +1208,11 @@ export default function App() {
                     </div>
                 </header>
 
-                <main className="w-full pt-12 sm:pt-16 space-y-8 sm:space-y-12 relative z-10 overflow-hidden">
-                  {/* Banner Section */}
+                <main className="w-full pt-0 space-y-0 relative z-10 overflow-hidden">
+                  {/* Luxury Hero Banner Section */}
 <div
   ref={bannerRef}
-  className="relative w-full h-[80vh] overflow-hidden shadow-2xl mt-5 rounded-2xl"
+  className="relative w-full h-screen overflow-hidden"
 >
     {bannerData.length > 0 ? (
         <>
@@ -1227,39 +1227,54 @@ export default function App() {
                 />
             ))}
 
-            {/* Gradient Overlay and Text Content */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-center text-center px-6">
-                <div className="relative w-full max-w-3xl h-48">
+            {/* Luxury Gradient Overlay with Premium Content */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 flex items-center justify-center text-center px-6">
+                <div className="relative w-full max-w-5xl">
                     {bannerData.map((banner, index) => (
-                        <div key={banner.id} className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}>
-                            <h1 className="text-4xl md:text-6xl font-extrabold tracking-wide drop-shadow-xl text-white">
-                                {banner.title}
+                        <div key={banner.id} className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                            <div className="mb-4 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30">
+                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                    ✦ Luxury Experience ✦
+                                </span>
+                            </div>
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight drop-shadow-2xl text-white mb-6">
+                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                    {banner.title}
+                                </span>
                             </h1>
-                            <p className="mt-4 text-lg md:text-xl text-neutral-200">
+                            <p className="mt-4 text-xl md:text-2xl text-neutral-100 max-w-4xl mx-auto leading-relaxed drop-shadow-lg px-4">
                                 {banner.subtitle}
                             </p>
-                            <a href="#rooms-section" className={`mt-6 inline-block px-8 py-3 text-white font-semibold ${theme.buttonBg} rounded-full shadow-xl ${theme.buttonHover} transition-all duration-300 transform hover:scale-105 hover:shadow-2xl`}>
-                                Explore Rooms
-                            </a>
+                            <div className="mt-10 flex flex-wrap justify-center gap-4">
+                                <a href="#rooms-section" className="group px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50">
+                                    <span className="flex items-center gap-2">
+                                        Book Your Stay
+                                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </span>
+                                </a>
+                                <a href="#packages" className="px-10 py-4 bg-white/10 backdrop-blur-sm text-white font-bold text-lg rounded-full border-2 border-white/30 hover:bg-white/20 transition-all duration-300">
+                                    View Packages
+                                </a>
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Carousel Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
-        {bannerData.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentBannerIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              index === currentBannerIndex
-                ? "bg-white scale-125"
-                : "bg-white/50 hover:bg-white"
-            }`}
-          />
-        ))}
-      </div>
+            {/* Luxury Navigation Dots */}
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3">
+                {bannerData.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => setCurrentBannerIndex(index)}
+                        className={`transition-all duration-300 ${
+                            index === currentBannerIndex
+                                ? "w-12 h-1 bg-amber-400 rounded-full"
+                                : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                        }`}
+                    />
+                ))}
+            </div>
         </>
     ) : (
         <div className={`w-full h-full flex items-center justify-center ${theme.placeholderBg} ${theme.placeholderText}`}>
@@ -1268,10 +1283,25 @@ export default function App() {
     )}
 </div>
 
+                    {/* Premium Luxury Section - Inspired by Mountain Shadows */}
+                    <section className="bg-gradient-to-b from-neutral-50 to-white py-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Exclusive Deals ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    Packages for Memorable Experiences
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                                    Discover our curated luxury packages designed to create unforgettable moments
+                                </p>
+                            </div>
+                    </section>
 
                     {/* Packages Section */}
-                    <section>
-                        <h2 className={`group ${sectionTitleStyle}`}>
+                    <section id="packages" className="bg-white py-16">
+                        <h2 className={`group text-center ${sectionTitleStyle}`}>
                             <Package className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Luxury Packages
                         </h2>
                         <div className="w-full overflow-hidden">
