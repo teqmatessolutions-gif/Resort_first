@@ -305,12 +305,24 @@ const AttendanceTracking = () => {
       setWorkLogs([response.data, ...workLogs]);
       showMessage('Clocked in successfully.', 'success');
     } catch (err) {
-      showMessage(err.response?.data?.detail || 'Failed to clock in.', 'error');
+      const errorMsg = err.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to clock in.';
+      showMessage(message, 'error');
     }
   };
 
   const handleClockOut = async () => {
     if (!selectedEmployeeId) return showMessage('Please select an employee.', 'error');
+    
+    // Check if there's an open clock-in before attempting clock-out
+    const hasOpenClockIn = workLogs.some(log => 
+      log.check_out_time === null || log.check_out_time === undefined
+    );
+    
+    if (!hasOpenClockIn) {
+      return showMessage('Please clock in first before clocking out.', 'error');
+    }
+    
     try {
       // Corrected to use POST and send employee_id in the body, matching the backend implementation
       const response = await api.post('/attendance/clock-out', { employee_id: selectedEmployeeId });
@@ -318,7 +330,9 @@ const AttendanceTracking = () => {
       setWorkLogs(workLogs.map(log => log.id === response.data.id ? response.data : log).sort((a, b) => new Date(b.date) - new Date(a.date) || b.id - a.id));
       showMessage('Clocked out successfully.', 'success');
     } catch (err) {
-      showMessage(err.response?.data?.detail || 'Failed to clock out.', 'error');
+      const errorMsg = err.response?.data?.detail;
+      const message = typeof errorMsg === 'string' ? errorMsg : 'Failed to clock out.';
+      showMessage(message, 'error');
     }
   };
 
