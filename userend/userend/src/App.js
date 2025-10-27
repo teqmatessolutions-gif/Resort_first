@@ -1560,6 +1560,80 @@ export default function App() {
                         </div>
                     </section>
 
+                    {/* Premium Services Showcase Section */}
+                    <section className="bg-white py-20">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Premium Services ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    WORLD-CLASS AMENITIES & SERVICES
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Experience unparalleled luxury with our comprehensive range of world-class amenities and personalized services
+                                </p>
+                            </div>
+
+                            {/* Services Grid - 2 Column Layout */}
+                            {services.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {services.slice(0, 4).map((service) => (
+                                        <div 
+                                            key={service.id}
+                                            className="group relative bg-gradient-to-br from-white to-neutral-50 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                        >
+                                            {/* Icon */}
+                                            <div className="flex items-start gap-6 mb-6">
+                                                <div className="relative">
+                                                    <div className="absolute inset-0 bg-amber-500/20 rounded-2xl blur-xl"></div>
+                                                    <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-4 rounded-2xl">
+                                                        <ConciergeBell className="w-8 h-8 text-white" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors mb-2">
+                                                        {service.name}
+                                                    </h3>
+                                                    <p className="text-gray-600 leading-relaxed">
+                                                        {service.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Pricing */}
+                                            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                                                <span className="text-sm text-gray-500 uppercase tracking-wide font-semibold">
+                                                    Starting From
+                                                </span>
+                                                <div className="text-right">
+                                                    <span className="text-3xl font-extrabold text-amber-600">
+                                                        ₹{service.charges}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Hover Glow Effect */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-transparent rounded-3xl transition-all duration-500 pointer-events-none" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center py-12 text-gray-500">No services available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {services.length > 4 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50">
+                                        View All Services
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
                     {/* Food Items Section */}
                     <section>
                         <h2 className={`group ${sectionTitleStyle}`}>
