@@ -1354,11 +1354,15 @@ export default function App() {
                             <div className="relative">
                                 <button 
                                     onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-2.5 rounded-lg transition-all duration-300 ${theme.textAccent} hover:${theme.bgSecondary} border ${theme.border} hover:border-amber-500 shadow-md hover:shadow-lg`}
+                                    className={`p-2.5 rounded-lg transition-all duration-300 border shadow-md hover:shadow-lg ${theme.textAccent} ${theme.border} bg-opacity-10 hover:bg-opacity-20 ${isThemeDropdownOpen ? 'ring-2 ring-amber-500 bg-opacity-30' : ''}`}
+                                    style={{ 
+                                        backgroundColor: `${theme.bgCard}80`,
+                                        borderColor: theme.border.includes('amber') ? '#f59e0b' : 'currentColor'
+                                    }}
                                     title="Change Theme"
                                     aria-label="Change Theme"
                                 >
-                                    <div className="w-6 h-6">
+                                    <div className="w-6 h-6 flex items-center justify-center">
                                         {themes[currentTheme].icon}
                                     </div>
                                 </button>
