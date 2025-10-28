@@ -802,7 +802,8 @@ export default function App() {
                 ] = data;
 
                 setAllRooms(roomsData);
-                setRooms(roomsData);
+                // Don't set rooms here - only show after dates are selected
+                // setRooms will be set in useEffect when dates are chosen
                 setBookings(bookingsData.bookings || []); // Store bookings for availability filtering
                 setServices(servicesData || []); // Fetch services from backend
                 setFoodItems(foodItemsData);
@@ -943,10 +944,16 @@ export default function App() {
     }, [bookingData.check_in, bookingData.check_out, allRooms, bookings]);
 
     // Filter rooms based on date availability for package booking
+    // Note: This shares the same rooms state, so it will override regular booking rooms
+    // Priority: If package dates are set, show package rooms; else show regular booking rooms
     useEffect(() => {
-        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0) {
+        // Check both booking and package booking dates to determine which rooms to show
+        const hasBookingDates = bookingData.check_in && bookingData.check_out;
+        const hasPackageDates = packageBookingData.check_in && packageBookingData.check_out;
+        
+        if (hasPackageDates && allRooms.length > 0) {
+            // Package booking dates take priority
             const availableRooms = allRooms.filter(room => {
-                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
                 const hasConflict = bookings.some(booking => {
                     const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
                     if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
@@ -956,11 +963,9 @@ export default function App() {
                     const requestedCheckIn = new Date(packageBookingData.check_in);
                     const requestedCheckOut = new Date(packageBookingData.check_out);
                     
-                    // Check if room is part of this booking
                     const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
                     if (!isRoomInBooking) return false;
                     
-                    // Check for date overlap
                     return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
                 });
                 
@@ -968,11 +973,14 @@ export default function App() {
             });
             
             setRooms(availableRooms);
+        } else if (hasBookingDates && allRooms.length > 0) {
+            // Use regular booking dates if package dates not set
+            // This is handled by the first useEffect
         } else {
-            // If no dates selected, don't show any rooms - require dates first
+            // No dates selected - clear rooms
             setRooms([]);
         }
-    }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings]);
+    }, [packageBookingData.check_in, packageBookingData.check_out, bookingData.check_in, bookingData.check_out, allRooms, bookings]);
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
@@ -1344,23 +1352,51 @@ export default function App() {
                         </div>
                         <nav className="flex items-center space-x-4">
                             <div className="relative">
-                                <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className="p-2 rounded-lg transition-colors duration-300 text-gray-700 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-neutral-800"
-                                    title="Change Theme">
-                                    {themes[currentTheme].icon}
+                                <button 
+                                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                                    className={`p-2.5 rounded-lg transition-all duration-300 ${theme.textAccent} hover:${theme.bgSecondary} border ${theme.border} hover:border-amber-500 shadow-md hover:shadow-lg`}
+                                    title="Change Theme"
+                                    aria-label="Change Theme"
+                                >
+                                    <div className="w-6 h-6">
+                                        {themes[currentTheme].icon}
+                                    </div>
                                 </button>
                                 {isThemeDropdownOpen && (
-                                    <div className={`absolute right-0 mt-2 w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
-                                        <div className="p-2 grid grid-cols-4 gap-1">
-                                            {Object.values(themes).map((t) => (
-                                                <button key={t.id} onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `${theme.buttonBg} ${theme.buttonText}` : `${theme.textSecondary} ${theme.bgSecondary} ${theme.textAccent}`}`}
-                                                    title={t.name}>
-                                                    {t.icon}
-                                                </button>
-                                            ))}
+                                    <>
+                                        {/* Backdrop to close dropdown when clicking outside */}
+                                        <div 
+                                            className="fixed inset-0 z-[49]" 
+                                            onClick={() => setIsThemeDropdownOpen(false)}
+                                        ></div>
+                                        <div className={`absolute right-0 mt-2 w-56 ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[55] overflow-hidden`}>
+                                            <div className={`p-3 ${theme.bgSecondary} border-b ${theme.border}`}>
+                                                <p className={`text-sm font-semibold ${theme.textPrimary}`}>Choose Theme</p>
+                                            </div>
+                                            <div className="p-3 grid grid-cols-4 gap-2">
+                                                {Object.values(themes).map((t) => (
+                                                    <button 
+                                                        key={t.id} 
+                                                        onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
+                                                        className={`p-3 rounded-lg transition-all duration-300 flex items-center justify-center ${
+                                                            t.id === currentTheme 
+                                                                ? `${theme.buttonBg} ${theme.buttonText} ring-2 ring-offset-2 ${theme.border} shadow-lg transform scale-105` 
+                                                                : `${theme.bgSecondary} ${theme.textSecondary} hover:${theme.bgCard} hover:${theme.textPrimary} border ${theme.border} hover:border-amber-500`
+                                                        }`}
+                                                        title={t.name}
+                                                        aria-label={`Select ${t.name} theme`}
+                                                    >
+                                                        <div className="w-5 h-5">
+                                                            {t.icon}
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className={`p-2 text-center ${theme.bgSecondary} border-t ${theme.border}`}>
+                                                <span className={`text-xs ${theme.textSecondary}`}>{themes[currentTheme].name} Theme</span>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
                             </div>
 
@@ -2203,7 +2239,7 @@ export default function App() {
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
+                                                        src={getImageUrl(room.image_url)} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -2287,17 +2323,22 @@ export default function App() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
-                                    {packageBookingData.check_in && packageBookingData.check_out && (
-                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
-                                    )}
-                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
-                                            rooms.filter(r => r.status === 'Available').map(room => (
+                                    {!packageBookingData.check_in || !packageBookingData.check_out ? (
+                                        <div className={`p-6 text-center rounded-xl ${theme.bgSecondary} border-2 border-dashed ${theme.border}`}>
+                                            <BedDouble className={`w-10 h-10 ${theme.textSecondary} mx-auto mb-3`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>Please select check-in and check-out dates above to see available rooms</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
+                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                                {rooms.length > 0 ? (
+                                                    rooms.map(room => (
                                                 <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
+                                                        src={getImageUrl(room.image_url)} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -2309,17 +2350,17 @@ export default function App() {
                                                         <p className="text-xs font-bold mt-1">₹{room.price}</p>
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="col-span-full text-center py-8 text-gray-500">
-                                                <p className="text-sm">
-                                                    {packageBookingData.check_in && packageBookingData.check_out 
-                                                        ? "No rooms available for the selected dates. Please try different dates." 
-                                                        : "Please select check-in and check-out dates first"}
-                                                </p>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                                        <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                        <p className="text-sm font-semibold mb-1">No rooms available</p>
+                                                        <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Full Name</label>
