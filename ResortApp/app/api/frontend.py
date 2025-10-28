@@ -61,7 +61,10 @@ async def update_header_banner(
 ):
     image_url = None
     if image:
-        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        # Generate unique filename to avoid conflicts
+        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
         normalized_path = file_path.replace('\\', '/')
