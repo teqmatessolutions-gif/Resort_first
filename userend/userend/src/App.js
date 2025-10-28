@@ -1545,7 +1545,7 @@ export default function App() {
                                             >
                                                 <div className="flex flex-col md:flex-row items-stretch">
                                                     {/* Large Image Section - Left */}
-                                                    <div className="w-full md:w-1/2 h-96 md:h-auto min-h-[500px] overflow-hidden relative">
+                                                    <div className="w-full md:w-1/2 h-96 md:h-[600px] overflow-hidden relative">
                                                         <img 
                                                             src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                             alt={featuredPkg.title} 
