@@ -1576,8 +1576,8 @@ export default function App() {
 
                                     {/* Smaller Packages Grid - Only show if more than 1 package */}
                                     {packages.length > 1 && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            {packages.slice(1, 5).map((pkg) => {
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {packages.slice(1, 4).map((pkg) => {
                                                 const imgIndex = packageImageIndex[pkg.id] || 0;
                                                 const currentImage = pkg.images && pkg.images[imgIndex];
                                                 return (
@@ -1610,26 +1610,14 @@ export default function App() {
                                                             )}
                                                         </div>
 
-                                                        {/* Content */}
+                                                        {/* Content - Simplified like Mountain Shadows */}
                                                         <div className={`p-6 ${theme.bgCard}`}>
                                                             <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
                                                                 {pkg.title}
                                                             </h3>
-                                                            <p className={`text-base ${theme.textSecondary} mb-4 font-medium`}>
+                                                            <p className={`text-base ${theme.textSecondary} font-medium`}>
                                                                 (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
                                                             </p>
-                                                            <div className={`flex items-center justify-between pt-4 border-t ${theme.border}`}>
-                                                                <span className={`text-2xl font-extrabold ${theme.textAccent}`}>
-                                                                    ₹{pkg.price}
-                                                                </span>
-                                                                <button 
-                                                                    onClick={() => handleOpenPackageBookingForm(pkg.id)} 
-                                                                    className={`px-6 py-2 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2 text-sm`}
-                                                                >
-                                                                    KNOW MORE
-                                                                    <ChevronRight className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
