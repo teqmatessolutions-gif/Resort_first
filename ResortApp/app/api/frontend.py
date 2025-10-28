@@ -34,11 +34,12 @@ async def create_header_banner(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.HeaderBannerCreate(
         title=title,
         subtitle=subtitle,
         is_active=is_active,
-        image_url=f"/{file_path.replace('\\', '/')}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.HeaderBanner, obj)
 
@@ -59,7 +60,8 @@ async def update_header_banner(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        image_url = f"/{file_path.replace('\\', '/')}"
+        normalized_path = file_path.replace('\\', '/')
+        image_url = f"/{normalized_path}"
 
     obj = schemas.HeaderBannerUpdate(
         title=title,
@@ -114,10 +116,11 @@ async def create_gallery(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.GalleryCreate(
         caption=caption,
         is_active=is_active,
-        image_url=f"/{file_path.replace('\\', '/')}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.Gallery, obj)
 
@@ -136,7 +139,8 @@ async def update_gallery(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        image_url = f"/{file_path.replace('\\', '/')}"
+        normalized_path = file_path.replace('\\', '/')
+        image_url = f"/{normalized_path}"
 
     obj = schemas.GalleryCreate(
         caption=caption,
@@ -221,11 +225,12 @@ async def create_signature_experience(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.SignatureExperienceCreate(
         title=title,
         description=description,
         is_active=is_active,
-        image_url=f"/{file_path.replace('\\', '/')}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.SignatureExperience, obj)
 
@@ -250,7 +255,8 @@ async def update_signature_experience(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
 
     obj = schemas.SignatureExperienceUpdate(**update_data)
     return crud.update(db, models.SignatureExperience, item_id, obj)
@@ -280,11 +286,12 @@ async def create_plan_wedding(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.PlanWeddingCreate(
         title=title,
         description=description,
         is_active=is_active,
-        image_url=f"/{file_path.replace('\\', '/')}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.PlanWedding, obj)
 
@@ -309,7 +316,8 @@ async def update_plan_wedding(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
 
     obj = schemas.PlanWeddingUpdate(**update_data)
     return crud.update(db, models.PlanWedding, item_id, obj)
@@ -339,11 +347,12 @@ async def create_nearby_attraction(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.NearbyAttractionCreate(
         title=title,
         description=description,
         is_active=is_active,
-        image_url=f"/{file_path.replace('\\', '/')}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.NearbyAttraction, obj)
 
@@ -368,7 +377,8 @@ async def update_nearby_attraction(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
 
     obj = schemas.NearbyAttractionUpdate(**update_data)
     return crud.update(db, models.NearbyAttraction, item_id, obj)
