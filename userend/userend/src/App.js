@@ -31,14 +31,18 @@ const themes = {
         id: 'dark',
         name: 'Dark',
         icon: <Moon className="w-5 h-5" />,
-        bgPrimary: "bg-neutral-950",
-        bgSecondary: "bg-neutral-900",
-        bgCard: "bg-neutral-900",
+        bgPrimary: "bg-black",
+        bgSecondary: "bg-neutral-950",
+        bgCard: "bg-white",
         textPrimary: "text-white",
         textSecondary: "text-neutral-400",
+        textCardPrimary: "text-neutral-900",
+        textCardSecondary: "text-neutral-600",
         textAccent: "text-amber-400",
+        textCardAccent: "text-amber-600",
         textTitleGradient: "from-gray-200 via-white to-gray-400",
         border: "border-neutral-700",
+        cardBorder: "border-neutral-200",
         borderHover: "hover:border-amber-500/50",
         buttonBg: "bg-amber-500",
         buttonText: "text-neutral-950",
@@ -65,7 +69,11 @@ const themes = {
         bgCard: "bg-white",
         textPrimary: "text-neutral-900",
         textSecondary: "text-neutral-600",
+        textCardPrimary: "text-neutral-900",
+        textCardSecondary: "text-neutral-600",
         textAccent: "text-amber-600",
+        textCardAccent: "text-amber-600",
+        cardBorder: "border-neutral-300",
         textTitleGradient: "from-amber-600 via-amber-700 to-neutral-900",
         border: "border-neutral-300",
         borderHover: "hover:border-amber-500/50",
@@ -91,7 +99,7 @@ const themes = {
         icon: <Droplet className="w-5 h-5" />,
         bgPrimary: "bg-slate-50",
         bgSecondary: "bg-slate-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-slate-900",
         textSecondary: "text-slate-600",
         textAccent: "text-teal-600",
@@ -120,7 +128,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tree-pine"><path d="M17 19h2c.5 0 1-.5 1-1V9c0-2-3-3-3-3H8c-3 0-4 1.5-4 4.5v3.5c0 1.5 1 2 2 2h2"/><path d="M14 15v.5"/><path d="M13 14v.5"/><path d="M12 13v.5"/><path d="M11 12v.5"/><path d="M10 11v.5"/><path d="M9 10v.5"/><path d="M8 9v.5"/><path d="M17 14v.5"/><path d="M16 13v.5"/><path d="M15 12v.5"/><path d="M14 11v.5"/><path d="M13 10v.5"/><path d="M12 9v.5"/><path d="M11 8v.5"/><path d="M10 7v.5"/><path d="M9 6v.5"/><path d="M15 18v1"/><path d="M14 17v1"/><path d="M13 16v1"/><path d="M12 15v1"/><path d="M11 14v1"/><path d="M10 13v1"/><path d="M9 12v1"/><path d="M8 11v1"/><path d="M7 10v1"/><path d="M6 9v1"/><path d="M18 17v1"/><path d="M17 16v1"/><path d="M16 15v1"/><path d="M15 14v1"/><path d="M14 13v1"/><path d="M13 12v1"/><path d="M12 11v1"/><path d="M11 10v1"/><path d="M10 9v1"/><path d="M19 18v1"/><path d="M18 17v1"/><path d="M17 16v1"/><path d="M16 15v1"/><path d="M15 14v1"/><path d="M14 13v1"/><path d="M13 12v1"/><path d="M22 19v2"/><path d="M20 18v1"/><path d="M18 17v1"/><path d="M16 16v1"/><path d="M14 15v1"/><path d="M12 14v1"/><path d="M10 13v1"/><path d="M8 12v1"/><path d="M6 11v1"/><path d="M4 10v1"/><path d="M2 9v1"/><path d="M2 21h20"/><path d="m14 12-2-4-2 4"/><path d="m13 8-1-4-1 4"/><path d="M14 12c.5-1 1.5-2 2.5-3"/><path d="M10 12c-.5-1-1.5-2-2.5-3"/><path d="M12 22v-8"/><path d="m10 16-2 3"/><path d="m14 16 2 3"/></svg>,
         bgPrimary: "bg-green-50",
         bgSecondary: "bg-green-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-green-900",
         textSecondary: "text-green-600",
         textAccent: "text-emerald-600",
@@ -149,7 +157,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flower"><path d="M12 7.5a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1-4.5-4.5H12a4.5 4.5 0 1 1 4.5 4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M7.5 12H12a4.5 4.5 0 0 0 4.5-4.5v-3a4.5 4.5 0 1 1 0 9v3a4.5 4.5 0 1 1 0-9h-4.5a4.5 4.5 0 0 0-4.5 4.5V12z"/></svg>,
         bgPrimary: "bg-pink-50",
         bgSecondary: "bg-pink-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-pink-900",
         textSecondary: "text-pink-600",
         textAccent: "text-rose-600",
@@ -178,7 +186,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/></svg>,
         bgPrimary: "bg-gray-950",
         bgSecondary: "bg-gray-900",
-        bgCard: "bg-gray-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-gray-100",
         textSecondary: "text-gray-400",
         textAccent: "text-sky-400",
@@ -207,7 +215,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sunrise"><path d="M12 2v2"/><path d="m5 10 1-1"/><path d="m19 10 1-1"/><path d="M12 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-orange-50",
         bgSecondary: "bg-yellow-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-orange-900",
         textSecondary: "text-orange-600",
         textAccent: "text-red-500",
@@ -236,7 +244,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lavender"><path d="M14.5 16.5c-2.4-1-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5C3.3 6.7 4 6 5 6c1.1 0 2.4.8 3.5 2.5 1.2 1.9 2 4.2 2.5 5.5.5 1.5 1 3.6 2 4.5 1 .8 2.2 1.3 3.5 1C17.3 17.3 18 16.6 18 15.6c0-1.1-.8-2.4-2.5-3.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5.3-1.3 1-2 2-2 1.1 0 2.4.8 3.5 2.5 1.9 1.2 4.2 2 5.5 2.5 1.5.5 3.6 1 4.5 2 .8 1 1.3 2.2 1 3.5-.3 1.3-1 2-2 2-1.1 0-2.4-.8-3.5-2.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4-.8-3.5-2.5"/><path d="M12 12c-2.4-1-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5.3-1.3 1-2 2-2 1.1 0 2.4.8 3.5 2.5 1.9 1.2 4.2 2 5.5 2.5 1.5.5 3.6 1 4.5 2 .8 1 1.3 2.2 1 3.5-.3 1.3-1 2-2 2-1.1 0-2.4-.8-3.5-2.5"/><path d="M12 12c2.4-1 4.2-2 5.5-2.5 1.5-.5 3.6-1 4.5-2 .8-1 1.3 2.2 1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4.8-3.5 2.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4-.8-3.5-2.5"/></svg>,
         bgPrimary: "bg-indigo-950",
         bgSecondary: "bg-indigo-900",
-        bgCard: "bg-indigo-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-indigo-100",
         textSecondary: "text-indigo-300",
         textAccent: "text-violet-400",
@@ -265,7 +273,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sunrise"><path d="M12 2v2"/><path d="m5 10 1-1"/><path d="m19 10 1-1"/><path d="M12 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-stone-100",
         bgSecondary: "bg-stone-200",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-stone-900",
         textSecondary: "text-stone-600",
         textAccent: "text-orange-700",
@@ -294,7 +302,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grape"><path d="M22 6c0 4-4 8-10 8S2 10 2 6"/><path d="M12 14c-6 0-10 4-10 8s4 8 10 8"/><path d="M22 14c-6 0-10 4-10 8s4 8 10 8"/></svg>,
         bgPrimary: "bg-purple-950",
         bgSecondary: "bg-purple-900",
-        bgCard: "bg-purple-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-purple-100",
         textSecondary: "text-purple-300",
         textAccent: "text-pink-400",
@@ -323,7 +331,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-sun"><path d="M12 2v2"/><path d="m4.9 10 1-1"/><path d="m19.1 10-1-1"/><path d="M14 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-sky-50",
         bgSecondary: "bg-sky-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-sky-900",
         textSecondary: "text-sky-600",
         textAccent: "text-blue-500",
@@ -352,7 +360,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame"><path d="M18 10c-1.2-1.2-3-2-5-2-1.2 0-2.8.8-4 2-1.2 1.2-2 3-2 5-2.2 2.2-2.5 4.5-2.5 5.5s.8 1.5 1.5 1.5c.7 0 1.5-.8 1.5-1.5s.3-3.3 2.5-5.5c1.2-1.2 3-2 5-2 1.2 0 2.8.8 4 2 1.2 1.2 2 3 2 5 2.2 2.2 2.5 4.5 2.5 5.5s-.8 1.5-1.5 1.5c-.7 0-1.5-.8-1.5-1.5s-.3-3.3-2.5-5.5z"/></svg>,
         bgPrimary: "bg-red-950",
         bgSecondary: "bg-red-900",
-        bgCard: "bg-red-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-red-100",
         textSecondary: "text-red-300",
         textAccent: "text-orange-400",
@@ -381,7 +389,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-leaf"><path d="M2 13c3.5-3.5 12-5 18 0 0 0-4 4-8 8s-8-4-10-6z"/></svg>,
         bgPrimary: "bg-teal-50",
         bgSecondary: "bg-teal-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-teal-900",
         textSecondary: "text-teal-600",
         textAccent: "text-emerald-600",
@@ -678,7 +686,6 @@ export default function App() {
     ]);
     const [userMessage, setUserMessage] = useState("");
     const [isChatLoading, setIsChatLoading] = useState(false);
-    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
     const [showAllRooms, setShowAllRooms] = useState(false);
 
     // Package image slider state
@@ -699,6 +706,7 @@ export default function App() {
     // Booking Modals State
     const [isRoomBookingFormOpen, setIsRoomBookingFormOpen] = useState(false);
     const [isPackageBookingFormOpen, setIsPackageBookingFormOpen] = useState(false);
+    const [isPackageSelectionOpen, setIsPackageSelectionOpen] = useState(false);
     const [isServiceBookingFormOpen, setIsServiceBookingFormOpen] = useState(false);
     const [isFoodOrderFormOpen, setIsFoodOrderFormOpen] = useState(false);
     const [isGeneralBookingOpen, setIsGeneralBookingOpen] = useState(false);
@@ -739,11 +747,8 @@ export default function App() {
     const [bookingMessage, setBookingMessage] = useState({ type: null, text: "" });
     const [isBookingLoading, setIsBookingLoading] = useState(false);
 
-    const [currentTheme, setCurrentTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('selectedTheme');
-        return savedTheme && themes[savedTheme] ? savedTheme : 'dark';
-    });
-
+    // Always use light theme - matching Mountain Shadows style
+    const currentTheme = 'light';
     const theme = themes[currentTheme];
 
     const bannerRef = useRef(null);
@@ -841,7 +846,6 @@ export default function App() {
     }, [bannerData.length]);
 
     const toggleChat = () => setIsChatOpen(!isChatOpen);
-    const changeTheme = (themeId) => setCurrentTheme(themeId);
 
     // Handlers for opening booking modals
     const handleOpenRoomBookingForm = (roomId) => {
@@ -851,7 +855,22 @@ export default function App() {
     };
 
     const handleOpenPackageBookingForm = (packageId) => {
-        setPackageBookingData({ ...packageBookingData, package_id: packageId });
+        // Always prioritize dates from bookingData (selected on previous page) over packageBookingData
+        setPackageBookingData(prev => {
+            const checkIn = (bookingData.check_in && bookingData.check_in.trim() !== '') 
+                ? bookingData.check_in 
+                : (prev.check_in && prev.check_in.trim() !== '' ? prev.check_in : '');
+            const checkOut = (bookingData.check_out && bookingData.check_out.trim() !== '') 
+                ? bookingData.check_out 
+                : (prev.check_out && prev.check_out.trim() !== '' ? prev.check_out : '');
+            
+            return {
+                ...prev, 
+                package_id: packageId,
+                check_in: checkIn,
+                check_out: checkOut
+            };
+        });
         setIsPackageBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
@@ -949,9 +968,36 @@ export default function App() {
         setRooms(allRooms);
     }, [allRooms]);
 
-    // Note: Package booking form uses its own room availability logic
-    // The main rooms section always shows all rooms - no filtering here
-    // Package booking modal will calculate availability separately when form is open
+    // Package booking availability - check availability based on packageBookingData dates
+    const [packageRoomAvailability, setPackageRoomAvailability] = useState({});
+    
+    useEffect(() => {
+        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0 && isPackageBookingFormOpen) {
+            // Calculate availability for each room for package booking
+            const availability = {};
+            allRooms.forEach(room => {
+                const hasConflict = bookings.some(booking => {
+                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
+                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
+                    
+                    const bookingCheckIn = new Date(booking.check_in);
+                    const bookingCheckOut = new Date(booking.check_out);
+                    const requestedCheckIn = new Date(packageBookingData.check_in);
+                    const requestedCheckOut = new Date(packageBookingData.check_out);
+                    
+                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+                    if (!isRoomInBooking) return false;
+                    
+                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+                });
+                
+                availability[room.id] = !hasConflict;
+            });
+            setPackageRoomAvailability(availability);
+        } else {
+            setPackageRoomAvailability({});
+        }
+    }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings, isPackageBookingFormOpen]);
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
@@ -1074,10 +1120,47 @@ export default function App() {
 
         try {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
+            
+            // Validate required fields
+            if (!packageBookingData.package_id) {
+                showBannerMessage("error", "Package ID is missing. Please select a package.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            if (!packageBookingData.check_in || !packageBookingData.check_out) {
+                showBannerMessage("error", "Please select check-in and check-out dates.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            if (!packageBookingData.guest_name) {
+                showBannerMessage("error", "Please enter your full name.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            // Email and mobile are optional in the schema, but we'll recommend at least one
+            if (!packageBookingData.guest_email && !packageBookingData.guest_mobile) {
+                showBannerMessage("error", "Please provide at least an email address or mobile number.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
             const payload = {
-                ...packageBookingData,
+                package_id: parseInt(packageBookingData.package_id),
                 room_ids: packageBookingData.room_ids.map(id => parseInt(id)),
+                guest_name: packageBookingData.guest_name.trim(),
+                guest_email: packageBookingData.guest_email?.trim() || null,
+                guest_mobile: packageBookingData.guest_mobile.trim(),
+                check_in: packageBookingData.check_in,
+                check_out: packageBookingData.check_out,
+                adults: parseInt(packageBookingData.adults) || 1,
+                children: parseInt(packageBookingData.children) || 0,
             };
+            
+            console.log("Package Booking Payload:", payload); // Debug log
+            
             const response = await fetch(`${API_BASE_URL}/packages/book/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1092,17 +1175,39 @@ export default function App() {
                     setIsPackageBookingFormOpen(false);
                 }, 2000);
             } else {
-                const errorData = await response.json();
-                // Check if it's a validation error from the backend
-                if (errorData.detail && errorData.detail.includes("Check-out date must be at least 1 day")) {
-                    showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
-                } else {
-                    showBannerMessage("error", `Package booking failed: ${errorData.detail || "An unexpected error occurred."}`);
+                let errorMessage = "An unexpected error occurred.";
+                try {
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
+                        const errorData = await response.json();
+                        console.error("Package Booking Error Response:", errorData);
+                        
+                        // Check if it's a validation error from the backend
+                        if (errorData.detail) {
+                            if (typeof errorData.detail === 'string') {
+                                errorMessage = errorData.detail;
+                            } else if (Array.isArray(errorData.detail)) {
+                                // Handle Pydantic validation errors
+                                const errors = errorData.detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
+                                errorMessage = `Validation error: ${errors}`;
+                            } else {
+                                errorMessage = JSON.stringify(errorData.detail);
+                            }
+                        }
+                    } else {
+                        const textError = await response.text();
+                        console.error("Error response text:", textError);
+                        errorMessage = textError || `Server error (${response.status}): ${response.statusText}`;
+                    }
+                } catch (parseError) {
+                    console.error("Failed to parse error response:", parseError);
+                    errorMessage = `Server error (${response.status}): ${response.statusText}`;
                 }
+                showBannerMessage("error", `Package booking failed: ${errorMessage}`);
             }
         } catch (err) {
             console.error("Package Booking API Error:", err);
-            showBannerMessage("error", "An error occurred while booking the package. Please try again.");
+            showBannerMessage("error", `An error occurred while booking the package: ${err.message || "Please check your connection and try again."}`);
         } finally {
             setIsBookingLoading(false);
         }
@@ -1242,11 +1347,10 @@ export default function App() {
     }, [chatHistory]);
 
     useEffect(() => {
-        localStorage.setItem('selectedTheme', currentTheme);
         // Apply theme to document body for better visibility
         document.documentElement.className = '';
         document.body.className = `${theme.bgPrimary} ${theme.textPrimary} transition-colors duration-500`;
-    }, [currentTheme, theme]);
+    }, [theme]);
 
 
     useEffect(() => {
@@ -1315,92 +1419,13 @@ export default function App() {
                     </div>
                 )}
                 
-                <header className={`fixed left-0 right-0 z-50 ${theme.bgCard}/95 backdrop-blur-md shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
+                <header className={`fixed left-0 right-0 z-50 ${theme.bgCard}/30 backdrop-blur-sm shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
                     <div className="container mx-auto px-4 sm:px-6 md:px-12 py-4 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                             <BedDouble className={`w-8 h-8 ${theme.textAccent}`} />
                             <span className={`text-2xl font-bold ${theme.textPrimary} tracking-tight`}>Elysian Retreat</span>
                         </div>
                         <nav className="flex items-center space-x-4">
-                            <div className="relative z-[60]">
-                                <button 
-                                    onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-2.5 rounded-lg transition-all duration-300 border shadow-md hover:shadow-lg ${theme.textAccent} ${theme.border} bg-opacity-10 hover:bg-opacity-20 ${isThemeDropdownOpen ? 'ring-2 ring-amber-500 bg-opacity-30' : ''}`}
-                                    style={{ 
-                                        backgroundColor: `${theme.bgCard}80`,
-                                        borderColor: theme.border.includes('amber') ? '#f59e0b' : 'currentColor'
-                                    }}
-                                    title="Change Theme"
-                                    aria-label="Change Theme"
-                                >
-                                    <div className="w-6 h-6 flex items-center justify-center">
-                                        {themes[currentTheme].icon}
-                                    </div>
-                                </button>
-                                {isThemeDropdownOpen && (
-                                    <>
-                                        {/* Backdrop to close dropdown when clicking outside */}
-                                        <div 
-                                            className="fixed inset-0 z-[55]" 
-                                            onClick={() => setIsThemeDropdownOpen(false)}
-                                        ></div>
-                                        {/* Compact Dropdown Menu - Positioned below button, fixed to viewport */}
-                                        <div 
-                                            className={`fixed ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[60] overflow-visible`}
-                                            style={{
-                                                top: '70px',
-                                                right: '20px',
-                                                width: '280px',
-                                                maxHeight: '400px'
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <div className={`p-3 ${theme.bgSecondary} border-b ${theme.border} rounded-t-xl`}>
-                                                <div className="flex items-center justify-between">
-                                                    <p className={`text-sm font-semibold ${theme.textPrimary}`}>Choose Theme</p>
-                                                    <button 
-                                                        onClick={() => setIsThemeDropdownOpen(false)}
-                                                        className={`p-1 rounded hover:${theme.bgCard} ${theme.textSecondary} hover:${theme.textPrimary}`}
-                                                        aria-label="Close"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className={`p-3 grid grid-cols-4 gap-2 overflow-y-auto`} style={{ maxHeight: '300px' }}>
-                                                {Object.values(themes).map((t) => (
-                                                    <button 
-                                                        key={t.id} 
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation();
-                                                            changeTheme(t.id); 
-                                                            setIsThemeDropdownOpen(false); 
-                                                        }}
-                                                        className={`p-2.5 rounded-lg transition-all duration-200 flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
-                                                            t.id === currentTheme 
-                                                                ? `${theme.buttonBg} ${theme.buttonText} ring-2 ring-amber-400 shadow-md` 
-                                                                : `${theme.bgSecondary} ${theme.textSecondary} hover:${theme.bgCard} hover:${theme.textPrimary} border ${theme.border} hover:border-amber-500`
-                                                        }`}
-                                                        title={t.name}
-                                                        aria-label={`Select ${t.name} theme`}
-                                                    >
-                                                        <div className="w-5 h-5 flex items-center justify-center">
-                                                            {t.icon}
-                                                        </div>
-                                                        <span className={`text-[10px] font-semibold ${t.id === currentTheme ? theme.buttonText : theme.textSecondary} leading-tight text-center`}>
-                                                            {t.name}
-                                                        </span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <div className={`p-2 text-center ${theme.bgSecondary} border-t ${theme.border} rounded-b-xl`}>
-                                                <span className={`text-xs ${theme.textSecondary}`}>Current: {themes[currentTheme].name}</span>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
                             <button 
                                 onClick={() => setIsGeneralBookingOpen(true)} 
                                 className={`px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105`}
@@ -1639,10 +1664,10 @@ export default function App() {
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ LUXURY ACCOMMODATION ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     Sustainable Luxury Cottages with Unforgettable Views
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
                                     Experience the perfect blend of luxury and sustainability in our eco-friendly cottages with panoramic lake and forest views
                                 </p>
                             </div>
@@ -1690,7 +1715,7 @@ export default function App() {
                                         {rooms.map((room, index) => (
                                         <div 
                                             key={room.id} 
-                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2`}
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
                                         >
                                             {/* Image Container with Overlay */}
                                             <div className="relative h-48 overflow-hidden">
@@ -1730,33 +1755,33 @@ export default function App() {
 
                                             {/* Content */}
                                             <div className="p-4 space-y-4">
-                                                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors">
+                                                <h3 className={`text-2xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors`}>
                                                     {room.type}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <BedDouble className="w-5 h-5 text-amber-500" />
+                                                <div className={`flex items-center gap-2 text-sm ${theme.textCardSecondary || theme.textSecondary}`}>
+                                                    <BedDouble className={`w-5 h-5 ${theme.textCardAccent || theme.textAccent}`} />
                                                     <span>Room #{room.number}</span>
                                                 </div>
                                                 
                                                 {/* Features */}
-                                                <div className="flex items-center gap-4 text-sm">
-                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                <div className={`flex items-center gap-4 text-sm ${theme.textCardSecondary || theme.textSecondary}`}>
+                                                    <span className="flex items-center gap-1">
                                                         <span className="w-2 h-2 rounded-full bg-green-400"></span>
                                                         Lake View
                                                     </span>
-                                                    <span className="flex items-center gap-1 text-gray-600">
+                                                    <span className="flex items-center gap-1">
                                                         <span className="w-2 h-2 rounded-full bg-green-400"></span>
                                                         Balcony
                                                     </span>
                                                 </div>
 
                                                 {/* Price */}
-                                                <div className="flex items-baseline justify-between pt-2 border-t border-gray-200">
+                                                <div className={`flex items-baseline justify-between pt-2 border-t ${theme.cardBorder || theme.border}`}>
                                                     <div>
-                                                        <p className="text-sm text-gray-500">Starting from</p>
-                                                        <p className="text-3xl font-extrabold text-amber-600">
+                                                        <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary}`}>Starting from</p>
+                                                        <p className={`text-3xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
                                                             ₹{room.price}
-                                                            <span className="text-sm text-gray-500 font-normal">/night</span>
+                                                            <span className={`text-sm ${theme.textCardSecondary || theme.textSecondary} font-normal`}>/night</span>
                                                         </p>
                                                     </div>
                                                 </div>
@@ -1798,10 +1823,10 @@ export default function App() {
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ Signature Experiences ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     SIGNATURE EXPERIENCES AT THE BEST LUXURY RESORT
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
                                     Guests can enjoy a range of curated in-house activities designed to explore the region's rich flora and fauna
                                 </p>
                             </div>
@@ -1812,7 +1837,7 @@ export default function App() {
                                     {signatureExperiences.filter(exp => exp.is_active).map((experience) => (
                                         <div 
                                             key={experience.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
                                         >
                                             {/* Image Container */}
                                             <div className="relative h-64 overflow-hidden">
@@ -1827,10 +1852,10 @@ export default function App() {
 
                                             {/* Content */}
                                             <div className="p-6 space-y-3">
-                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                                                <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
                                                     {experience.title}
                                                 </h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                                                <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
                                                     {experience.description}
                                                 </p>
                                             </div>
@@ -1838,7 +1863,7 @@ export default function App() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center py-12 text-gray-500">No signature experiences available at the moment.</p>
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No signature experiences available at the moment.</p>
                             )}
                         </div>
                     </section>
@@ -1851,10 +1876,10 @@ export default function App() {
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ Premium Services ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     WORLD-CLASS AMENITIES & SERVICES
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
                                     Experience unparalleled luxury with our comprehensive range of world-class amenities and personalized services
                                 </p>
                             </div>
@@ -1865,7 +1890,7 @@ export default function App() {
                                     {services.slice(0, 4).map((service) => (
                                         <div 
                                             key={service.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-500 transform hover:-translate-y-2 border ${theme.border}`}
                                         >
                                             {/* Image Container */}
                                             <div className="relative h-48 overflow-hidden">
@@ -1878,7 +1903,7 @@ export default function App() {
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 flex items-center justify-center">
-                                                        <ConciergeBell className="w-12 h-12 text-amber-500" />
+                                                        <ConciergeBell className={`w-12 h-12 ${theme.textAccent}`} />
                                                     </div>
                                                 )}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
@@ -1895,28 +1920,18 @@ export default function App() {
 
                                             {/* Content */}
                                             <div className="p-4 space-y-3">
-                                                <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                                                <h3 className={`text-lg font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
                                                     {service.name}
                                                 </h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
+                                                <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
                                                     {service.description}
                                                 </p>
-                                                
-                                                {/* Pricing */}
-                                                <div className="pt-2 border-t border-gray-100">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-xs text-gray-500">From</span>
-                                                        <span className="text-xl font-extrabold text-amber-600">
-                                                            ₹{service.charges}
-                                                        </span>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center py-12 text-gray-500">No services available at the moment.</p>
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No services available at the moment.</p>
                             )}
 
                             {/* View More Button */}
@@ -1938,10 +1953,10 @@ export default function App() {
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ Savor the Art ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     SAVOR THE ART OF CUISINE
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
                                     Experience the art of cuisine at our luxury resort. Enjoy a diverse menu featuring international favorites and authentic local flavors, crafted to delight every palate.
                                 </p>
                             </div>
@@ -1952,7 +1967,7 @@ export default function App() {
                                     {foodItems.map((food) => (
                                         <div 
                                             key={food.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
                                         >
                                             {/* Image */}
                                             <div className="relative h-40 overflow-hidden">
@@ -1970,18 +1985,11 @@ export default function App() {
                                                         {food.available ? "Available" : "Unavailable"}
                                                     </span>
                                                 </div>
-
-                                                {/* Price on Image */}
-                                                <div className="absolute bottom-4 left-4 right-4">
-                                                    <span className="inline-block px-4 py-2 bg-white/95 backdrop-blur-sm text-amber-600 font-bold rounded-full text-lg shadow-lg">
-                                                        ₹{food.price}
-                                                    </span>
-                                                </div>
                                             </div>
 
                                             {/* Content */}
                                             <div className="p-5">
-                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors mb-2 line-clamp-2">
+                                                <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors mb-2 line-clamp-2`}>
                                                     {food.name}
                                                 </h3>
                                             </div>
@@ -1989,7 +1997,7 @@ export default function App() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center py-12 text-gray-500">No food items available at the moment.</p>
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No food items available at the moment.</p>
                             )}
 
                             {/* View More Button */}
@@ -2011,10 +2019,10 @@ export default function App() {
                                 <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
                                     ✦ Captured Moments ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     EXPLORE THE TIMELESS BEAUTY
                                 </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
                                     Witness the charm of our resort's stunning views and unforgettable experiences
                                 </p>
                             </div>
@@ -2047,7 +2055,7 @@ export default function App() {
                                     ))}
                                 </div>
                             ) : (
-                                <p className="text-center py-12 text-gray-500">No gallery images available at the moment.</p>
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No gallery images available at the moment.</p>
                             )}
 
                             {/* View More Button */}
@@ -2274,7 +2282,16 @@ export default function App() {
                                             <span>Book a Room</span>
                                         </button>
                                         <button 
-                                            onClick={() => { setIsGeneralBookingOpen(false); setIsPackageBookingFormOpen(true); }}
+                                            onClick={() => { 
+                                                setIsGeneralBookingOpen(false);
+                                                // Copy dates from bookingData to packageBookingData
+                                                setPackageBookingData(prev => ({ 
+                                                    ...prev,
+                                                    check_in: bookingData.check_in || prev.check_in || '',
+                                                    check_out: bookingData.check_out || prev.check_out || ''
+                                                }));
+                                                setIsPackageSelectionOpen(true); 
+                                            }}
                                             className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
                                         >
                                             <Package className="w-5 h-5" />
@@ -2296,16 +2313,33 @@ export default function App() {
                                 <button onClick={() => setIsRoomBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
                             <form onSubmit={handleRoomBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
-                                <div className="flex space-x-4">
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
+                                {bookingData.check_in && bookingData.check_out ? (
+                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
+                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
+                                        <div className="flex space-x-4">
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_in}</p>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_out}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                ) : (
+                                    <div className="flex space-x-4">
+                                        <div className="space-y-2 w-1/2">
+                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                            <input type="date" name="check_in" value={bookingData.check_in || ''} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        </div>
+                                        <div className="space-y-2 w-1/2">
+                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
                                     {!bookingData.check_in || !bookingData.check_out ? (
@@ -2395,16 +2429,33 @@ export default function App() {
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
                                     <input type="number" name="package_id" value={packageBookingData.package_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
                                 </div>
-                                <div className="flex space-x-4">
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
+                                {packageBookingData.check_in && packageBookingData.check_out && packageBookingData.check_in !== '' && packageBookingData.check_out !== '' ? (
+                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
+                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
+                                        <div className="flex space-x-4">
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_in}</p>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_out}</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="space-y-2 w-1/2">
-                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                ) : (
+                                    <div className="flex space-x-4">
+                                        <div className="space-y-2 w-1/2">
+                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                            <input type="date" name="check_in" value={packageBookingData.check_in || ''} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        </div>
+                                        <div className="space-y-2 w-1/2">
+                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
                                     {!packageBookingData.check_in || !packageBookingData.check_out ? (
@@ -2417,9 +2468,17 @@ export default function App() {
                                             <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
                                             <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                                 {rooms.length > 0 ? (
-                                                    rooms.map(room => (
-                                                <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
-                                                    className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                    rooms.map(room => {
+                                                        const isAvailable = Object.keys(packageRoomAvailability).length === 0 || packageRoomAvailability[room.id] !== false;
+                                                        return (
+                                                <div 
+                                                    key={room.id} 
+                                                    onClick={() => isAvailable && handlePackageRoomSelection(room.id)}
+                                                    className={`rounded-lg border-2 transition-all duration-200 overflow-hidden ${
+                                                        !isAvailable 
+                                                            ? 'opacity-50 cursor-not-allowed bg-gray-300 border-gray-400' 
+                                                            : `cursor-pointer ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`
+                                                    }`}
                                                 >
                                                     <img 
                                                         src={getImageUrl(room.image_url)} 
@@ -2432,9 +2491,13 @@ export default function App() {
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
                                                         <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        {!isAvailable && (
+                                                            <p className="text-xs text-red-600 font-bold mt-1">Unavailable</p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                    ))
+                                                        );
+                                                    })
                                                 ) : (
                                                     <div className="col-span-full text-center py-8 text-gray-500">
                                                         <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
@@ -2452,7 +2515,7 @@ export default function App() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Email Address</label>
-                                    <input type="email" name="guest_email" value={packageBookingData.guest_email} onChange={handlePackageBookingChange} placeholder="user@example.com" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    <input type="email" name="guest_email" value={packageBookingData.guest_email || ''} onChange={handlePackageBookingChange} placeholder="user@example.com (optional)" className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Phone Number</label>
@@ -2480,7 +2543,90 @@ export default function App() {
                         </div>
                     </div>
                 )}
-                
+
+                {/* Package Selection Modal */}
+                {isPackageSelectionOpen && (
+                    <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                        <div className={`w-full max-w-4xl ${theme.bgCard} rounded-3xl shadow-2xl flex flex-col max-h-[90vh] my-8`}>
+                            <div className={`p-6 flex items-center justify-between border-b ${theme.border}`}>
+                                <h3 className="text-lg font-bold flex items-center"><Package className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Select a Package</h3>
+                                <button onClick={() => setIsPackageSelectionOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
+                            </div>
+                            <div className="p-6 overflow-y-auto">
+                                {packages.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {packages.map((pkg) => {
+                                            const imgIndex = packageImageIndex[pkg.id] || 0;
+                                            const currentImage = pkg.images && pkg.images[imgIndex];
+                                            return (
+                                                <div 
+                                                    key={pkg.id}
+                                                    onClick={() => {
+                                                        handleOpenPackageBookingForm(pkg.id);
+                                                        setIsPackageSelectionOpen(false);
+                                                    }}
+                                                    className={`${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer transform hover:-translate-y-1`}
+                                                >
+                                                    {/* Image Container */}
+                                                    <div className="relative h-48 overflow-hidden">
+                                                        <img 
+                                                            src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                            alt={pkg.title} 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                        />
+                                                        {/* Image Slider Dots */}
+                                                        {pkg.images && pkg.images.length > 1 && (
+                                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                                {pkg.images.map((_, imgIdx) => (
+                                                                    <button
+                                                                        key={imgIdx}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                        }}
+                                                                        className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="p-5">
+                                                        <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} mb-2 line-clamp-2`}>
+                                                            {pkg.title}
+                                                        </h3>
+                                                        <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary} mb-3 line-clamp-2`}>
+                                                            {pkg.description}
+                                                        </p>
+                                                        <div className={`flex items-center justify-between pt-3 border-t ${theme.cardBorder || theme.border}`}>
+                                                            <span className={`text-2xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
+                                                                ₹{pkg.price}
+                                                            </span>
+                                                            <button 
+                                                                className={`px-6 py-2 text-sm font-bold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow-lg ${theme.buttonHover} transition-all duration-300 transform hover:scale-105`}
+                                                            >
+                                                                Select
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Package className={`w-16 h-16 ${theme.textSecondary} mx-auto mb-4`} />
+                                        <p className={`${theme.textSecondary}`}>No packages available at the moment.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Service Booking Modal */}
                 {isServiceBookingFormOpen && (
                     <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -2544,7 +2690,6 @@ export default function App() {
                                                 <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://localhost:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
                                                 <div>
                                                     <p className={`font-semibold ${theme.textPrimary}`}>{item.name}</p>
-                                                    <p className={`text-sm ${theme.textSecondary}`}>₹{item.price}</p>
                                                 </div>
                                             </div>
                                             <input

@@ -61,7 +61,46 @@ def book_package_api(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return crud_package.book_package(db, booking)
+    result = crud_package.book_package(db, booking)
+    
+    # Send confirmation email if email address is provided
+    if booking.guest_email and result:
+        try:
+            from app.utils.email import send_email, create_booking_confirmation_email
+            
+            # Get package details
+            package = db.query(Package).filter(Package.id == booking.package_id).first()
+            
+            # Get room details
+            rooms_data = [
+                {
+                    'number': pbr.room.number if pbr.room else 'N/A',
+                    'type': pbr.room.type if pbr.room else 'N/A'
+                }
+                for pbr in result.rooms if pbr.room
+            ]
+            
+            email_html = create_booking_confirmation_email(
+                guest_name=result.guest_name,
+                booking_id=result.id,
+                booking_type='package',
+                check_in=str(result.check_in),
+                check_out=str(result.check_out),
+                rooms=rooms_data,
+                package_name=package.title if package else None
+            )
+            
+            send_email(
+                to_email=booking.guest_email,
+                subject=f"Package Booking Confirmation #{result.id} - Elysian Retreat",
+                html_content=email_html,
+                to_name=result.guest_name
+            )
+        except Exception as e:
+            # Log error but don't fail the booking
+            print(f"Failed to send confirmation email: {str(e)}")
+    
+    return result
 
 @router.post("/book/guest", response_model=PackageBookingOut, summary="Book a package as a guest")
 def book_package_guest_api(
@@ -71,7 +110,46 @@ def book_package_guest_api(
     """
     Public endpoint for guests to book a package without authentication.
     """
-    return crud_package.book_package(db, booking)
+    result = crud_package.book_package(db, booking)
+    
+    # Send confirmation email if email address is provided
+    if booking.guest_email and result:
+        try:
+            from app.utils.email import send_email, create_booking_confirmation_email
+            
+            # Get package details
+            package = db.query(Package).filter(Package.id == booking.package_id).first()
+            
+            # Get room details
+            rooms_data = [
+                {
+                    'number': pbr.room.number if pbr.room else 'N/A',
+                    'type': pbr.room.type if pbr.room else 'N/A'
+                }
+                for pbr in result.rooms if pbr.room
+            ]
+            
+            email_html = create_booking_confirmation_email(
+                guest_name=result.guest_name,
+                booking_id=result.id,
+                booking_type='package',
+                check_in=str(result.check_in),
+                check_out=str(result.check_out),
+                rooms=rooms_data,
+                package_name=package.title if package else None
+            )
+            
+            send_email(
+                to_email=booking.guest_email,
+                subject=f"Package Booking Confirmation #{result.id} - Elysian Retreat",
+                html_content=email_html,
+                to_name=result.guest_name
+            )
+        except Exception as e:
+            # Log error but don't fail the booking
+            print(f"Failed to send confirmation email: {str(e)}")
+    
+    return result
 
 @router.get("/bookingsall", response_model=List[PackageBookingOut])
 def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
