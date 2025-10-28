@@ -12,11 +12,15 @@ from app.utils.auth import get_db, get_current_user
 
 router = APIRouter()
 
-# Use relative path - should resolve to ResortApp/static/uploads
-# This works because main.py runs from ResortApp directory
-UPLOAD_DIR = "static/uploads"
+# Determine upload directory - use absolute path to avoid issues with working directory
+# Get the directory where main.py is located (ResortApp/)
+# frontend.py is at: ResortApp/app/api/frontend.py
+# So we need to go up 3 levels: app/api -> app -> ResortApp
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
 # Ensure directory exists with proper permissions
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+print(f"Upload directory set to: {UPLOAD_DIR}")  # Debug log
 
 # ---------- Header & Banner ----------
 @router.get("/header-banner/", response_model=list[schemas.HeaderBanner])
@@ -41,23 +45,53 @@ async def create_header_banner(
         # Ensure upload directory exists
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         
+        # Check if directory is writable
+        if not os.access(UPLOAD_DIR, os.W_OK):
+            raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+        
         # Generate unique filename to avoid conflicts
+        if not image.filename:
+            raise HTTPException(status_code=400, detail="No filename provided for image")
+        
         file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
         unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
         
+        # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
+        
+        # Verify file was saved
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=500, detail="File was not saved successfully")
 
+        # Create URL path (relative to static mount)
+        # static/uploads/banner_xxx.jpg -> /static/uploads/banner_xxx.jpg
         normalized_path = file_path.replace('\\', '/')
+        # Extract relative path from BASE_DIR
+        if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+            image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+        else:
+            image_url = normalized_path.lstrip('/')
+        
+        if not image_url.startswith('static/'):
+            image_url = f"static/uploads/{unique_filename}"
+        
+        image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
+        
         obj = schemas.HeaderBannerCreate(
             title=title,
             subtitle=subtitle,
             is_active=is_active_bool,
-            image_url=f"/{normalized_path}"
+            image_url=image_url
         )
         return crud.create(db, models.HeaderBanner, obj)
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        error_detail = f"Failed to create header banner: {str(e)}\n{traceback.format_exc()}"
+        print(f"ERROR: {error_detail}")  # Log to console for debugging
         raise HTTPException(status_code=500, detail=f"Failed to create header banner: {str(e)}")
 
 
@@ -81,14 +115,36 @@ async def update_header_banner(
             # Ensure upload directory exists
             os.makedirs(UPLOAD_DIR, exist_ok=True)
             
+            # Check if directory is writable
+            if not os.access(UPLOAD_DIR, os.W_OK):
+                raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+            
             # Generate unique filename to avoid conflicts
+            if not image.filename:
+                raise HTTPException(status_code=400, detail="No filename provided for image")
+            
             file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
             unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
             file_path = os.path.join(UPLOAD_DIR, unique_filename)
+            
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(image.file, buffer)
+            
+            # Verify file was saved
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=500, detail="File was not saved successfully")
+            
+            # Create URL path (relative to static mount)
             normalized_path = file_path.replace('\\', '/')
-            image_url = f"/{normalized_path}"
+            if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+                image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+            else:
+                image_url = normalized_path.lstrip('/')
+            
+            if not image_url.startswith('static/'):
+                image_url = f"static/uploads/{unique_filename}"
+            
+            image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
 
         obj = schemas.HeaderBannerUpdate(
             title=title,
