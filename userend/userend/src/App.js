@@ -1373,16 +1373,16 @@ export default function App() {
                                             className="fixed inset-0 z-[49]" 
                                             onClick={() => setIsThemeDropdownOpen(false)}
                                         ></div>
-                                        <div className={`absolute right-0 mt-2 w-56 ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[55] overflow-hidden`}>
-                                            <div className={`p-3 ${theme.bgSecondary} border-b ${theme.border}`}>
-                                                <p className={`text-sm font-semibold ${theme.textPrimary}`}>Choose Theme</p>
+                                        <div className={`absolute right-0 mt-2 w-72 ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[55] overflow-hidden`}>
+                                            <div className={`p-4 ${theme.bgSecondary} border-b ${theme.border}`}>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>Choose Theme</p>
                                             </div>
-                                            <div className="p-3 grid grid-cols-4 gap-2">
+                                            <div className="p-4 grid grid-cols-4 gap-3">
                                                 {Object.values(themes).map((t) => (
                                                     <button 
                                                         key={t.id} 
                                                         onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                        className={`p-3 rounded-lg transition-all duration-300 flex items-center justify-center ${
+                                                        className={`p-4 rounded-lg transition-all duration-300 flex flex-col items-center justify-center gap-2 ${
                                                             t.id === currentTheme 
                                                                 ? `${theme.buttonBg} ${theme.buttonText} ring-2 ring-offset-2 ${theme.border} shadow-lg transform scale-105` 
                                                                 : `${theme.bgSecondary} ${theme.textSecondary} hover:${theme.bgCard} hover:${theme.textPrimary} border ${theme.border} hover:border-amber-500`
@@ -1390,14 +1390,17 @@ export default function App() {
                                                         title={t.name}
                                                         aria-label={`Select ${t.name} theme`}
                                                     >
-                                                        <div className="w-5 h-5">
+                                                        <div className="w-6 h-6 flex items-center justify-center">
                                                             {t.icon}
                                                         </div>
+                                                        <span className={`text-xs font-medium ${t.id === currentTheme ? theme.buttonText : theme.textSecondary}`}>
+                                                            {t.name}
+                                                        </span>
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className={`p-2 text-center ${theme.bgSecondary} border-t ${theme.border}`}>
-                                                <span className={`text-xs ${theme.textSecondary}`}>{themes[currentTheme].name} Theme</span>
+                                            <div className={`p-3 text-center ${theme.bgSecondary} border-t ${theme.border}`}>
+                                                <span className={`text-sm font-medium ${theme.textPrimary}`}>Current: {themes[currentTheme].name} Theme</span>
                                             </div>
                                         </div>
                                     </>
@@ -1500,10 +1503,10 @@ export default function App() {
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
-                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
                                     ✦ Exclusive Deals ✦
                                 </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                     EXCLUSIVE DEALS FOR MEMORABLE EXPERIENCES
                                 </h2>
                             </div>
@@ -1517,7 +1520,7 @@ export default function App() {
                                         return (
                                             <div 
                                                 key={pkg.id} 
-                                                className="group relative bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500"
+                                                className={`group relative ${theme.bgCard} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500`}
                                             >
                                                 {/* Image Container - Full Width */}
                                                 <div className="relative h-56 overflow-hidden">
@@ -1572,7 +1575,7 @@ export default function App() {
                                     })}
                                 </div>
                             ) : (
-                                <p className="text-center py-12 text-gray-500">No packages available at the moment.</p>
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No packages available at the moment.</p>
                             )}
                         </div>
                     </section>
