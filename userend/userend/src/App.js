@@ -1720,7 +1720,8 @@ export default function App() {
                                             </div>
                                         </div>
                                     ))}
-                                </div>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="text-center py-12">
                                     <BedDouble className={`w-16 h-16 ${theme.textSecondary} mx-auto mb-4`} />
