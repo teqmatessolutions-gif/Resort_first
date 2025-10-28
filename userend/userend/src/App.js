@@ -949,44 +949,9 @@ export default function App() {
         setRooms(allRooms);
     }, [allRooms]);
 
-    // Filter rooms based on date availability for package booking
-    // Note: This shares the same rooms state, so it will override regular booking rooms
-    // Priority: If package dates are set, show package rooms; else show regular booking rooms
-    useEffect(() => {
-        // Check both booking and package booking dates to determine which rooms to show
-        const hasBookingDates = bookingData.check_in && bookingData.check_out;
-        const hasPackageDates = packageBookingData.check_in && packageBookingData.check_out;
-        
-        if (hasPackageDates && allRooms.length > 0) {
-            // Package booking dates take priority
-            const availableRooms = allRooms.filter(room => {
-                const hasConflict = bookings.some(booking => {
-                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
-                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
-                    
-                    const bookingCheckIn = new Date(booking.check_in);
-                    const bookingCheckOut = new Date(booking.check_out);
-                    const requestedCheckIn = new Date(packageBookingData.check_in);
-                    const requestedCheckOut = new Date(packageBookingData.check_out);
-                    
-                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
-                    if (!isRoomInBooking) return false;
-                    
-                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
-                });
-                
-                return !hasConflict;
-            });
-            
-            setRooms(availableRooms);
-        } else if (hasBookingDates && allRooms.length > 0) {
-            // Use regular booking dates if package dates not set
-            // This is handled by the first useEffect
-        } else {
-            // No dates selected - clear rooms
-            setRooms([]);
-        }
-    }, [packageBookingData.check_in, packageBookingData.check_out, bookingData.check_in, bookingData.check_out, allRooms, bookings]);
+    // Note: Package booking form uses its own room availability logic
+    // The main rooms section always shows all rooms - no filtering here
+    // Package booking modal will calculate availability separately when form is open
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
@@ -1656,10 +1621,16 @@ export default function App() {
                                 </div>
                             )}
 
-                            {/* Villa Grid - Always show all rooms */}
+                            {/* Villa Grid - Always show ALL rooms */}
                             {rooms.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {rooms.map((room, index) => (
+                                <>
+                                    <div className="mb-4 text-center">
+                                        <p className={`text-sm ${theme.textSecondary}`}>
+                                            Showing all <span className="font-semibold ${theme.textPrimary}">{rooms.length}</span> rooms
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        {rooms.map((room, index) => (
                                         <div 
                                             key={room.id} 
                                             className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2`}
