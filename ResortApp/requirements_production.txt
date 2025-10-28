@@ -54,7 +54,7 @@ reportlab==4.0.7
 structlog==23.2.0
 
 # Core Dependencies (from working requirements)
-anyio==4.11.0
+anyio>=3.7.1,<4.0.0
 cffi==2.0.0
 click==8.3.0
 colorama==0.4.6
