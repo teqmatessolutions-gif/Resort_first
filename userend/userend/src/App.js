@@ -2050,47 +2050,47 @@ export default function App() {
                         </section>
                     )}
 
-                    {/* Nearby Attractions Section - Dynamic */}
+                    {/* Nearby Attractions Section - Mountain Shadows Style */}
                     {nearbyAttractions.length > 0 && nearbyAttractions.some(a => a.is_active) && (
                         <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
                             <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                                 <div className="text-center mb-16">
-                                    <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
                                         ✦ Explore ✦
                                     </span>
-                                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
                                         NEARBY ATTRACTIONS
                                     </h2>
-                                    <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                                        Discover the beautiful surroundings and attractions near our luxury resort
-                                    </p>
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {nearbyAttractions.filter(attr => attr.is_active).map((attraction) => (
+                                
+                                {/* Split Layout - Image Left, Text Right or vice versa */}
+                                <div className="space-y-12">
+                                    {nearbyAttractions.filter(attr => attr.is_active).map((attraction, index) => (
                                         <div 
-                                            key={attraction.id}
-                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                            key={attraction.id} 
+                                            className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
                                         >
-                                            {/* Image Container */}
-                                            <div className="relative h-64 overflow-hidden">
-                                                <img 
-                                                    src={getImageUrl(attraction.image_url)} 
-                                                    alt={attraction.title} 
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="p-6 space-y-3">
-                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
-                                                    {attraction.title}
-                                                </h3>
-                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
-                                                    {attraction.description}
-                                                </p>
+                                            <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-stretch`}>
+                                                {/* Image Section */}
+                                                <div className="w-full md:w-1/2 h-80 md:h-96 overflow-hidden">
+                                                    <img 
+                                                        src={getImageUrl(attraction.image_url)} 
+                                                        alt={attraction.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                </div>
+                                                
+                                                {/* Content Section */}
+                                                <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
+                                                    <h3 className={`text-3xl md:text-4xl font-extrabold ${theme.textPrimary} mb-4 leading-tight`}>
+                                                        {attraction.title}
+                                                    </h3>
+                                                    <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-amber-600 mb-6"></div>
+                                                    <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed`}>
+                                                        {attraction.description}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
