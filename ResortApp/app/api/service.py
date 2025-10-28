@@ -32,7 +32,8 @@ async def create_service(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(img.file, buffer)
         # Store with leading slash for proper URL construction
-        image_urls.append(f"/{file_path.replace('\\', '/')}")
+        normalized_path = file_path.replace('\\', '/')
+        image_urls.append(f"/{normalized_path}")
     
     return service_crud.create_service(db, name, description, charges, image_urls)
 
