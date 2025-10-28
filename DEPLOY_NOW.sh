@@ -44,7 +44,7 @@ echo ""
 
 echo -e "${GREEN}Step 4/6: Building Userend frontend...${NC}"
 cd ../userend/userend
-npm install || { echo -e "${RED}NPM install failed for userend!${NC}"; exit 1; }
+npm install --legacy-peer-deps || { echo -e "${RED}NPM install failed for userend!${NC}"; exit 1; }
 npm run build || { echo -e "${RED}Userend build failed!${NC}"; exit 1; }
 echo "✅ Userend built successfully"
 echo ""
