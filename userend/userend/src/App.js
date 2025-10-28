@@ -1379,34 +1379,35 @@ export default function App() {
                                             className="fixed inset-0 z-[49]" 
                                             onClick={() => setIsThemeDropdownOpen(false)}
                                         ></div>
-                                        <div className={`absolute right-0 mt-2 w-72 ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[55] overflow-hidden`}>
-                                            <div className={`p-4 ${theme.bgSecondary} border-b ${theme.border}`}>
-                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>Choose Theme</p>
+                                        {/* Compact Dropdown Menu - Positioned below button */}
+                                        <div className={`absolute right-0 top-full mt-2 w-64 ${theme.bgCard} rounded-xl shadow-2xl border-2 ${theme.border} z-[55] overflow-hidden`}>
+                                            <div className={`p-3 ${theme.bgSecondary} border-b ${theme.border}`}>
+                                                <p className={`text-sm font-semibold ${theme.textPrimary}`}>Choose Theme</p>
                                             </div>
-                                            <div className="p-4 grid grid-cols-4 gap-3">
+                                            <div className="p-3 grid grid-cols-4 gap-2 max-h-64 overflow-y-auto">
                                                 {Object.values(themes).map((t) => (
                                                     <button 
                                                         key={t.id} 
                                                         onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                        className={`p-4 rounded-lg transition-all duration-300 flex flex-col items-center justify-center gap-2 ${
+                                                        className={`p-3 rounded-lg transition-all duration-300 flex flex-col items-center justify-center gap-1.5 ${
                                                             t.id === currentTheme 
-                                                                ? `${theme.buttonBg} ${theme.buttonText} ring-2 ring-offset-2 ${theme.border} shadow-lg transform scale-105` 
+                                                                ? `${theme.buttonBg} ${theme.buttonText} ring-2 ring-offset-1 ${theme.border} shadow-md` 
                                                                 : `${theme.bgSecondary} ${theme.textSecondary} hover:${theme.bgCard} hover:${theme.textPrimary} border ${theme.border} hover:border-amber-500`
                                                         }`}
                                                         title={t.name}
                                                         aria-label={`Select ${t.name} theme`}
                                                     >
-                                                        <div className="w-6 h-6 flex items-center justify-center">
+                                                        <div className="w-5 h-5 flex items-center justify-center">
                                                             {t.icon}
                                                         </div>
-                                                        <span className={`text-xs font-medium ${t.id === currentTheme ? theme.buttonText : theme.textSecondary}`}>
+                                                        <span className={`text-[10px] font-medium ${t.id === currentTheme ? theme.buttonText : theme.textSecondary} leading-tight text-center`}>
                                                             {t.name}
                                                         </span>
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className={`p-3 text-center ${theme.bgSecondary} border-t ${theme.border}`}>
-                                                <span className={`text-sm font-medium ${theme.textPrimary}`}>Current: {themes[currentTheme].name} Theme</span>
+                                            <div className={`p-2 text-center ${theme.bgSecondary} border-t ${theme.border}`}>
+                                                <span className={`text-xs ${theme.textSecondary}`}>{themes[currentTheme].name}</span>
                                             </div>
                                         </div>
                                     </>
