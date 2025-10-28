@@ -80,12 +80,29 @@ SELECT DISTINCT status FROM package_bookings;
 - Runs as `www-data` user
 
 ### 3. Environment Variables
-**Location:** `ResortApp/.env`
+**Location:** `ResortApp/.env` or systemd service override
 
 ```
 DATABASE_URL=postgresql://resort_user:****@localhost:5432/resort_db
 SECRET_KEY=****
 ENVIRONMENT=production
+
+# Email Configuration (REQUIRED for booking confirmations)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_USE_TLS=true
+SMTP_FROM_EMAIL=noreply@elysianretreat.com
+SMTP_FROM_NAME=Elysian Retreat
+```
+
+**Configuration Method:**
+```bash
+sudo systemctl edit resort.service
+# Add [Service] section with Environment variables above
+sudo systemctl daemon-reload
+sudo systemctl restart resort.service
 ```
 
 ---
@@ -120,11 +137,30 @@ ENVIRONMENT=production
 # On production server
 cd /var/www/resort/Resort_first
 git pull origin main
-cd dasboard && npm run build
-cd ../userend/userend && npm run build
+
+# Update backend dependencies
+cd ResortApp
+source venv/bin/activate
+pip install -r requirements_production.txt
+
+# Build frontend applications
+cd ../dasboard
+npm install --legacy-peer-deps  # Note: Required for TypeScript compatibility
+npm run build
+
+cd ../userend/userend
+npm install
+npm run build
+
+# Restart services
+cd /var/www/resort/Resort_first/ResortApp
 sudo systemctl restart resort.service
 sudo systemctl restart nginx
 ```
+
+### Important Notes
+- **npm install for dashboard:** Use `--legacy-peer-deps` flag due to TypeScript version conflict
+- **Email Configuration:** Must configure SMTP settings after deployment (see EMAIL_CONFIGURATION.md)
 
 ### Direct File Upload (If git not synced)
 ```bash
@@ -191,19 +227,24 @@ baseURL: process.env.NODE_ENV === 'production'
 ## Backend API Structure
 
 ### Key Endpoints
-- `/api/bookings` - Booking CRUD
+- `/api/bookings` - Booking CRUD (sends email confirmation)
+- `/api/bookings/guest` - Guest booking (sends email confirmation)
 - `/api/bookings/{id}/check-in` - Check-in with photos
+- `/api/packages/book` - Create package booking (dashboard, sends email)
+- `/api/packages/book/guest` - Guest package booking (sends email confirmation)
 - `/api/bill/active-rooms` - Get rooms for checkout dropdown ⚠️
 - `/api/bill/{room_number}` - Get bill details
 - `/api/bill/checkout/{room_number}` - Process checkout
-- `/api/packages/book` - Create package booking
 - `/api/rooms/` - Room management
 
 ### Important Files
+- `ResortApp/app/utils/email.py` - Email utility for booking confirmations
 - `ResortApp/app/api/checkout.py` - Billing/checkout logic
-- `ResortApp/app/api/booking.py` - Booking management
+- `ResortApp/app/api/booking.py` - Booking management + email integration
+- `ResortApp/app/api/packages.py` - Package booking + email integration
 - `ResortApp/app/api/room.py` - Room management
 - `ResortApp/app/database.py` - Database configuration (SSL disabled)
+- `ResortApp/EMAIL_CONFIGURATION.md` - Email setup guide
 
 ---
 
@@ -298,13 +339,26 @@ Created detailed installation and deployment guide: `DEPLOYMENT_INSTALLATION_GUI
 ### Session Focus Areas
 1. ✅ Fixed guest capacity validation (adults/children separate)
 2. ✅ Fixed duplicate booking entries (composite keys)
-3. 🔍 Investigating billing page dropdown issue (in progress)
+3. ✅ Added automatic email confirmation for all bookings
+4. ✅ Improved package booking flow with selection modal
+5. ✅ Removed food and service prices from userend
+6. ✅ Fixed package booking validation and error handling
+7. 🔍 Investigating billing page dropdown issue (in progress)
 
-### Last Deployment
-- Date: Current session
-- Files Modified: `dasboard/src/pages/Bookings.jsx`
-- Changes: Capacity validation logic update
-- Status: Deployed to production
+### Latest Deployment (Current Session)
+- **Date:** October 28, 2025
+- **New Features:**
+  - Automatic email confirmations for all bookings (dashboard + userend)
+  - Package selection modal before booking form
+  - Removed price displays from food items and services
+  - Enhanced booking validation and error messages
+- **Files Modified:**
+  - `ResortApp/app/utils/email.py` (new - email utility)
+  - `ResortApp/app/api/booking.py` (email integration)
+  - `ResortApp/app/api/packages.py` (email integration + dashboard support)
+  - `userend/userend/src/App.js` (package selection, price removal, fixes)
+  - `ResortApp/requirements_production.txt` (dependency fixes)
+- **Status:** Deployed to production
 
 ---
 
