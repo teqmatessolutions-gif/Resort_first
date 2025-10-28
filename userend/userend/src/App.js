@@ -1505,58 +1505,64 @@ export default function App() {
                                 </h2>
                             </div>
 
-                            {/* Packages Grid */}
+                            {/* Packages - Mountain Shadows Style */}
                             {packages.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {packages.map((pkg) => {
-                                        const imgIndex = packageImageIndex[pkg.id] || 0;
-                                        const currentImage = pkg.images && pkg.images[imgIndex];
+                                <div className="space-y-12">
+                                    {/* Featured Large Package */}
+                                    {packages[0] && (() => {
+                                        const featuredPkg = packages[0];
+                                        const imgIndex = packageImageIndex[featuredPkg.id] || 0;
+                                        const currentImage = featuredPkg.images && featuredPkg.images[imgIndex];
                                         return (
                                             <div 
-                                                key={pkg.id} 
-                                                className={`group relative ${theme.bgCard} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500`}
+                                                key={featuredPkg.id}
+                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
                                             >
-                                                {/* Image Container - Full Width */}
-                                                <div className="relative h-56 overflow-hidden">
-                                                    <img 
-                                                        src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
-                                                        alt={pkg.title} 
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                                                <div className="flex flex-col md:flex-row items-stretch">
+                                                    {/* Large Image Section - Left */}
+                                                    <div className="w-full md:w-1/2 h-96 md:h-auto min-h-[500px] overflow-hidden relative">
+                                                        <img 
+                                                            src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                            alt={featuredPkg.title} 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                        />
+                                                        {/* Image Slider Dots */}
+                                                        {featuredPkg.images && featuredPkg.images.length > 1 && (
+                                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                                {featuredPkg.images.map((_, imgIdx) => (
+                                                                    <button
+                                                                        key={imgIdx}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setPackageImageIndex(prev => ({ ...prev, [featuredPkg.id]: imgIdx }));
+                                                                        }}
+                                                                        className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                     
-                                                    {/* Image Slider Dots */}
-                                                    {pkg.images && pkg.images.length > 1 && (
-                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
-                                                            {pkg.images.map((_, imgIdx) => (
-                                                                <button
-                                                                    key={imgIdx}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
-                                                                    }}
-                                                                    className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {/* Content Overlay on Image */}
-                                                    <div className="absolute inset-0 flex flex-col justify-end p-8">
-                                                        <h3 className="text-3xl md:text-4xl font-extrabold text-white mb-3 drop-shadow-lg">
-                                                            {pkg.title}
+                                                    {/* Content Section - Right */}
+                                                    <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
+                                                        <h3 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
+                                                            {featuredPkg.title}
                                                         </h3>
-                                                        <p className="text-white/90 text-base leading-relaxed mb-4 drop-shadow-md">
-                                                            {pkg.description}
+                                                        <p className={`text-xl md:text-2xl ${theme.textSecondary} mb-6 font-medium`}>
+                                                            (Luxury Package {featuredPkg.duration || '2 Nights & 3 Days'})
                                                         </p>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-4xl font-extrabold text-amber-400 drop-shadow-lg">
-                                                                ₹{pkg.price}
+                                                        <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-amber-600 mb-6"></div>
+                                                        <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed mb-6`}>
+                                                            {featuredPkg.description}
+                                                        </p>
+                                                        <div className="flex items-center justify-between flex-wrap gap-4">
+                                                            <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
+                                                                ₹{featuredPkg.price}
                                                             </span>
                                                             <button 
-                                                                onClick={() => handleOpenPackageBookingForm(pkg.id)} 
-                                                                className="px-8 py-3 bg-white text-amber-600 font-bold rounded-full shadow-xl hover:bg-amber-50 transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                                                                onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
+                                                                className={`px-8 py-3 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2`}
                                                             >
                                                                 KNOW MORE
                                                                 <ChevronRight className="w-5 h-5" />
@@ -1566,7 +1572,70 @@ export default function App() {
                                                 </div>
                                             </div>
                                         );
-                                    })}
+                                    })()}
+
+                                    {/* Smaller Packages Grid - Only show if more than 1 package */}
+                                    {packages.length > 1 && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {packages.slice(1).map((pkg) => {
+                                                const imgIndex = packageImageIndex[pkg.id] || 0;
+                                                const currentImage = pkg.images && pkg.images[imgIndex];
+                                                return (
+                                                    <div 
+                                                        key={pkg.id} 
+                                                        className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border}`}
+                                                    >
+                                                        {/* Image Container */}
+                                                        <div className="relative h-64 overflow-hidden">
+                                                            <img 
+                                                                src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                                alt={pkg.title} 
+                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                            />
+                                                            {/* Image Slider Dots */}
+                                                            {pkg.images && pkg.images.length > 1 && (
+                                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                                    {pkg.images.map((_, imgIdx) => (
+                                                                        <button
+                                                                            key={imgIdx}
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                            }}
+                                                                            className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Content */}
+                                                        <div className={`p-6 ${theme.bgCard}`}>
+                                                            <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
+                                                                {pkg.title}
+                                                            </h3>
+                                                            <p className={`text-base ${theme.textSecondary} mb-4 font-medium`}>
+                                                                (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
+                                                            </p>
+                                                            <div className={`flex items-center justify-between pt-4 border-t ${theme.border}`}>
+                                                                <span className={`text-2xl font-extrabold ${theme.textAccent}`}>
+                                                                    ₹{pkg.price}
+                                                                </span>
+                                                                <button 
+                                                                    onClick={() => handleOpenPackageBookingForm(pkg.id)} 
+                                                                    className={`px-6 py-2 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2 text-sm`}
+                                                                >
+                                                                    KNOW MORE
+                                                                    <ChevronRight className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <p className={`text-center py-12 ${theme.textSecondary}`}>No packages available at the moment.</p>
