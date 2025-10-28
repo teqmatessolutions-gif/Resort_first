@@ -1726,13 +1726,13 @@ export default function App() {
                                         </div>
                                     ))}
                                 </div>
-                            ) : bookingData.check_in && bookingData.check_out && rooms.length === 0 ? (
+                            ) : (
                                 <div className="text-center py-12">
-                                    <BedDouble className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                    <p className={`text-lg font-semibold ${textSecondary} mb-2`}>No rooms available</p>
-                                    <p className={`${textSecondary}`}>No rooms are available for the selected dates. Please try different dates.</p>
+                                    <BedDouble className={`w-16 h-16 ${theme.textSecondary} mx-auto mb-4`} />
+                                    <p className={`text-lg font-semibold ${theme.textPrimary} mb-2`}>No rooms available</p>
+                                    <p className={`${theme.textSecondary}`}>No rooms found in the system.</p>
                                 </div>
-                            ) : null}
+                            )}
 
                             {/* View All Button */}
                             {rooms.length > 6 && (
