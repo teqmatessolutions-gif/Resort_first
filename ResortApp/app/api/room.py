@@ -99,15 +99,27 @@ def delete_room_test(room_id: int, db: Session = Depends(get_db)):
 @router.get("/test", response_model=list[RoomOut])
 def get_rooms_test(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
-        # Update room statuses before fetching
-        from app.utils.room_status import update_room_statuses
-        update_room_statuses(db)
+        # Update room statuses before fetching (non-blocking - continues even if update fails)
+        try:
+            from app.utils.room_status import update_room_statuses
+            update_room_statuses(db)
+        except Exception as status_error:
+            print(f"Room status update failed (continuing): {status_error}")
+            # Continue fetching rooms even if status update fails
         
         rooms = db.query(Room).offset(skip).limit(limit).all()
         return rooms
         
     except Exception as e:
         print(f"Error fetching rooms: {e}")
+        print(f"Error type: {type(e)}")
+        
+        # Try to rollback any pending transaction
+        try:
+            db.rollback()
+        except Exception as rollback_error:
+            print(f"Rollback error: {rollback_error}")
+        
         raise HTTPException(status_code=500, detail=f"Error fetching rooms: {str(e)}")
 
 # ---------------- CREATE ----------------
@@ -172,18 +184,34 @@ def update_room_statuses_endpoint(db: Session = Depends(get_db)):
 def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
     try:
         # Test database connection first
-        db.execute(text("SELECT 1"))
+        try:
+            db.execute(text("SELECT 1"))
+        except Exception as conn_error:
+            print(f"Database connection test failed: {conn_error}")
+            raise HTTPException(status_code=503, detail="Database connection unavailable. Please try again.")
         
-        # Update room statuses before fetching
-        from app.utils.room_status import update_room_statuses
-        update_room_statuses(db)
+        # Update room statuses before fetching (non-blocking - continues even if update fails)
+        try:
+            from app.utils.room_status import update_room_statuses
+            update_room_statuses(db)
+        except Exception as status_error:
+            print(f"Room status update failed (continuing): {status_error}")
+            # Continue fetching rooms even if status update fails
         
         # Query rooms with proper error handling
-        rooms = db.query(Room).offset(skip).limit(limit).all()
+        try:
+            rooms = db.query(Room).offset(skip).limit(limit).all()
+        except Exception as query_error:
+            print(f"Room query failed: {query_error}")
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error querying rooms: {str(query_error)}")
         
         # Return the rooms directly - SQLAlchemy should handle serialization
         return rooms
         
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         print(f"Error fetching rooms: {e}")
         print(f"Error type: {type(e)}")
