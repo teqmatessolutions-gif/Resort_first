@@ -217,10 +217,26 @@ export default function ResortCMS() {
         if (config.isMultipart) {
             const data = new FormData();
             Object.keys(formData).forEach(key => {
-                if (key !== 'image') data.append(key, formData[key]);
+                if (key !== 'image') {
+                    // Convert boolean values to string for FormData
+                    const value = formData[key];
+                    data.append(key, typeof value === 'boolean' ? String(value) : value);
+                }
             });
             if (file) data.append('image', file);
             payload = data;
+        } else {
+            // For JSON requests, ensure proper type conversion
+            const cleanData = { ...formData };
+            // Convert rating to integer if it exists
+            if (cleanData.rating !== undefined) {
+                cleanData.rating = parseInt(cleanData.rating, 10);
+            }
+            // Ensure boolean values are proper booleans
+            if (cleanData.is_active !== undefined) {
+                cleanData.is_active = cleanData.is_active === true || cleanData.is_active === 'true';
+            }
+            payload = cleanData;
         }
 
         try {

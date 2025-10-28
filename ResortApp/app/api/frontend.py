@@ -12,7 +12,10 @@ from app.utils.auth import get_db, get_current_user
 
 router = APIRouter()
 
+# Use relative path - should resolve to ResortApp/static/uploads
+# This works because main.py runs from ResortApp directory
 UPLOAD_DIR = "static/uploads"
+# Ensure directory exists with proper permissions
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # ---------- Header & Banner ----------
@@ -26,26 +29,36 @@ def list_header_banner(db: Session = Depends(get_db), skip: int = 0, limit: int 
 async def create_header_banner(
     title: str = Form(...),
     subtitle: str = Form(...),
-    is_active: bool = Form(True),
+    is_active: str = Form("true"),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Generate unique filename to avoid conflicts
-    file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
-    unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, unique_filename)
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
+    try:
+        # Convert is_active string to boolean
+        is_active_bool = is_active.lower() in ("true", "1", "yes", "on")
+        
+        # Ensure upload directory exists
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        
+        # Generate unique filename to avoid conflicts
+        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
 
-    normalized_path = file_path.replace('\\', '/')
-    obj = schemas.HeaderBannerCreate(
-        title=title,
-        subtitle=subtitle,
-        is_active=is_active,
-        image_url=f"/{normalized_path}"
-    )
-    return crud.create(db, models.HeaderBanner, obj)
+        normalized_path = file_path.replace('\\', '/')
+        obj = schemas.HeaderBannerCreate(
+            title=title,
+            subtitle=subtitle,
+            is_active=is_active_bool,
+            image_url=f"/{normalized_path}"
+        )
+        return crud.create(db, models.HeaderBanner, obj)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create header banner: {str(e)}")
 
 
 # ✅ Update header banner
@@ -54,29 +67,38 @@ async def update_header_banner(
     item_id: int,
     title: str = Form(...),
     subtitle: str = Form(...),
-    is_active: bool = Form(True),
+    is_active: str = Form("true"),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    image_url = None
-    if image:
-        # Generate unique filename to avoid conflicts
-        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
-        unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-        normalized_path = file_path.replace('\\', '/')
-        image_url = f"/{normalized_path}"
+    try:
+        # Convert is_active string to boolean
+        is_active_bool = is_active.lower() in ("true", "1", "yes", "on")
+        
+        image_url = None
+        if image:
+            # Ensure upload directory exists
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            
+            # Generate unique filename to avoid conflicts
+            file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+            unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_filename)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+            normalized_path = file_path.replace('\\', '/')
+            image_url = f"/{normalized_path}"
 
-    obj = schemas.HeaderBannerUpdate(
-        title=title,
-        subtitle=subtitle,
-        is_active=is_active,
-        image_url=image_url
-    )
-    return crud.update(db, models.HeaderBanner, item_id, obj)
+        obj = schemas.HeaderBannerUpdate(
+            title=title,
+            subtitle=subtitle,
+            is_active=is_active_bool,
+            image_url=image_url
+        )
+        return crud.update(db, models.HeaderBanner, item_id, obj)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update header banner: {str(e)}")
 
 
 # ✅ Delete header banner
@@ -170,12 +192,24 @@ def list_reviews(db: Session = Depends(get_db), skip: int = 0, limit: int = 100)
 
 @router.post("/reviews/", response_model=schemas.Review)
 def create_review(obj: schemas.ReviewCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return crud.create(db, models.Review, obj)
+    try:
+        # Ensure rating is an integer
+        if isinstance(obj.rating, str):
+            obj.rating = int(obj.rating)
+        return crud.create(db, models.Review, obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to create review: {str(e)}")
 
 
 @router.put("/reviews/{item_id}", response_model=schemas.Review)
 def update_review(item_id: int, obj: schemas.ReviewCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return crud.update(db, models.Review, item_id, obj)
+    try:
+        # Ensure rating is an integer
+        if isinstance(obj.rating, str):
+            obj.rating = int(obj.rating)
+        return crud.update(db, models.Review, item_id, obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to update review: {str(e)}")
 
 
 @router.delete("/reviews/{item_id}")
