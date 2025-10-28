@@ -679,6 +679,7 @@ export default function App() {
     const [userMessage, setUserMessage] = useState("");
     const [isChatLoading, setIsChatLoading] = useState(false);
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+    const [showAllRooms, setShowAllRooms] = useState(false);
 
     // Package image slider state
     const [packageImageIndex, setPackageImageIndex] = useState({});
@@ -1635,7 +1636,7 @@ export default function App() {
                             {/* Villa Grid - Always show all rooms */}
                             {rooms.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {rooms.slice(0, 6).map((room, index) => (
+                                    {(showAllRooms ? rooms : rooms.slice(0, 6)).map((room, index) => (
                                         <div 
                                             key={room.id} 
                                             className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2`}
@@ -1734,11 +1735,16 @@ export default function App() {
                                 </div>
                             )}
 
-                            {/* View All Button */}
+                            {/* View All / Show Less Button */}
                             {rooms.length > 6 && (
                                 <div className="text-center mt-12">
-                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
-                                        View All Villas
+                                    <button 
+                                        onClick={() => setShowAllRooms(!showAllRooms)}
+                                        className={`px-10 py-4 ${theme.bgCard} ${theme.textAccent} font-bold text-lg rounded-full border-2 ${theme.border} hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg`}
+                                    >
+                                        {showAllRooms ? `Show Less (Viewing ${rooms.length} rooms)` : `View All Rooms (${rooms.length} total)`}
+                                        {!showAllRooms && <ChevronDown className="w-5 h-5 inline-block ml-2" />}
+                                        {showAllRooms && <ChevronUp className="w-5 h-5 inline-block ml-2" />}
                                     </button>
                                 </div>
                             )}
