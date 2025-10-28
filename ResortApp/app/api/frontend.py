@@ -200,3 +200,180 @@ def update_resort_info(
 @router.delete("/resort-info/{item_id}")
 def delete_resort_info(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return crud.delete(db, models.ResortInfo, item_id)
+
+
+# ---------- Signature Experiences ----------
+@router.get("/signature-experiences/", response_model=list[schemas.SignatureExperience])
+def list_signature_experiences(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.SignatureExperience, skip=skip, limit=limit)
+
+
+@router.post("/signature-experiences/", response_model=schemas.SignatureExperience)
+async def create_signature_experience(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    obj = schemas.SignatureExperienceCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{file_path.replace('\\', '/')}"
+    )
+    return crud.create(db, models.SignatureExperience, obj)
+
+
+@router.put("/signature-experiences/{item_id}", response_model=schemas.SignatureExperience)
+async def update_signature_experience(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+
+    obj = schemas.SignatureExperienceUpdate(**update_data)
+    return crud.update(db, models.SignatureExperience, item_id, obj)
+
+
+@router.delete("/signature-experiences/{item_id}")
+def delete_signature_experience(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.SignatureExperience, item_id)
+
+
+# ---------- Plan Your Wedding ----------
+@router.get("/plan-weddings/", response_model=list[schemas.PlanWedding])
+def list_plan_weddings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.PlanWedding, skip=skip, limit=limit)
+
+
+@router.post("/plan-weddings/", response_model=schemas.PlanWedding)
+async def create_plan_wedding(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    obj = schemas.PlanWeddingCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{file_path.replace('\\', '/')}"
+    )
+    return crud.create(db, models.PlanWedding, obj)
+
+
+@router.put("/plan-weddings/{item_id}", response_model=schemas.PlanWedding)
+async def update_plan_wedding(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+
+    obj = schemas.PlanWeddingUpdate(**update_data)
+    return crud.update(db, models.PlanWedding, item_id, obj)
+
+
+@router.delete("/plan-weddings/{item_id}")
+def delete_plan_wedding(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.PlanWedding, item_id)
+
+
+# ---------- Nearby Attractions ----------
+@router.get("/nearby-attractions/", response_model=list[schemas.NearbyAttraction])
+def list_nearby_attractions(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.NearbyAttraction, skip=skip, limit=limit)
+
+
+@router.post("/nearby-attractions/", response_model=schemas.NearbyAttraction)
+async def create_nearby_attraction(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    obj = schemas.NearbyAttractionCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{file_path.replace('\\', '/')}"
+    )
+    return crud.create(db, models.NearbyAttraction, obj)
+
+
+@router.put("/nearby-attractions/{item_id}", response_model=schemas.NearbyAttraction)
+async def update_nearby_attraction(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        update_data["image_url"] = f"/{file_path.replace('\\', '/')}"
+
+    obj = schemas.NearbyAttractionUpdate(**update_data)
+    return crud.update(db, models.NearbyAttraction, item_id, obj)
+
+
+@router.delete("/nearby-attractions/{item_id}")
+def delete_nearby_attraction(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.NearbyAttraction, item_id)

@@ -3,7 +3,7 @@ from .room import Room
 from .booking import Booking, BookingRoom
 from .Package import Package, PackageBooking, PackageBookingRoom
 from .foodorder import FoodOrder, FoodOrderItem
-from .service import Service, AssignedService
+from .service import Service, AssignedService, ServiceImage
 from .expense import Expense
 from .checkout import Checkout
 from .employee import Employee, Attendance

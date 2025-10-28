@@ -106,6 +106,8 @@ const FormModal = ({ isOpen, onClose, onSubmit, fields, initialData, title, isMu
                                     <input type="file" name={field.name} onChange={handleFormChange} className="w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
                                 ) : field.type === 'checkbox' ? (
                                     <input type="checkbox" name={field.name} checked={!!formState[field.name]} onChange={handleFormChange} className="h-5 w-5 text-violet-600 border-gray-300 rounded focus:ring-violet-500" />
+                                ) : field.type === 'textarea' ? (
+                                    <textarea name={field.name} placeholder={field.placeholder} value={formState[field.name] || ''} onChange={handleFormChange} required={field.required !== false} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors" />
                                 ) : (
                                     <input type={field.type || "text"} name={field.name} placeholder={field.placeholder} value={formState[field.name] || ''} onChange={handleFormChange} required={field.required !== false} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors" />
                                 )}
@@ -130,6 +132,9 @@ export default function ResortCMS() {
         gallery: [],
         reviews: [],
         resortInfo: [],
+        signatureExperiences: [],
+        planWeddings: [],
+        nearbyAttractions: [],
     });
     const [isLoading, setIsLoading] = useState(true);
     const [modalState, setModalState] = useState({ isOpen: false, config: null, initialData: null });
@@ -137,17 +142,23 @@ export default function ResortCMS() {
     const fetchAll = async () => {
         setIsLoading(true);
         try {
-            const [bannersRes, galleryRes, reviewsRes, resortInfoRes] = await Promise.all([
+            const [bannersRes, galleryRes, reviewsRes, resortInfoRes, signatureExpRes, planWeddingRes, nearbyAttrRes] = await Promise.all([
                 api.get("/header-banner/"),
                 api.get("/gallery/"),
                 api.get("/reviews/"),
                 api.get("/resort-info/"),
+                api.get("/signature-experiences/"),
+                api.get("/plan-weddings/"),
+                api.get("/nearby-attractions/"),
             ]);
             setResortData({
                 banners: bannersRes.data || [],
                 gallery: galleryRes.data || [],
                 reviews: reviewsRes.data || [],
                 resortInfo: resortInfoRes.data || [],
+                signatureExperiences: signatureExpRes.data || [],
+                planWeddings: planWeddingRes.data || [],
+                nearbyAttractions: nearbyAttrRes.data || [],
             });
         } catch (error) {
             console.error("Failed to fetch data:", error);
@@ -173,6 +184,12 @@ export default function ResortCMS() {
                     return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
                 } else if (endpoint.includes('resort-info')) {
                     return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
+                } else if (endpoint.includes('signature-experiences')) {
+                    return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
+                } else if (endpoint.includes('plan-weddings')) {
+                    return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
+                } else if (endpoint.includes('nearby-attractions')) {
+                    return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
                 }
                 return prev;
             });
@@ -243,6 +260,27 @@ export default function ResortCMS() {
                         ? prev.resortInfo.map(item => item.id === initialData.id ? response.data : item)
                         : [response.data, ...prev.resortInfo]
                 }));
+            } else if (config.endpoint.includes('signature-experiences')) {
+                setResortData(prev => ({
+                    ...prev,
+                    signatureExperiences: isEditing
+                        ? prev.signatureExperiences.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.signatureExperiences]
+                }));
+            } else if (config.endpoint.includes('plan-weddings')) {
+                setResortData(prev => ({
+                    ...prev,
+                    planWeddings: isEditing
+                        ? prev.planWeddings.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.planWeddings]
+                }));
+            } else if (config.endpoint.includes('nearby-attractions')) {
+                setResortData(prev => ({
+                    ...prev,
+                    nearbyAttractions: isEditing
+                        ? prev.nearbyAttractions.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.nearbyAttractions]
+                }));
             }
             
             // Close modal after successful save
@@ -264,6 +302,9 @@ export default function ResortCMS() {
         gallery: { title: "Gallery Image", endpoint: "/gallery", fields: [{ name: "caption", placeholder: "Image Caption" }, { name: "image", type: "file" }], isMultipart: true },
         reviews: { title: "Review", endpoint: "/reviews", fields: [{ name: "name", placeholder: "Customer Name" }, { name: "comment", placeholder: "Review Comment" }, { name: "rating", placeholder: "Rating (1-5)", type: "number" }], isMultipart: false },
         resortInfo: { title: "Resort Info", endpoint: "/resort-info", fields: [{ name: "name", placeholder: "Resort Name" }, { name: "address", placeholder: "Resort Address" }, { name: "facebook", placeholder: "Facebook URL" }, { name: "instagram", placeholder: "Instagram URL" }, { name: "twitter", placeholder: "Twitter URL" }, { name: "linkedin", placeholder: "LinkedIn URL" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: false },
+        signatureExperiences: { title: "Signature Experience", endpoint: "/signature-experiences", fields: [{ name: "title", placeholder: "Experience Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        planWeddings: { title: "Plan Your Wedding", endpoint: "/plan-weddings", fields: [{ name: "title", placeholder: "Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        nearbyAttractions: { title: "Nearby Attraction", endpoint: "/nearby-attractions", fields: [{ name: "title", placeholder: "Attraction Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
     };
 
     if (isLoading) {
@@ -353,6 +394,51 @@ export default function ResortCMS() {
                                 </div>
                             </div>
                         )) : <p className="col-span-full text-center text-gray-500">No resort info found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="✦ Signature Experiences ✦" onAdd={() => openModal(sectionConfigs.signatureExperiences)} isLoading={isLoading}>
+                        {resortData.signatureExperiences.length > 0 ? resortData.signatureExperiences.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.signatureExperiences, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.signatureExperiences.endpoint, item.id, 'signature experience')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No signature experiences found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="Plan Your Wedding" onAdd={() => openModal(sectionConfigs.planWeddings)} isLoading={isLoading}>
+                        {resortData.planWeddings.length > 0 ? resortData.planWeddings.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.planWeddings, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.planWeddings.endpoint, item.id, 'plan wedding')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No wedding plans found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="Nearby Attractions" onAdd={() => openModal(sectionConfigs.nearbyAttractions)} isLoading={isLoading}>
+                        {resortData.nearbyAttractions.length > 0 ? resortData.nearbyAttractions.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.nearbyAttractions, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.nearbyAttractions.endpoint, item.id, 'nearby attraction')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No nearby attractions found.</p>}
                     </ManagementSection>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
@@ -11,9 +11,19 @@ class ServiceBase(BaseModel):
 class ServiceCreate(ServiceBase):
     pass
 
+
+class ServiceImageOut(BaseModel):
+    id: int
+    image_url: str
+
+    class Config:
+        from_attributes = True
+
+
 class ServiceOut(ServiceBase):
     id: int
     created_at: datetime
+    images: List[ServiceImageOut] = []
 
     class Config:
         from_attributes = True

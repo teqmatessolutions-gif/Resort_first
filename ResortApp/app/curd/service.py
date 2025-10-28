@@ -1,16 +1,26 @@
 from sqlalchemy.orm import Session, joinedload
-from app.models.service import Service, AssignedService
+from typing import List
+from app.models.service import Service, AssignedService, ServiceImage
 from app.schemas.service import ServiceCreate, AssignedServiceCreate, AssignedServiceUpdate
 
-def create_service(db: Session, service: ServiceCreate):
-    db_service = Service(**service.dict())
+def create_service(db: Session, name: str, description: str, charges: float, image_urls: List[str] = None):
+    db_service = Service(name=name, description=description, charges=charges)
     db.add(db_service)
     db.commit()
     db.refresh(db_service)
-    return db_service
+    
+    if image_urls:
+        for url in image_urls:
+            img = ServiceImage(service_id=db_service.id, image_url=url)
+            db.add(img)
+        db.commit()
+        db.refresh(db_service)
+    
+    # Load images relationship
+    return db.query(Service).options(joinedload(Service.images)).filter(Service.id == db_service.id).first()
 
 def get_services(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Service).offset(skip).limit(limit).all()
+    return db.query(Service).options(joinedload(Service.images)).offset(skip).limit(limit).all()
 
 def delete_service(db: Session, service_id: int):
     service = db.query(Service).filter(Service.id == service_id).first()

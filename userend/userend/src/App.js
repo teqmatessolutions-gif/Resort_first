@@ -665,6 +665,9 @@ export default function App() {
     const [galleryImages, setGalleryImages] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [bannerData, setBannerData] = useState([]);
+    const [signatureExperiences, setSignatureExperiences] = useState([]);
+    const [planWeddings, setPlanWeddings] = useState([]);
+    const [nearbyAttractions, setNearbyAttractions] = useState([]);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -748,6 +751,18 @@ export default function App() {
     
     const ITEM_PLACEHOLDER = "https://placehold.co/400x300/2d3748/cbd5e0?text=Image+Not+Available";
 
+    // Helper function to get correct image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return ITEM_PLACEHOLDER;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        const baseUrl = process.env.NODE_ENV === 'production' 
+            ? 'https://www.teqmates.com' 
+            : 'http://localhost:8000';
+        // Ensure imagePath starts with / for proper URL construction
+        const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+        return `${baseUrl}${path}`;
+    };
+
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
@@ -761,7 +776,10 @@ export default function App() {
                 gallery: '/gallery/',
                 reviews: '/reviews/',
                 banners: '/header-banner/',
-                services: '/services/' // Fetch services (note: plural)
+                services: '/services/', // Fetch services (note: plural)
+                signatureExperiences: '/signature-experiences/',
+                planWeddings: '/plan-weddings/',
+                nearbyAttractions: '/nearby-attractions/'
             };
 
             try {
@@ -779,7 +797,8 @@ export default function App() {
 
                 const [
                     roomsData, bookingsData, foodItemsData, packagesData,
-                    resortInfoData, galleryData, reviewsData, bannerData, servicesData
+                    resortInfoData, galleryData, reviewsData, bannerData, servicesData,
+                    signatureExperiencesData, planWeddingsData, nearbyAttractionsData
                 ] = data;
 
                 setAllRooms(roomsData);
@@ -791,7 +810,10 @@ export default function App() {
                 setResortInfo(resortInfoData.length > 0 ? resortInfoData[0] : null);
                 setGalleryImages(galleryData);
                 setReviews(reviewsData);
-                setBannerData(bannerData);
+                setBannerData(bannerData.filter(b => b.is_active));
+                setSignatureExperiences(signatureExperiencesData || []);
+                setPlanWeddings(planWeddingsData || []);
+                setNearbyAttractions(nearbyAttractionsData || []);
 
             } catch (err) {
                 console.error("Failed to fetch resort data:", err);
@@ -804,13 +826,15 @@ export default function App() {
         fetchResortData();
     }, []); // Empty dependency array ensures this runs only once on mount
 
-    // Auto-rotate banner images
+    // Auto-rotate banner images - only if multiple banners
     useEffect(() => {
-        if (bannerData.length > 0) {
+        if (bannerData.length > 1) {
             const interval = setInterval(() => {
                 setCurrentBannerIndex((prev) => (prev + 1) % bannerData.length);
             }, 5000); // Change image every 5 seconds
             return () => clearInterval(interval);
+        } else if (bannerData.length === 1) {
+            setCurrentBannerIndex(0); // Ensure first banner is shown
         }
     }, [bannerData.length]);
 
@@ -1240,16 +1264,11 @@ export default function App() {
 
     useEffect(() => {
         localStorage.setItem('selectedTheme', currentTheme);
-    }, [currentTheme]);
+        // Apply theme to document body for better visibility
+        document.documentElement.className = '';
+        document.body.className = `${theme.bgPrimary} ${theme.textPrimary} transition-colors duration-500`;
+    }, [currentTheme, theme]);
 
-    useEffect(() => {
-        if (bannerData.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentBannerIndex(prev => (prev + 1) % bannerData.length);
-            }, 5000);
-            return () => clearInterval(interval);
-        }
-    }, [bannerData]);
 
     useEffect(() => {
         const handleScroll = () => setShowBackToTop(window.scrollY > 300);
@@ -1317,25 +1336,25 @@ export default function App() {
                     </div>
                 )}
                 
-                <header className={`fixed left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
+                <header className={`fixed left-0 right-0 z-50 ${theme.bgCard}/95 backdrop-blur-md shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
                     <div className="container mx-auto px-4 sm:px-6 md:px-12 py-4 flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                            <BedDouble className={`w-8 h-8 text-amber-600`} />
-                            <span className="text-2xl font-bold text-gray-900 tracking-tight">Elysian Retreat</span>
+                            <BedDouble className={`w-8 h-8 ${theme.textAccent}`} />
+                            <span className={`text-2xl font-bold ${theme.textPrimary} tracking-tight`}>Elysian Retreat</span>
                         </div>
                         <nav className="flex items-center space-x-4">
                             <div className="relative">
                                 <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-2 rounded-lg transition-colors duration-300 text-gray-700 hover:text-amber-600 hover:bg-amber-50`}
+                                    className="p-2 rounded-lg transition-colors duration-300 text-gray-700 dark:text-neutral-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-neutral-800"
                                     title="Change Theme">
                                     {themes[currentTheme].icon}
                                 </button>
                                 {isThemeDropdownOpen && (
-                                    <div className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50`}>
+                                    <div className={`absolute right-0 mt-2 w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
                                         <div className="p-2 grid grid-cols-4 gap-1">
                                             {Object.values(themes).map((t) => (
                                                 <button key={t.id} onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `bg-amber-500 text-white` : `text-gray-600 hover:bg-amber-50 hover:text-amber-600`}`}
+                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `${theme.buttonBg} ${theme.buttonText}` : `${theme.textSecondary} ${theme.bgSecondary} ${theme.textAccent}`}`}
                                                     title={t.name}>
                                                     {t.icon}
                                                 </button>
@@ -1367,7 +1386,7 @@ export default function App() {
             {bannerData.map((banner, index) => (
                 <img
                     key={banner.id}
-                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://localhost:8000${banner.image_url}`}
+                    src={getImageUrl(banner.image_url)}
                     onError={(e) => { e.target.src = ITEM_PLACEHOLDER; console.error('Banner image failed to load:', banner.image_url); }}
                     alt={banner.title}
                     className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentBannerIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
@@ -1412,20 +1431,22 @@ export default function App() {
                 </div>
             </div>
 
-            {/* Luxury Navigation Dots */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3">
-                {bannerData.map((_, index) => (
-                    <button
-                        key={index}
-                        onClick={() => setCurrentBannerIndex(index)}
-                        className={`transition-all duration-300 ${
-                            index === currentBannerIndex
-                                ? "w-12 h-1 bg-amber-400 rounded-full"
-                                : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
-                        }`}
-                    />
-                ))}
-            </div>
+            {/* Luxury Navigation Dots - Only show if multiple banners */}
+            {bannerData.length > 1 && (
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
+                    {bannerData.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => setCurrentBannerIndex(index)}
+                            className={`transition-all duration-300 ${
+                                index === currentBannerIndex
+                                    ? "w-12 h-1 bg-amber-400 rounded-full"
+                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                            }`}
+                        />
+                    ))}
+                </div>
+            )}
         </>
     ) : (
         <div className={`w-full h-full flex items-center justify-center ${theme.placeholderBg} ${theme.placeholderText}`}>
@@ -1435,7 +1456,7 @@ export default function App() {
 </div>
 
                     {/* Exclusive Deals Section - Mountain Shadows Style */}
-                    <section id="packages" className="bg-gradient-to-b from-neutral-50 to-white py-20">
+                    <section id="packages" className={`bg-gradient-to-b ${theme.bgSecondary} ${theme.bgCard} py-20 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -1461,7 +1482,7 @@ export default function App() {
                                                 {/* Image Container - Full Width */}
                                                 <div className="relative h-56 overflow-hidden">
                                                     <img 
-                                                        src={currentImage ? (process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${currentImage.image_url}` : `http://localhost:8000${currentImage.image_url}`) : ITEM_PLACEHOLDER} 
+                                                        src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                         alt={pkg.title} 
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1517,7 +1538,7 @@ export default function App() {
                     </section>
                     
                     {/* Luxury Villa Showcase Section */}
-                    <section id="rooms-section" className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                    <section id="rooms-section" className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -1630,7 +1651,7 @@ export default function App() {
                     </section>
 
                     {/* Premium Experiences Section - Mountain Shadows Style */}
-                    <section className="bg-white py-20">
+                    <section className={`${theme.bgCard} py-20 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -1645,19 +1666,72 @@ export default function App() {
                                 </p>
                             </div>
 
-                            {/* Services Grid */}
-                            {services.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {services.map((service) => (
+                            {/* Signature Experiences Grid */}
+                            {signatureExperiences.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {signatureExperiences.filter(exp => exp.is_active).map((experience) => (
                                         <div 
-                                            key={service.id}
+                                            key={experience.id}
                                             className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
                                         >
-                                            {/* Image Container with Multiple Images Support */}
-                                            <div className="relative h-40 overflow-hidden">
+                                            {/* Image Container */}
+                                            <div className="relative h-64 overflow-hidden">
+                                                <img 
+                                                    src={getImageUrl(experience.image_url)} 
+                                                    alt={experience.title} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-6 space-y-3">
+                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                                                    {experience.title}
+                                                </h3>
+                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                                                    {experience.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-center py-12 text-gray-500">No signature experiences available at the moment.</p>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Premium Services Showcase Section */}
+                    <section className={`${theme.bgCard} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Premium Services ✦
+                                </span>
+                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                    WORLD-CLASS AMENITIES & SERVICES
+                                </h2>
+                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                    Experience unparalleled luxury with our comprehensive range of world-class amenities and personalized services
+                                </p>
+                            </div>
+
+                            {/* Services Grid - 2 Column Layout with Images */}
+                            {services.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {services.slice(0, 4).map((service) => (
+                                        <div 
+                                            key={service.id}
+                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                        >
+                                            {/* Image Container */}
+                                            <div className="relative h-48 overflow-hidden">
                                                 {service.images && service.images.length > 0 ? (
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${service.images[0].image_url}` : `http://localhost:8000${service.images[0].image_url}`} 
+                                                        src={getImageUrl(service.images[0].image_url)} 
                                                         alt={service.name} 
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1680,15 +1754,15 @@ export default function App() {
                                             </div>
 
                                             {/* Content */}
-                                            <div className="p-4 space-y-2">
+                                            <div className="p-4 space-y-3">
                                                 <h3 className="text-lg font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
                                                     {service.name}
                                                 </h3>
-                                                <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
+                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
                                                     {service.description}
                                                 </p>
                                                 
-                                                {/* Charges */}
+                                                {/* Pricing */}
                                                 <div className="pt-2 border-t border-gray-100">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-xs text-gray-500">From</span>
@@ -1698,71 +1772,6 @@ export default function App() {
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-center py-12 text-gray-500">No experiences available at the moment.</p>
-                            )}
-                        </div>
-                    </section>
-
-                    {/* Premium Services Showcase Section */}
-                    <section className="bg-white py-20">
-                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
-                            {/* Section Header */}
-                            <div className="text-center mb-16">
-                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
-                                    ✦ Premium Services ✦
-                                </span>
-                                <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-                                    WORLD-CLASS AMENITIES & SERVICES
-                                </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                                    Experience unparalleled luxury with our comprehensive range of world-class amenities and personalized services
-                                </p>
-                            </div>
-
-                            {/* Services Grid - 2 Column Layout */}
-                            {services.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                    {services.slice(0, 4).map((service) => (
-                                        <div 
-                                            key={service.id}
-                                            className="group relative bg-gradient-to-br from-white to-neutral-50 rounded-2xl p-4 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
-                                        >
-                                            {/* Icon */}
-                                            <div className="flex items-start gap-4 mb-6">
-                                                <div className="relative">
-                                                    <div className="absolute inset-0 bg-amber-500/20 rounded-2xl blur-xl"></div>
-                                                    <div className="relative bg-gradient-to-br from-amber-500 to-orange-500 p-4 rounded-2xl">
-                                                        <ConciergeBell className="w-8 h-8 text-white" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors mb-2">
-                                                        {service.name}
-                                                    </h3>
-                                                    <p className="text-gray-600 leading-relaxed">
-                                                        {service.description}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            {/* Pricing */}
-                                            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                                                <span className="text-sm text-gray-500 uppercase tracking-wide font-semibold">
-                                                    Starting From
-                                                </span>
-                                                <div className="text-right">
-                                                    <span className="text-3xl font-extrabold text-amber-600">
-                                                        ₹{service.charges}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Hover Glow Effect */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-amber-500/0 to-amber-500/0 group-hover:from-amber-500/5 group-hover:to-transparent rounded-3xl transition-all duration-500 pointer-events-none" />
                                         </div>
                                     ))}
                                 </div>
@@ -1782,7 +1791,7 @@ export default function App() {
                     </section>
 
                     {/* Premium Cuisine Section - Mountain Shadows Style */}
-                    <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -1855,7 +1864,7 @@ export default function App() {
                     </section>
 
                     {/* Premium Gallery Section - Mountain Shadows Style */}
-                    <section className="bg-gradient-to-b from-white to-neutral-50 py-20">
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -1912,105 +1921,101 @@ export default function App() {
                         </div>
                     </section>
                     
-                    {/* Premium Wedding Destination Section - Full Screen Moving Banner */}
-                    <section className="relative w-full h-screen overflow-hidden">
-                        {/* Background Image with Parallax Effect */}
-                        <div className="absolute inset-0">
-                            <img 
-                                src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1920" 
-                                alt="Wedding venue" 
-                                className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
-                            />
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
-                        </div>
+                    {/* Plan Your Wedding Section - Dynamic */}
+                    {planWeddings.length > 0 && planWeddings.some(w => w.is_active) && (
+                        <section className="relative w-full min-h-screen overflow-hidden">
+                            {planWeddings.filter(w => w.is_active).slice(0, 1).map((wedding) => (
+                                <div key={wedding.id}>
+                                    {/* Background Image with Parallax Effect */}
+                                    <div className="absolute inset-0">
+                                        <img 
+                                            src={getImageUrl(wedding.image_url)} 
+                                            alt={wedding.title} 
+                                            className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
+                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
+                                        />
+                                        {/* Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
+                                    </div>
 
-                        {/* Content Overlay */}
-                        <div className="relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
-                            <div className="max-w-5xl mx-auto text-center text-white">
-                                {/* Badge */}
-                                <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
-                                    <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
-                                        ✦ Perfect Venue ✦
-                                    </span>
-                                </div>
-
-                                {/* Main Title */}
-                                <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
-                                    THE PERFECT BEST<br/>
-                                    <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
-                                        WEDDING DESTINATION
-                                    </span><br/>
-                                    IN KERALA
-                                </h2>
-
-                                {/* Description */}
-                                <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
-                                    Nestled on a serene island with breathtaking views of the lake and forest, our resort provides the perfect backdrop for your dream wedding. The tabletop lawn overlooks the forest and lake, offering a stunning setting.
-                                </p>
-
-                                {/* CTA Button */}
-                                <div className="animate-[fadeInUp_1.6s_ease-out]">
-                                    <button className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50 animate-[gentle-pulse_2s_ease-in-out_infinite]">
-                                        Plan Your Wedding
-                                        <ChevronRight className="inline-block ml-2 w-6 h-6" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Scroll Indicator */}
-                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-                            <ChevronDown className="w-8 h-8 text-white/60" />
-                        </div>
-                    </section>
-
-                    {/* Nearby Attractions Section */}
-                    <section className="bg-white py-20">
-                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
-                            <div className="text-center mb-12">
-                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
-                                    ✦ Explore ✦
-                                </span>
-                                <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 mb-4">
-                                    NEARBY ATTRACTIONS
-                                </h2>
-                                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-                                    Discover the beautiful surroundings and attractions near our luxury resort
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {['Waterfalls', 'Hill Stations', 'Wildlife Sanctuary'].map((attraction, index) => (
-                                    <div 
-                                        key={index}
-                                        className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transform hover:-translate-y-2"
-                                    >
-                                        <div className="relative h-48 overflow-hidden">
-                                            <img 
-                                                src={`https://images.unsplash.com/photo-${1507350223404 + index}aef8e6e3b5c?w=400`} 
-                                                alt={attraction} 
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                            />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                                            <div className="absolute bottom-4 left-4 right-4">
-                                                <h3 className="text-xl font-bold text-white">{attraction}</h3>
+                                    {/* Content Overlay */}
+                                    <div className="relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+                                        <div className="max-w-5xl mx-auto text-center text-white">
+                                            {/* Badge */}
+                                            <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                                    ✦ Perfect Venue ✦
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="p-4">
-                                            <p className="text-gray-600 text-sm">
-                                                Experience the natural beauty of {attraction} with our guided tours and packages.
+
+                                            {/* Main Title */}
+                                            <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
+                                                {wedding.title.split(' ').slice(0, 3).join(' ')}<br/>
+                                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                                    {wedding.title.split(' ').slice(3).join(' ') || 'WEDDING DESTINATION'}
+                                                </span>
+                                            </h2>
+
+                                            {/* Description */}
+                                            <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
+                                                {wedding.description}
                                             </p>
-                                            <button className="mt-4 text-amber-600 font-semibold hover:text-amber-700 transition-colors">
-                                                Learn More →
-                                            </button>
                                         </div>
                                     </div>
-                                ))}
+                                </div>
+                            ))}
+                        </section>
+                    )}
+
+                    {/* Nearby Attractions Section - Dynamic */}
+                    {nearbyAttractions.length > 0 && nearbyAttractions.some(a => a.is_active) && (
+                        <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                            <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                                <div className="text-center mb-16">
+                                    <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                        ✦ Explore ✦
+                                    </span>
+                                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                                        NEARBY ATTRACTIONS
+                                    </h2>
+                                    <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                                        Discover the beautiful surroundings and attractions near our luxury resort
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {nearbyAttractions.filter(attr => attr.is_active).map((attraction) => (
+                                        <div 
+                                            key={attraction.id}
+                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border border-gray-100"
+                                        >
+                                            {/* Image Container */}
+                                            <div className="relative h-64 overflow-hidden">
+                                                <img 
+                                                    src={getImageUrl(attraction.image_url)} 
+                                                    alt={attraction.title} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-6 space-y-3">
+                                                <h3 className="text-xl font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                                                    {attraction.title}
+                                                </h3>
+                                                <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+                                                    {attraction.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+                    )}
+
 
                     {/* Reviews Section */}
                     <section>
