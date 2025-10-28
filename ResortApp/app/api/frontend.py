@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 import os
 import shutil
+import uuid
 
 import app.schemas.frontend as schemas
 import app.models.frontend as models
@@ -30,7 +31,10 @@ async def create_header_banner(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    # Generate unique filename to avoid conflicts
+    file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+    unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, unique_filename)
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
