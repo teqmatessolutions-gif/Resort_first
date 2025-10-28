@@ -911,11 +911,14 @@ export default function App() {
         }));
     };
 
-    // Filter rooms based on date availability for room booking
+    // Check room availability based on selected dates (but always show all rooms)
+    const [roomAvailability, setRoomAvailability] = useState({});
+    
     useEffect(() => {
         if (bookingData.check_in && bookingData.check_out && allRooms.length > 0) {
-            const availableRooms = allRooms.filter(room => {
-                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
+            // Calculate availability for each room
+            const availability = {};
+            allRooms.forEach(room => {
                 const hasConflict = bookings.some(booking => {
                     const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
                     if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
@@ -925,23 +928,25 @@ export default function App() {
                     const requestedCheckIn = new Date(bookingData.check_in);
                     const requestedCheckOut = new Date(bookingData.check_out);
                     
-                    // Check if room is part of this booking
                     const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
                     if (!isRoomInBooking) return false;
                     
-                    // Check for date overlap
                     return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
                 });
                 
-                return !hasConflict;
+                availability[room.id] = !hasConflict;
             });
-            
-            setRooms(availableRooms);
+            setRoomAvailability(availability);
         } else {
-            // If no dates selected, don't show any rooms - require dates first
-            setRooms([]);
+            // If no dates selected, clear availability data (all rooms shown without availability check)
+            setRoomAvailability({});
         }
     }, [bookingData.check_in, bookingData.check_out, allRooms, bookings]);
+    
+    // Always set rooms to allRooms - availability filtering happens in UI
+    useEffect(() => {
+        setRooms(allRooms);
+    }, [allRooms]);
 
     // Filter rooms based on date availability for package booking
     // Note: This shares the same rooms state, so it will override regular booking rooms
@@ -1596,30 +1601,44 @@ export default function App() {
                                 </p>
                             </div>
 
-                            {/* Date Selection Prompt */}
+                            {/* Info Banner - Show when dates not selected */}
                             {(!bookingData.check_in || !bookingData.check_out) && (
-                                <div className="text-center py-16">
-                                    <div className="inline-block p-8 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 max-w-2xl">
-                                        <BedDouble className="w-16 h-16 text-amber-600 mx-auto mb-4" />
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Select Your Dates</h3>
-                                        <p className="text-gray-600 mb-6">Please select your check-in and check-out dates to view available rooms</p>
-                                        <button 
-                                            onClick={() => setIsGeneralBookingOpen(true)}
-                                            className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105"
-                                        >
-                                            Select Dates
-                                        </button>
+                                <div className="mb-8">
+                                    <div className={`inline-block w-full p-4 ${theme.bgSecondary} rounded-xl border ${theme.border} shadow-sm`}>
+                                        <div className="flex items-center gap-3 justify-center flex-wrap">
+                                            <BedDouble className={`w-5 h-5 ${theme.textAccent}`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>
+                                                Select check-in and check-out dates above to check room availability for your stay
+                                            </p>
+                                            <button 
+                                                onClick={() => setIsGeneralBookingOpen(true)}
+                                                className={`px-4 py-2 text-xs font-semibold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow hover:shadow-md transition-all duration-300 transform hover:scale-105`}
+                                            >
+                                                Select Dates
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Villa Grid - Only show when dates are selected */}
-                            {bookingData.check_in && bookingData.check_out && rooms.length > 0 ? (
+                            {/* Availability Info - Show when dates are selected */}
+                            {bookingData.check_in && bookingData.check_out && Object.keys(roomAvailability).length > 0 && (
+                                <div className="mb-6">
+                                    <div className={`inline-block w-full p-3 ${theme.bgCard} rounded-lg border ${theme.border} shadow-sm`}>
+                                        <p className={`text-sm ${theme.textPrimary} text-center`}>
+                                            Showing availability for <span className="font-semibold">{bookingData.check_in}</span> to <span className="font-semibold">{bookingData.check_out}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Villa Grid - Always show all rooms */}
+                            {rooms.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                     {rooms.slice(0, 6).map((room, index) => (
                                         <div 
                                             key={room.id} 
-                                            className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2"
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2`}
                                         >
                                             {/* Image Container with Overlay */}
                                             <div className="relative h-48 overflow-hidden">
@@ -1638,12 +1657,20 @@ export default function App() {
                                                     </span>
                                                 </div>
 
-                                                {/* Availability Badge - Shows when dates are selected */}
-                                                <div className="absolute top-4 right-4">
-                                                    <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
-                                                        Available
-                                                    </span>
-                                                </div>
+                                                {/* Availability Badge - Only show when dates are selected */}
+                                                {bookingData.check_in && bookingData.check_out && (
+                                                    <div className="absolute top-4 right-4">
+                                                        {roomAvailability[room.id] ? (
+                                                            <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
+                                                                Available
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-red-500 text-white">
+                                                                Booked
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
 
                                                 {/* Hover Effect Overlay */}
                                                 <div className="absolute inset-0 bg-amber-500/0 group-hover:bg-amber-500/10 transition-all duration-500" />
@@ -1685,9 +1712,14 @@ export default function App() {
                                                 {/* CTA Button */}
                                                 <button 
                                                     onClick={() => handleOpenRoomBookingForm(room.id)} 
-                                                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50 flex items-center justify-center gap-2"
+                                                    disabled={bookingData.check_in && bookingData.check_out && !roomAvailability[room.id]}
+                                                    className={`w-full mt-4 px-6 py-3 font-bold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 ${
+                                                        bookingData.check_in && bookingData.check_out && !roomAvailability[room.id]
+                                                            ? 'bg-gray-400 text-gray-700 cursor-not-allowed opacity-50'
+                                                            : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/50'
+                                                    }`}
                                                 >
-                                                    Book Now
+                                                    {bookingData.check_in && bookingData.check_out && !roomAvailability[room.id] ? 'Not Available' : 'Book Now'}
                                                     <ChevronRight className="w-5 h-5" />
                                                 </button>
                                             </div>
