@@ -21,6 +21,8 @@ const Services = () => {
   const [services, setServices] = useState([]);
   const [assignedServices, setAssignedServices] = useState([]);
   const [form, setForm] = useState({ name: "", description: "", charges: "" });
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [assignForm, setAssignForm] = useState({
     service_id: "",
     employee_id: "",
@@ -85,6 +87,26 @@ const Services = () => {
     }
   };
 
+  // Handle image selection
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedImages(files);
+    // Create preview URLs
+    const previews = files.map(file => URL.createObjectURL(file));
+    setImagePreviews(previews);
+  };
+
+  // Helper function to get image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://www.teqmates.com' 
+      : 'http://localhost:8000';
+    const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `${baseUrl}${path}`;
+  };
+
   // Create service
   const handleCreate = async () => {
     if (!form.name || !form.description || !form.charges) {
@@ -92,15 +114,28 @@ const Services = () => {
       return;
     }
     try {
-      await api.post("/services", {
-        name: form.name,
-        description: form.description,
-        charges: parseFloat(form.charges),
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('description', form.description);
+      formData.append('charges', parseFloat(form.charges));
+      
+      // Append images
+      selectedImages.forEach((image) => {
+        formData.append('images', image);
+      });
+
+      await api.post("/services", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       setForm({ name: "", description: "", charges: "" });
+      setSelectedImages([]);
+      setImagePreviews([]);
       fetchAll();
     } catch (err) {
       console.error("Failed to create service", err);
+      alert("Failed to create service. Please try again.");
     }
   };
 
@@ -216,6 +251,23 @@ const Services = () => {
                 onChange={(e) => setForm({ ...form, charges: e.target.value })}
                 className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Images</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-indigo-400"
+                />
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {imagePreviews.map((preview, idx) => (
+                      <img key={idx} src={preview} alt={`Preview ${idx + 1}`} className="w-full h-20 object-cover rounded border" />
+                    ))}
+                  </div>
+                )}
+              </div>
               <button
                 onClick={handleCreate}
                 className="w-full mt-3 bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-lg shadow-lg font-semibold"
@@ -254,7 +306,10 @@ const Services = () => {
                 className="w-full border p-3 rounded-lg"
               >
                 <option value="">Select Room</option>
-                {rooms.filter(r => ['Booked', 'Checked-in'].includes(r.status)).map((r) => (
+                {rooms.filter(r => {
+                  const normalizedStatus = r.status?.toLowerCase().replace(/[-_\s]/g, '');
+                  return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
+                }).map((r) => (
                   <option key={r.id} value={r.id}>Room {r.number}</option>
                 ))}
               </select>
@@ -318,6 +373,7 @@ const Services = () => {
               <table className="min-w-full border border-gray-200 rounded-lg">
                 <thead className="bg-gray-100 text-gray-700 uppercase tracking-wider">
                   <tr>
+                    <th className="py-3 px-4 text-left">Image</th>
                     <th className="py-3 px-4 text-left">Service Name</th>
                     <th className="py-3 px-4 text-left">Description</th>
                     <th className="py-3 px-4 text-right">Charges ($)</th>
@@ -326,6 +382,13 @@ const Services = () => {
                 <tbody>
                   {services.map((s, idx) => (
                     <tr key={s.id} className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100 transition-colors`}>
+                      <td className="py-3 px-4">
+                        {s.images && s.images.length > 0 ? (
+                          <img src={getImageUrl(s.images[0].image_url)} alt={s.name} className="w-16 h-16 object-cover rounded border" />
+                        ) : (
+                          <div className="w-16 h-16 bg-gray-200 rounded border flex items-center justify-center text-xs text-gray-400">No Image</div>
+                        )}
+                      </td>
                       <td className="py-3 px-4">{s.name}</td>
                       <td className="py-3 px-4">{s.description}</td>
                       <td className="py-3 px-4 text-right">{s.charges}</td>

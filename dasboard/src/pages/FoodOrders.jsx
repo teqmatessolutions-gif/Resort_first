@@ -216,11 +216,17 @@ export default function FoodOrders() {
   className="border rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 text-black"
 >
   <option value="">Select Room</option>
-  {rooms.filter((room) => ["Booked", "checked-in", "Checked-in"].includes(room.status)).length === 0 ? (
+  {rooms.filter((room) => {
+    const normalizedStatus = room.status?.toLowerCase().replace(/[-_\s]/g, '');
+    return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
+  }).length === 0 ? (
     <option disabled>No checked-in rooms available</option>
   ) : (
     rooms
-      .filter((room) => ["Booked", "checked-in", "Checked-in"].includes(room.status))
+      .filter((room) => {
+        const normalizedStatus = room.status?.toLowerCase().replace(/[-_\s]/g, '');
+        return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
+      })
       .map((room) => (
         <option key={room.id} value={room.id}>
           Room {room.number || room.room_number || room.id} ({room.booking?.guest_name || 'Guest'})

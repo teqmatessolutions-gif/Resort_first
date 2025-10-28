@@ -1,9 +1,9 @@
-// Axios in// src/services/api.js
+// src/services/api.js
 import axios from "axios";
 
 // Set your backend API base URL
 const API = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://localhost:8000",
+  baseURL: process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api",
 });
 
 // Automatically add token to headers

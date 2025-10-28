@@ -213,6 +213,13 @@ const CheckInModal = ({ booking, onSave, onClose, feedback, isSubmitting }) => {
   };
 
   const handleSave = () => {
+    // Check if booking is in correct state before attempting check-in
+    const normalizedStatus = booking.status?.toLowerCase().replace(/[-_]/g, '');
+    if (normalizedStatus !== 'booked') {
+      alert(`Cannot check in. Booking status is: ${booking.status}`);
+      return;
+    }
+    
     if (!idCardImage || !guestPhoto) {
       alert("Please upload both ID card and guest photo.");
       return;
@@ -1385,21 +1392,21 @@ const Bookings = () => {
                       <button
                         onClick={() => setBookingToCheckIn(b)}
                         className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status !== "booked"}
+                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                       >
                         Check-in
                       </button>
                       <button
                         onClick={() => setBookingToExtend(b)}
                         className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={!["booked", "checked-in"].includes(b.status)}
+                        disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
                       >
                         Extend
                       </button>
                       <button
                         onClick={() => cancelBooking(b.id, b.is_package)}
                         className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status !== "booked"}
+                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                       >
                         Cancel
                       </button>

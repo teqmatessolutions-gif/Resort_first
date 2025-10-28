@@ -37,14 +37,17 @@ async def create_expense(
         # Path to be used by frontend (relative to /uploads/)
         image_path = f"uploads/expenses/{filename}"
 
-    # Store expense in DB
-    expense_data = {
-        "category": category,
-        "amount": amount,
-        "date": date,
-        "description": description,
-        "employee_id": employee_id,
-    }
+    # Store expense in DB using ExpenseCreate schema
+    from app.schemas.expenses import ExpenseCreate
+    from datetime import datetime
+    
+    expense_data = ExpenseCreate(
+        category=category,
+        amount=amount,
+        date=datetime.strptime(date, "%Y-%m-%d").date() if isinstance(date, str) else date,
+        description=description,
+        employee_id=employee_id,
+    )
 
     created = expense_crud.create_expense(db, data=expense_data, image_path=image_path)
 

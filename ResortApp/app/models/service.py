@@ -17,6 +17,9 @@ class Service(Base):
     description = Column(String, nullable=True)
     charges = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    images = relationship("ServiceImage", back_populates="service", cascade="all, delete-orphan")
 
 class AssignedService(Base):
     __tablename__ = "assigned_services"
@@ -31,3 +34,13 @@ class AssignedService(Base):
     service = relationship("Service")
     employee = relationship("Employee")
     room = relationship("Room")
+
+
+class ServiceImage(Base):
+    __tablename__ = "service_images"
+    id = Column(Integer, primary_key=True, index=True)
+    service_id = Column(Integer, ForeignKey("services.id"))
+    image_url = Column(String, nullable=False)
+    
+    # Relationships
+    service = relationship("Service", back_populates="images")

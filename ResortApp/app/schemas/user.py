@@ -1,5 +1,6 @@
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+import json
 
 # ---------- Role Models ----------
 class RoleBase(BaseModel):
@@ -14,6 +15,21 @@ class RoleOut(RoleBase):
     name: str
     permissions: Optional[List[str]] = None
     model_config = ConfigDict(from_attributes=True)
+    
+    @field_validator('permissions', mode='before')
+    @classmethod
+    def parse_permissions(cls, v):
+        """Convert permissions from JSON string to list"""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            try:
+                return json.loads(v)
+            except (json.JSONDecodeError, TypeError):
+                return []
+        if isinstance(v, list):
+            return v
+        return []
 
 # ---------- User Models ----------
 class UserBase(BaseModel):

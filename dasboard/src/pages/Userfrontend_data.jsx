@@ -5,7 +5,19 @@ import { toast } from "react-hot-toast";
 import { FaStar, FaTrashAlt, FaPencilAlt, FaPlus, FaTimes } from "react-icons/fa";
 import { AnimatePresence, motion } from "framer-motion";
 
-const API_URL = "http://localhost:8000";
+// Get the correct base URL based on environment
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+  if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://www.teqmates.com' 
+    : 'http://localhost:8000';
+  // Ensure imagePath starts with / for proper URL construction
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${baseUrl}${path}`;
+};
+
+const API_URL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
 
 // --- Reusable Components ---
 
@@ -40,7 +52,7 @@ const FormModal = ({ isOpen, onClose, onSubmit, fields, initialData, title, isMu
         if (initialData) {
             setFormState(initialData);
             if (initialData.image_url) {
-                setImagePreview(`${API_URL}${initialData.image_url}`);
+                setImagePreview(getImageUrl(initialData.image_url));
             }
         } else {
             setFormState({});
@@ -94,6 +106,8 @@ const FormModal = ({ isOpen, onClose, onSubmit, fields, initialData, title, isMu
                                     <input type="file" name={field.name} onChange={handleFormChange} className="w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100" />
                                 ) : field.type === 'checkbox' ? (
                                     <input type="checkbox" name={field.name} checked={!!formState[field.name]} onChange={handleFormChange} className="h-5 w-5 text-violet-600 border-gray-300 rounded focus:ring-violet-500" />
+                                ) : field.type === 'textarea' ? (
+                                    <textarea name={field.name} placeholder={field.placeholder} value={formState[field.name] || ''} onChange={handleFormChange} required={field.required !== false} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors" />
                                 ) : (
                                     <input type={field.type || "text"} name={field.name} placeholder={field.placeholder} value={formState[field.name] || ''} onChange={handleFormChange} required={field.required !== false} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 transition-colors" />
                                 )}
@@ -118,6 +132,9 @@ export default function ResortCMS() {
         gallery: [],
         reviews: [],
         resortInfo: [],
+        signatureExperiences: [],
+        planWeddings: [],
+        nearbyAttractions: [],
     });
     const [isLoading, setIsLoading] = useState(true);
     const [modalState, setModalState] = useState({ isOpen: false, config: null, initialData: null });
@@ -125,17 +142,23 @@ export default function ResortCMS() {
     const fetchAll = async () => {
         setIsLoading(true);
         try {
-            const [bannersRes, galleryRes, reviewsRes, resortInfoRes] = await Promise.all([
+            const [bannersRes, galleryRes, reviewsRes, resortInfoRes, signatureExpRes, planWeddingRes, nearbyAttrRes] = await Promise.all([
                 api.get("/header-banner/"),
                 api.get("/gallery/"),
                 api.get("/reviews/"),
                 api.get("/resort-info/"),
+                api.get("/signature-experiences/"),
+                api.get("/plan-weddings/"),
+                api.get("/nearby-attractions/"),
             ]);
             setResortData({
                 banners: bannersRes.data || [],
                 gallery: galleryRes.data || [],
                 reviews: reviewsRes.data || [],
                 resortInfo: resortInfoRes.data || [],
+                signatureExperiences: signatureExpRes.data || [],
+                planWeddings: planWeddingRes.data || [],
+                nearbyAttractions: nearbyAttrRes.data || [],
             });
         } catch (error) {
             console.error("Failed to fetch data:", error);
@@ -151,43 +174,138 @@ export default function ResortCMS() {
 
     const handleDelete = async (endpoint, id, name) => {
         if (window.confirm(`Are you sure you want to delete this ${name}?`)) {
+            // Optimistically remove from UI immediately
+            setResortData(prev => {
+                if (endpoint.includes('header-banner')) {
+                    return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
+                } else if (endpoint.includes('gallery')) {
+                    return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
+                } else if (endpoint.includes('reviews')) {
+                    return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
+                } else if (endpoint.includes('resort-info')) {
+                    return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
+                } else if (endpoint.includes('signature-experiences')) {
+                    return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
+                } else if (endpoint.includes('plan-weddings')) {
+                    return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
+                } else if (endpoint.includes('nearby-attractions')) {
+                    return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
+                }
+                return prev;
+            });
+            
             try {
                 await api.delete(`${endpoint}/${id}`);
                 toast.success(`${name} deleted successfully!`);
+                // Optionally refresh to sync with server
                 fetchAll();
             } catch (err) {
                 console.error("Delete error:", err);
                 toast.error(`Failed to delete ${name}.`);
+                // Re-fetch to restore original state if delete failed
+                fetchAll();
             }
         }
     };
 
-    const handleFormSubmit = async (config, data, file) => {
-        const isEditing = data && data.id;
-        const endpoint = isEditing ? `${config.endpoint}/${data.id}` : config.endpoint;
+    const handleFormSubmit = async (config, initialData, formData, file) => {
+        const isEditing = initialData && initialData.id;
+        const endpoint = isEditing ? `${config.endpoint}/${initialData.id}` : config.endpoint;
         const method = isEditing ? 'put' : 'post';
 
-        let payload = data;
+        let payload = formData;
         if (config.isMultipart) {
-            const formData = new FormData();
-            Object.keys(data).forEach(key => {
-                if (key !== 'image') formData.append(key, data[key]);
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (key !== 'image') {
+                    // Convert boolean values to string for FormData
+                    const value = formData[key];
+                    data.append(key, typeof value === 'boolean' ? String(value) : value);
+                }
             });
-            if (file) formData.append('image', file);
-            payload = formData;
+            if (file) data.append('image', file);
+            payload = data;
+        } else {
+            // For JSON requests, ensure proper type conversion
+            const cleanData = { ...formData };
+            // Convert rating to integer if it exists
+            if (cleanData.rating !== undefined) {
+                cleanData.rating = parseInt(cleanData.rating, 10);
+            }
+            // Ensure boolean values are proper booleans
+            if (cleanData.is_active !== undefined) {
+                cleanData.is_active = cleanData.is_active === true || cleanData.is_active === 'true';
+            }
+            payload = cleanData;
         }
 
         try {
-            await api({
+            const response = await api({
                 method: method,
                 url: endpoint,
                 data: payload,
             });
             toast.success(`${config.title} ${isEditing ? 'updated' : 'added'} successfully!`);
-            fetchAll();
+            
+            // Optimistically update the UI
+            if (config.endpoint.includes('header-banner')) {
+                setResortData(prev => ({
+                    ...prev,
+                    banners: isEditing 
+                        ? prev.banners.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.banners]
+                }));
+            } else if (config.endpoint.includes('gallery')) {
+                setResortData(prev => ({
+                    ...prev,
+                    gallery: isEditing
+                        ? prev.gallery.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.gallery]
+                }));
+            } else if (config.endpoint.includes('reviews')) {
+                setResortData(prev => ({
+                    ...prev,
+                    reviews: isEditing
+                        ? prev.reviews.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.reviews]
+                }));
+            } else if (config.endpoint.includes('resort-info')) {
+                setResortData(prev => ({
+                    ...prev,
+                    resortInfo: isEditing
+                        ? prev.resortInfo.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.resortInfo]
+                }));
+            } else if (config.endpoint.includes('signature-experiences')) {
+                setResortData(prev => ({
+                    ...prev,
+                    signatureExperiences: isEditing
+                        ? prev.signatureExperiences.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.signatureExperiences]
+                }));
+            } else if (config.endpoint.includes('plan-weddings')) {
+                setResortData(prev => ({
+                    ...prev,
+                    planWeddings: isEditing
+                        ? prev.planWeddings.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.planWeddings]
+                }));
+            } else if (config.endpoint.includes('nearby-attractions')) {
+                setResortData(prev => ({
+                    ...prev,
+                    nearbyAttractions: isEditing
+                        ? prev.nearbyAttractions.map(item => item.id === initialData.id ? response.data : item)
+                        : [response.data, ...prev.nearbyAttractions]
+                }));
+            }
+            
+            // Close modal after successful save
+            setModalState({ isOpen: false, config: null, initialData: null });
         } catch (error) {
             console.error(`Failed to ${isEditing ? 'update' : 'add'} ${config.title}:`, error.response?.data || error.message);
-            toast.error(`Failed to save ${config.title}.`);
+            const errorMsg = error.response?.data?.detail;
+            const message = typeof errorMsg === 'string' ? errorMsg : `Failed to save ${config.title}.`;
+            toast.error(message);
         }
     };
 
@@ -200,6 +318,9 @@ export default function ResortCMS() {
         gallery: { title: "Gallery Image", endpoint: "/gallery", fields: [{ name: "caption", placeholder: "Image Caption" }, { name: "image", type: "file" }], isMultipart: true },
         reviews: { title: "Review", endpoint: "/reviews", fields: [{ name: "name", placeholder: "Customer Name" }, { name: "comment", placeholder: "Review Comment" }, { name: "rating", placeholder: "Rating (1-5)", type: "number" }], isMultipart: false },
         resortInfo: { title: "Resort Info", endpoint: "/resort-info", fields: [{ name: "name", placeholder: "Resort Name" }, { name: "address", placeholder: "Resort Address" }, { name: "facebook", placeholder: "Facebook URL" }, { name: "instagram", placeholder: "Instagram URL" }, { name: "twitter", placeholder: "Twitter URL" }, { name: "linkedin", placeholder: "LinkedIn URL" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: false },
+        signatureExperiences: { title: "Signature Experience", endpoint: "/signature-experiences", fields: [{ name: "title", placeholder: "Experience Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        planWeddings: { title: "Plan Your Wedding", endpoint: "/plan-weddings", fields: [{ name: "title", placeholder: "Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        nearbyAttractions: { title: "Nearby Attraction", endpoint: "/nearby-attractions", fields: [{ name: "title", placeholder: "Attraction Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
     };
 
     if (isLoading) {
@@ -221,7 +342,7 @@ export default function ResortCMS() {
                 <FormModal
                     isOpen={modalState.isOpen}
                     onClose={() => setModalState({ isOpen: false, config: null, initialData: null })}
-                    onSubmit={(data, file) => handleFormSubmit(modalState.config, data, file)}
+                    onSubmit={(data, file) => handleFormSubmit(modalState.config, modalState.initialData, data, file)}
                     fields={modalState.config?.fields || []}
                     initialData={modalState.initialData}
                     title={`${modalState.initialData ? 'Edit' : 'Add'} ${modalState.config?.title}`}
@@ -232,7 +353,7 @@ export default function ResortCMS() {
                     <ManagementSection title="Header Banners" onAdd={() => openModal(sectionConfigs.banners)} isLoading={isLoading}>
                         {resortData.banners.length > 0 ? resortData.banners.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={`${API_URL}${item.image_url}`} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
                                 <h3 className="font-bold text-gray-800">{item.title}</h3>
                                 <p className="text-xs text-gray-600">{item.subtitle}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
@@ -247,7 +368,7 @@ export default function ResortCMS() {
                     <ManagementSection title="Gallery" onAdd={() => openModal(sectionConfigs.gallery)} isLoading={isLoading}>
                         {resortData.gallery.length > 0 ? resortData.gallery.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={`${API_URL}${item.image_url}`} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <img src={getImageUrl(item.image_url)} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
                                 <p className="text-xs text-gray-600">{item.caption}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.gallery, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
@@ -289,6 +410,51 @@ export default function ResortCMS() {
                                 </div>
                             </div>
                         )) : <p className="col-span-full text-center text-gray-500">No resort info found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="✦ Signature Experiences ✦" onAdd={() => openModal(sectionConfigs.signatureExperiences)} isLoading={isLoading}>
+                        {resortData.signatureExperiences.length > 0 ? resortData.signatureExperiences.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.signatureExperiences, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.signatureExperiences.endpoint, item.id, 'signature experience')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No signature experiences found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="Plan Your Wedding" onAdd={() => openModal(sectionConfigs.planWeddings)} isLoading={isLoading}>
+                        {resortData.planWeddings.length > 0 ? resortData.planWeddings.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.planWeddings, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.planWeddings.endpoint, item.id, 'plan wedding')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No wedding plans found.</p>}
+                    </ManagementSection>
+
+                    <ManagementSection title="Nearby Attractions" onAdd={() => openModal(sectionConfigs.nearbyAttractions)} isLoading={isLoading}>
+                        {resortData.nearbyAttractions.length > 0 ? resortData.nearbyAttractions.map(item => (
+                            <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
+                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
+                                <h3 className="font-bold text-gray-800">{item.title}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
+                                <div className="flex gap-2 pt-2 border-t">
+                                    <button onClick={() => openModal(sectionConfigs.nearbyAttractions, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
+                                    <button onClick={() => handleDelete(sectionConfigs.nearbyAttractions.endpoint, item.id, 'nearby attraction')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
+                                </div>
+                            </div>
+                        )) : <p className="col-span-full text-center text-gray-500">No nearby attractions found.</p>}
                     </ManagementSection>
                 </div>
             </div>

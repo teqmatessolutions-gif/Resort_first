@@ -2,8 +2,22 @@ from sqlalchemy.orm import Session
 from app.models.expense import Expense
 from app.schemas.expenses import ExpenseCreate, ExpenseUpdate
 
-def create_expense(db: Session, data: ExpenseCreate, image_path: str = None):
-    new_expense = Expense(**data, image=image_path)
+def create_expense(db: Session, data, image_path: str = None):
+    # Handle both dict and Pydantic model
+    if isinstance(data, dict):
+        expense_data = ExpenseCreate(**data)
+    else:
+        expense_data = data
+    
+    # Create expense model
+    new_expense = Expense(
+        category=expense_data.category,
+        amount=expense_data.amount,
+        date=expense_data.date,
+        description=expense_data.description,
+        employee_id=expense_data.employee_id,
+        image=image_path
+    )
     db.add(new_expense)
     db.commit()
     db.refresh(new_expense)

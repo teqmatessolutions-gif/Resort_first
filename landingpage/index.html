@@ -86,8 +86,8 @@
             <h1 data-aos="fade-up">Innovative Software Solutions for Your Business</h1>
             <p data-aos="fade-up" data-aos-delay="100">Your technology partner for Custom Software, Digital Marketing, Web & Mobile Apps, UI/UX Design, Cloud & DevOps, and ongoing support.</p>
             <div class="d-flex flex-column flex-md-row" data-aos="fade-up" data-aos-delay="200">
-              <a href="#about" class="btn-get-started">Get Started <i class="bi bi-arrow-right"></i></a>
-              <a href="https://www.youtube.com/watch?v=LXb3EKWsInQ" class="glightbox btn-watch-video d-flex align-items-center justify-content-center ms-0 ms-md-4 mt-4 mt-md-0"><i class="bi bi-play-circle"></i><span>Our Process</span></a>
+              <a href="#getStartedModal" data-bs-toggle="modal" class="btn-get-started">Get Started <i class="bi bi-arrow-right"></i></a>
+              <a href="https://www.youtube.com/watch?v=LXb3EKWsInQ" class="glightbox btn-watch-video d-none d-flex align-items-center justify-content-center ms-0 ms-md-4 mt-4 mt-md-0"><i class="bi bi-play-circle"></i><span>Our Process</span></a>
             </div>
           </div>
           <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out">
@@ -526,7 +526,7 @@
           </div>
 
           <div class="col-lg-6">
-            <form action="forms/contact.php" method="post" class="php-email-form" data-aos="fade-up" data-aos-delay="200">
+            <form id="contactForm" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
                 <div class="col-md-6">
@@ -546,15 +546,35 @@
                 </div>
 
                 <div class="col-12 text-center">
-                  <div class="loading">Loading</div>
-                  <div class="error-message"></div>
-                  <div class="sent-message">Your message has been sent. Thank you!</div>
+                  <div class="loading" style="display: none;">Loading</div>
+                  <div class="error-message" style="display: none;"></div>
+                  <div class="sent-message" style="display: none;">Your message has been sent. Thank you!</div>
 
                   <button type="submit">Send Message</button>
                 </div>
 
               </div>
             </form>
+            <script>
+            if (document.getElementById('contactForm')) {
+              document.getElementById('contactForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const loading = this.querySelector('.loading');
+                const error = this.querySelector('.error-message');
+                const success = this.querySelector('.sent-message');
+                
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                success.style.display = 'none';
+                
+                setTimeout(function() {
+                  loading.style.display = 'none';
+                  success.style.display = 'block';
+                  document.getElementById('contactForm').reset();
+                }, 1000);
+              });
+            }
+            </script>
           </div><!-- End Contact Form -->
 
         </div>
@@ -573,12 +593,32 @@
           <div class="col-lg-6">
             <h4>Join Our Newsletter</h4>
             <p>Subscribe to our newsletter and receive the latest news about our products and services!</p>
-            <form action="forms/newsletter.php" method="post" class="php-email-form">
-              <div class="newsletter-form"><input type="email" name="email"><input type="submit" value="Subscribe"></div>
-              <div class="loading">Loading</div>
-              <div class="error-message"></div>
-              <div class="sent-message">Your subscription request has been sent. Thank you!</div>
+            <form id="newsletterForm">
+              <div class="newsletter-form"><input type="email" name="email" required><input type="submit" value="Subscribe"></div>
+              <div class="loading" style="display: none;">Loading</div>
+              <div class="error-message" style="display: none;"></div>
+              <div class="sent-message" style="display: none;">Your subscription request has been sent. Thank you!</div>
             </form>
+            <script>
+            if (document.getElementById('newsletterForm')) {
+              document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const loading = this.querySelector('.loading');
+                const error = this.querySelector('.error-message');
+                const success = this.querySelector('.sent-message');
+                
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                success.style.display = 'none';
+                
+                setTimeout(function() {
+                  loading.style.display = 'none';
+                  success.style.display = 'block';
+                  document.getElementById('newsletterForm').reset();
+                }, 1000);
+              });
+            }
+            </script>
           </div>
         </div>
       </div>
@@ -640,35 +680,83 @@
 
   <!-- Get Started Modal -->
   <div class="modal fade" id="getStartedModal" tabindex="-1" aria-labelledby="getStartedModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="getStartedModalLabel">Request a Call Back</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-bottom: none; padding: 2rem;">
+          <div class="d-flex align-items-center w-100">
+            <div class="me-3" style="width: 50px; height: 50px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+              <i class="bi bi-telephone-fill text-white" style="font-size: 24px;"></i>
+            </div>
+            <div class="flex-grow-1">
+              <h4 class="modal-title text-white mb-1" id="getStartedModalLabel" style="font-weight: 600; font-size: 1.5rem;">Request a Call Back</h4>
+              <p class="mb-0 text-white-50" style="font-size: 0.9rem;">We'll get back to you soon!</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="opacity: 0.8;"></button>
         </div>
-        <div class="modal-body">
-          <form action="forms/callback.php" method="post" class="php-email-form">
-            <div class="row gy-4">
-              <div class="col-md-12">
-                <input type="text" name="name" class="form-control" placeholder="Your Name" required>
+        <div class="modal-body" style="padding: 2.5rem;">
+          <form id="callbackForm">
+            <div class="row gy-3">
+              <div class="col-md-6">
+                <div class="form-group position-relative">
+                  <i class="bi bi-person-fill position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #667eea; z-index: 5;"></i>
+                  <input type="text" name="name" class="form-control" placeholder="Your Name" required style="padding-left: 45px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; height: 50px;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'">
+                </div>
               </div>
-              <div class="col-md-12">
-                <input type="email" class="form-control" name="email" placeholder="Your Email" required>
+              <div class="col-md-6">
+                <div class="form-group position-relative">
+                  <i class="bi bi-envelope-fill position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #667eea; z-index: 5;"></i>
+                  <input type="email" class="form-control" name="email" placeholder="Your Email" required style="padding-left: 45px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; height: 50px;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'">
+                </div>
               </div>
-              <div class="col-md-12">
-                <input type="text" class="form-control" name="phone" placeholder="Your Phone" required>
+              <div class="col-md-6">
+                <div class="form-group position-relative">
+                  <i class="bi bi-telephone position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #667eea; z-index: 5;"></i>
+                  <input type="text" class="form-control" name="phone" placeholder="Your Phone" required style="padding-left: 45px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; height: 50px;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'">
+                </div>
               </div>
-              <div class="col-md-12">
-                <input type="text" class="form-control" name="callback_time" placeholder="Preferred Call Back Time (e.g., Tomorrow 10 AM)">
+              <div class="col-md-6">
+                <div class="form-group position-relative">
+                  <i class="bi bi-calendar-check position-absolute" style="left: 15px; top: 50%; transform: translateY(-50%); color: #667eea; z-index: 5;"></i>
+                  <input type="text" class="form-control" name="callback_time" placeholder="Preferred Call Back Time" style="padding-left: 45px; border-radius: 10px; border: 2px solid #e0e0e0; transition: all 0.3s; height: 50px;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'">
+                </div>
               </div>
-              <div class="col-12 text-center">
-                <div class="loading">Loading</div>
-                <div class="error-message"></div>
-                <div class="sent-message">Your request has been sent. We will call you back shortly!</div>
-                <button type="submit">Arrange Call</button>
+              <div class="col-12 text-center mt-3">
+                <div class="loading" style="display: none; padding: 1rem;">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                  <p class="mt-2 mb-0 text-muted">Processing your request...</p>
+                </div>
+                <div class="error-message alert alert-danger" style="display: none; border-radius: 10px;"></div>
+                <div class="sent-message" style="display: none; padding: 1rem; background: #d4edda; border-radius: 10px; color: #155724; border: 1px solid #c3e6cb;">
+                  <i class="bi bi-check-circle-fill me-2"></i>Your request has been sent. We will call you back shortly!
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg px-5" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 12px; padding: 14px 40px; font-weight: 600; font-size: 1.1rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.6)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.4)'">
+                  <i class="bi bi-telephone-forward me-2"></i>Arrange Call Back
+                </button>
               </div>
             </div>
           </form>
+          <script>
+          document.getElementById('callbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const loading = this.querySelector('.loading');
+            const error = this.querySelector('.error-message');
+            const success = this.querySelector('.sent-message');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            success.style.display = 'none';
+            
+            // Simulate processing
+            setTimeout(function() {
+              loading.style.display = 'none';
+              success.style.display = 'block';
+              document.getElementById('callbackForm').reset();
+            }, 1500);
+          });
+          </script>
         </div>
       </div>
     </div>

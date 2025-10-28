@@ -55,3 +55,33 @@ class ResortInfo(Base):
     twitter = Column(String(255))
     linkedin = Column(String(255))
     is_active = Column(Boolean, default=True)
+
+
+# Signature Experiences
+class SignatureExperience(Base):
+    __tablename__ = "signature_experiences"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
+    is_active = Column(Boolean, default=True)
+
+
+# Plan Your Wedding
+class PlanWedding(Base):
+    __tablename__ = "plan_weddings"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
+    is_active = Column(Boolean, default=True)
+
+
+# Nearby Attractions
+class NearbyAttraction(Base):
+    __tablename__ = "nearby_attractions"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
+    is_active = Column(Boolean, default=True)

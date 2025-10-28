@@ -1,15 +1,27 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 from sqlalchemy.dialects.postgresql import ARRAY
+import json
 
 class Role(Base):
     __tablename__ = "roles"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
-    permissions = Column(ARRAY(String), nullable=True)
+    # Use Text for SQLite compatibility, JSON for PostgreSQL
+    permissions = Column(Text, nullable=True)
 
     users = relationship("User", back_populates="role")
+    
+    @property
+    def permissions_list(self):
+        """Convert permissions JSON string to list for Pydantic"""
+        if self.permissions is None:
+            return []
+        try:
+            return json.loads(self.permissions)
+        except (json.JSONDecodeError, TypeError):
+            return []
 
 
 class User(Base):

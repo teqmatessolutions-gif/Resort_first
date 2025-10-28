@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 import os
 import shutil
+import uuid
 
 import app.schemas.frontend as schemas
 import app.models.frontend as models
@@ -11,8 +12,15 @@ from app.utils.auth import get_db, get_current_user
 
 router = APIRouter()
 
-UPLOAD_DIR = "static/uploads"
+# Determine upload directory - use absolute path to avoid issues with working directory
+# Get the directory where main.py is located (ResortApp/)
+# frontend.py is at: ResortApp/app/api/frontend.py
+# So we need to go up 3 levels: app/api -> app -> ResortApp
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
+# Ensure directory exists with proper permissions
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+print(f"Upload directory set to: {UPLOAD_DIR}")  # Debug log
 
 # ---------- Header & Banner ----------
 @router.get("/header-banner/", response_model=list[schemas.HeaderBanner])
@@ -25,22 +33,66 @@ def list_header_banner(db: Session = Depends(get_db), skip: int = 0, limit: int 
 async def create_header_banner(
     title: str = Form(...),
     subtitle: str = Form(...),
-    is_active: bool = Form(True),
+    is_active: str = Form("true"),
     image: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    file_path = f"{UPLOAD_DIR}/{image.filename}"
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
+    try:
+        # Convert is_active string to boolean
+        is_active_bool = is_active.lower() in ("true", "1", "yes", "on")
+        
+        # Ensure upload directory exists
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        
+        # Check if directory is writable
+        if not os.access(UPLOAD_DIR, os.W_OK):
+            raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+        
+        # Generate unique filename to avoid conflicts
+        if not image.filename:
+            raise HTTPException(status_code=400, detail="No filename provided for image")
+        
+        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        
+        # Verify file was saved
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=500, detail="File was not saved successfully")
 
-    obj = schemas.HeaderBannerCreate(
-        title=title,
-        subtitle=subtitle,
-        is_active=is_active,
-        image_url=file_path.replace("\\", "/")
-    )
-    return crud.create(db, models.HeaderBanner, obj)
+        # Create URL path (relative to static mount)
+        # static/uploads/banner_xxx.jpg -> /static/uploads/banner_xxx.jpg
+        normalized_path = file_path.replace('\\', '/')
+        # Extract relative path from BASE_DIR
+        if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+            image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+        else:
+            image_url = normalized_path.lstrip('/')
+        
+        if not image_url.startswith('static/'):
+            image_url = f"static/uploads/{unique_filename}"
+        
+        image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
+        
+        obj = schemas.HeaderBannerCreate(
+            title=title,
+            subtitle=subtitle,
+            is_active=is_active_bool,
+            image_url=image_url
+        )
+        return crud.create(db, models.HeaderBanner, obj)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_detail = f"Failed to create header banner: {str(e)}\n{traceback.format_exc()}"
+        print(f"ERROR: {error_detail}")  # Log to console for debugging
+        raise HTTPException(status_code=500, detail=f"Failed to create header banner: {str(e)}")
 
 
 # ✅ Update header banner
@@ -49,25 +101,60 @@ async def update_header_banner(
     item_id: int,
     title: str = Form(...),
     subtitle: str = Form(...),
-    is_active: bool = Form(True),
+    is_active: str = Form("true"),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    image_url = None
-    if image:
-        file_path = f"{UPLOAD_DIR}/{image.filename}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-        image_url = file_path.replace("\\", "/")
+    try:
+        # Convert is_active string to boolean
+        is_active_bool = is_active.lower() in ("true", "1", "yes", "on")
+        
+        image_url = None
+        if image:
+            # Ensure upload directory exists
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            
+            # Check if directory is writable
+            if not os.access(UPLOAD_DIR, os.W_OK):
+                raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+            
+            # Generate unique filename to avoid conflicts
+            if not image.filename:
+                raise HTTPException(status_code=400, detail="No filename provided for image")
+            
+            file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+            unique_filename = f"banner_{uuid.uuid4().hex}.{file_ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_filename)
+            
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+            
+            # Verify file was saved
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=500, detail="File was not saved successfully")
+            
+            # Create URL path (relative to static mount)
+            normalized_path = file_path.replace('\\', '/')
+            if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+                image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+            else:
+                image_url = normalized_path.lstrip('/')
+            
+            if not image_url.startswith('static/'):
+                image_url = f"static/uploads/{unique_filename}"
+            
+            image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
 
-    obj = schemas.HeaderBannerUpdate(
-        title=title,
-        subtitle=subtitle,
-        is_active=is_active,
-        image_url=image_url
-    )
-    return crud.update(db, models.HeaderBanner, item_id, obj)
+        obj = schemas.HeaderBannerUpdate(
+            title=title,
+            subtitle=subtitle,
+            is_active=is_active_bool,
+            image_url=image_url
+        )
+        return crud.update(db, models.HeaderBanner, item_id, obj)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update header banner: {str(e)}")
 
 
 # ✅ Delete header banner
@@ -114,10 +201,11 @@ async def create_gallery(
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
+    normalized_path = file_path.replace('\\', '/')
     obj = schemas.GalleryCreate(
         caption=caption,
         is_active=is_active,
-        image_url=f"/{file_path}"
+        image_url=f"/{normalized_path}"
     )
     return crud.create(db, models.Gallery, obj)
 
@@ -136,7 +224,8 @@ async def update_gallery(
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-        image_url = f"/{file_path}"
+        normalized_path = file_path.replace('\\', '/')
+        image_url = f"/{normalized_path}"
 
     obj = schemas.GalleryCreate(
         caption=caption,
@@ -159,12 +248,24 @@ def list_reviews(db: Session = Depends(get_db), skip: int = 0, limit: int = 100)
 
 @router.post("/reviews/", response_model=schemas.Review)
 def create_review(obj: schemas.ReviewCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return crud.create(db, models.Review, obj)
+    try:
+        # Ensure rating is an integer
+        if isinstance(obj.rating, str):
+            obj.rating = int(obj.rating)
+        return crud.create(db, models.Review, obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to create review: {str(e)}")
 
 
 @router.put("/reviews/{item_id}", response_model=schemas.Review)
 def update_review(item_id: int, obj: schemas.ReviewCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return crud.update(db, models.Review, item_id, obj)
+    try:
+        # Ensure rating is an integer
+        if isinstance(obj.rating, str):
+            obj.rating = int(obj.rating)
+        return crud.update(db, models.Review, item_id, obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to update review: {str(e)}")
 
 
 @router.delete("/reviews/{item_id}")
@@ -200,3 +301,186 @@ def update_resort_info(
 @router.delete("/resort-info/{item_id}")
 def delete_resort_info(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return crud.delete(db, models.ResortInfo, item_id)
+
+
+# ---------- Signature Experiences ----------
+@router.get("/signature-experiences/", response_model=list[schemas.SignatureExperience])
+def list_signature_experiences(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.SignatureExperience, skip=skip, limit=limit)
+
+
+@router.post("/signature-experiences/", response_model=schemas.SignatureExperience)
+async def create_signature_experience(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    normalized_path = file_path.replace('\\', '/')
+    obj = schemas.SignatureExperienceCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{normalized_path}"
+    )
+    return crud.create(db, models.SignatureExperience, obj)
+
+
+@router.put("/signature-experiences/{item_id}", response_model=schemas.SignatureExperience)
+async def update_signature_experience(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
+
+    obj = schemas.SignatureExperienceUpdate(**update_data)
+    return crud.update(db, models.SignatureExperience, item_id, obj)
+
+
+@router.delete("/signature-experiences/{item_id}")
+def delete_signature_experience(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.SignatureExperience, item_id)
+
+
+# ---------- Plan Your Wedding ----------
+@router.get("/plan-weddings/", response_model=list[schemas.PlanWedding])
+def list_plan_weddings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.PlanWedding, skip=skip, limit=limit)
+
+
+@router.post("/plan-weddings/", response_model=schemas.PlanWedding)
+async def create_plan_wedding(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    normalized_path = file_path.replace('\\', '/')
+    obj = schemas.PlanWeddingCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{normalized_path}"
+    )
+    return crud.create(db, models.PlanWedding, obj)
+
+
+@router.put("/plan-weddings/{item_id}", response_model=schemas.PlanWedding)
+async def update_plan_wedding(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
+
+    obj = schemas.PlanWeddingUpdate(**update_data)
+    return crud.update(db, models.PlanWedding, item_id, obj)
+
+
+@router.delete("/plan-weddings/{item_id}")
+def delete_plan_wedding(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.PlanWedding, item_id)
+
+
+# ---------- Nearby Attractions ----------
+@router.get("/nearby-attractions/", response_model=list[schemas.NearbyAttraction])
+def list_nearby_attractions(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+    return crud.get_all(db, models.NearbyAttraction, skip=skip, limit=limit)
+
+
+@router.post("/nearby-attractions/", response_model=schemas.NearbyAttraction)
+async def create_nearby_attraction(
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    file_path = f"{UPLOAD_DIR}/{image.filename}"
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
+
+    normalized_path = file_path.replace('\\', '/')
+    obj = schemas.NearbyAttractionCreate(
+        title=title,
+        description=description,
+        is_active=is_active,
+        image_url=f"/{normalized_path}"
+    )
+    return crud.create(db, models.NearbyAttraction, obj)
+
+
+@router.put("/nearby-attractions/{item_id}", response_model=schemas.NearbyAttraction)
+async def update_nearby_attraction(
+    item_id: int,
+    title: str = Form(...),
+    description: str = Form(...),
+    is_active: bool = Form(True),
+    image: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = {
+        "title": title,
+        "description": description,
+        "is_active": is_active,
+    }
+    
+    if image:
+        file_path = f"{UPLOAD_DIR}/{image.filename}"
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        normalized_path = file_path.replace('\\', '/')
+        update_data["image_url"] = f"/{normalized_path}"
+
+    obj = schemas.NearbyAttractionUpdate(**update_data)
+    return crud.update(db, models.NearbyAttraction, item_id, obj)
+
+
+@router.delete("/nearby-attractions/{item_id}")
+def delete_nearby_attraction(item_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud.delete(db, models.NearbyAttraction, item_id)
