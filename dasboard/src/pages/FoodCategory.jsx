@@ -218,17 +218,18 @@ const FoodManagement = () => {
     try {
       if (editCategoryId) {
         await API.put(`/food-categories/${editCategoryId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setEditCategoryId(null);
         toast.success("Category updated successfully!");
       } else {
         if (!categoryImageFile) {
           toast.error("Please select an image for the new category.");
+          setIsLoading(false);
           return;
         }
         await API.post("/food-categories", formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         toast.success("Category added successfully!");
       }
@@ -238,7 +239,8 @@ const FoodManagement = () => {
       fetchCategories();
     } catch (err) {
       console.error("Failed to save category:", err);
-      toast.error("Failed to save category.");
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || "Failed to save category.";
+      toast.error(`Failed to save category: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
