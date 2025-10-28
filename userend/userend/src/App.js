@@ -843,7 +843,7 @@ export default function App() {
 
     // Handlers for opening booking modals
     const handleOpenRoomBookingForm = (roomId) => {
-        setBookingData(prev => ({ ...prev, room_ids: [roomId] }));
+        setBookingData(prev => ({ ...prev, room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId] }));
         setIsRoomBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
@@ -912,7 +912,7 @@ export default function App() {
 
     // Filter rooms based on date availability for room booking
     useEffect(() => {
-        if (bookingData.checkIn && bookingData.checkOut && allRooms.length > 0) {
+        if (bookingData.check_in && bookingData.check_out && allRooms.length > 0) {
             const availableRooms = allRooms.filter(room => {
                 // Check if room has any conflicting bookings (ignore cancelled, checked-out)
                 const hasConflict = bookings.some(booking => {
@@ -921,8 +921,8 @@ export default function App() {
                     
                     const bookingCheckIn = new Date(booking.check_in);
                     const bookingCheckOut = new Date(booking.check_out);
-                    const requestedCheckIn = new Date(bookingData.checkIn);
-                    const requestedCheckOut = new Date(bookingData.checkOut);
+                    const requestedCheckIn = new Date(bookingData.check_in);
+                    const requestedCheckOut = new Date(bookingData.check_out);
                     
                     // Check if room is part of this booking
                     const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
@@ -936,11 +936,11 @@ export default function App() {
             });
             
             setRooms(availableRooms);
-        } else if (!bookingData.checkIn || !bookingData.checkOut) {
-            // If no dates selected, show all available rooms
-            setRooms(allRooms.filter((r) => r.status === "Available"));
+        } else {
+            // If no dates selected, don't show any rooms - require dates first
+            setRooms([]);
         }
-    }, [bookingData.checkIn, bookingData.checkOut, allRooms, bookings]);
+    }, [bookingData.check_in, bookingData.check_out, allRooms, bookings]);
 
     // Filter rooms based on date availability for package booking
     useEffect(() => {
@@ -968,9 +968,9 @@ export default function App() {
             });
             
             setRooms(availableRooms);
-        } else if (!packageBookingData.check_in || !packageBookingData.check_out) {
-            // If no dates selected, show all available rooms
-            setRooms(allRooms.filter((r) => r.status === "Available"));
+        } else {
+            // If no dates selected, don't show any rooms - require dates first
+            setRooms([]);
         }
     }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings]);
 
@@ -1553,10 +1553,27 @@ export default function App() {
                                 </p>
                             </div>
 
-                            {/* Villa Grid */}
-                            {rooms.length > 0 ? (
+                            {/* Date Selection Prompt */}
+                            {(!bookingData.check_in || !bookingData.check_out) && (
+                                <div className="text-center py-16">
+                                    <div className="inline-block p-8 bg-gradient-to-br from-amber-50 to-orange-50 rounded-3xl border-2 border-amber-200 max-w-2xl">
+                                        <BedDouble className="w-16 h-16 text-amber-600 mx-auto mb-4" />
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Select Your Dates</h3>
+                                        <p className="text-gray-600 mb-6">Please select your check-in and check-out dates to view available rooms</p>
+                                        <button 
+                                            onClick={() => setIsGeneralBookingOpen(true)}
+                                            className="px-8 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105"
+                                        >
+                                            Select Dates
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Villa Grid - Only show when dates are selected */}
+                            {bookingData.check_in && bookingData.check_out && rooms.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {rooms.filter(room => room.status === "Available").slice(0, 6).map((room, index) => (
+                                    {rooms.slice(0, 6).map((room, index) => (
                                         <div 
                                             key={room.id} 
                                             className="group relative bg-white rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2"
@@ -1564,7 +1581,7 @@ export default function App() {
                                             {/* Image Container with Overlay */}
                                             <div className="relative h-48 overflow-hidden">
                                                 <img 
-                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://localhost:8000${room.image_url}`} 
+                                                    src={getImageUrl(room.image_url)} 
                                                     alt={room.type} 
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                     onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1578,10 +1595,10 @@ export default function App() {
                                                     </span>
                                                 </div>
 
-                                                {/* Status Badge */}
+                                                {/* Availability Badge - Shows when dates are selected */}
                                                 <div className="absolute top-4 right-4">
-                                                    <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-lg ${room.status === "Available" ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
-                                                        {room.status}
+                                                    <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
+                                                        Available
                                                     </span>
                                                 </div>
 
@@ -1625,8 +1642,7 @@ export default function App() {
                                                 {/* CTA Button */}
                                                 <button 
                                                     onClick={() => handleOpenRoomBookingForm(room.id)} 
-                                                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" 
-                                                    disabled={room.status !== "Available"}
+                                                    className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50 flex items-center justify-center gap-2"
                                                 >
                                                     Book Now
                                                     <ChevronRight className="w-5 h-5" />
@@ -1635,9 +1651,13 @@ export default function App() {
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <p className={`text-center py-12 ${textSecondary}`}>No villas available at the moment.</p>
-                            )}
+                            ) : bookingData.check_in && bookingData.check_out && rooms.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <BedDouble className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                    <p className={`text-lg font-semibold ${textSecondary} mb-2`}>No rooms available</p>
+                                    <p className={`${textSecondary}`}>No rooms are available for the selected dates. Please try different dates.</p>
+                                </div>
+                            ) : null}
 
                             {/* View All Button */}
                             {rooms.length > 6 && (
@@ -2087,30 +2107,61 @@ export default function App() {
                     </div>
                 )}
                 
-                {/* General Booking Modal */}
+                {/* General Booking Modal - Date Selection First */}
                 {isGeneralBookingOpen && (
                     <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                         <div className={`w-full max-w-md ${theme.bgCard} rounded-3xl shadow-2xl flex flex-col`}>
                             <div className={`p-6 flex items-center justify-between border-b ${theme.border}`}>
-                                <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Start Your Booking</h3>
+                                <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Select Your Dates</h3>
                                 <button onClick={() => setIsGeneralBookingOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <div className="p-4 space-y-4">
-                                <p className={`${theme.textSecondary} text-center`}>How would you like to book your stay?</p>
-                                <button 
-                                    onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
-                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                >
-                                    <BedDouble className="w-5 h-5" />
-                                    <span>Book a Room</span>
-                                </button>
-                                <button 
-                                    onClick={() => { setIsGeneralBookingOpen(false); setIsPackageBookingFormOpen(true); }}
-                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                >
-                                    <Package className="w-5 h-5" />
-                                    <span>Book a Package</span>
-                                </button>
+                            <div className="p-6 space-y-4">
+                                <p className={`${theme.textSecondary} text-center mb-4`}>Select your check-in and check-out dates to view available rooms</p>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                        <input 
+                                            type="date" 
+                                            name="check_in" 
+                                            value={bookingData.check_in} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
+                                    </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                        <input 
+                                            type="date" 
+                                            name="check_out" 
+                                            value={bookingData.check_out} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={bookingData.check_in || new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
+                                    </div>
+                                </div>
+                                {bookingData.check_in && bookingData.check_out && (
+                                    <div className="pt-4 space-y-3 border-t border-gray-200 dark:border-neutral-700">
+                                        <p className={`text-sm ${theme.textSecondary} text-center`}>Continue with booking:</p>
+                                        <button 
+                                            onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
+                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                        >
+                                            <BedDouble className="w-5 h-5" />
+                                            <span>Book a Room</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => { setIsGeneralBookingOpen(false); setIsPackageBookingFormOpen(true); }}
+                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                        >
+                                            <Package className="w-5 h-5" />
+                                            <span>Book a Package</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -2137,12 +2188,17 @@ export default function App() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
-                                    {bookingData.checkIn && bookingData.checkOut && (
-                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {bookingData.checkIn} to {bookingData.checkOut}</p>
-                                    )}
-                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
-                                            rooms.filter(r => r.status === 'Available').map(room => (
+                                    {!bookingData.check_in || !bookingData.check_out ? (
+                                        <div className={`p-6 text-center rounded-xl ${theme.bgSecondary} border-2 border-dashed ${theme.border}`}>
+                                            <BedDouble className={`w-10 h-10 ${theme.textSecondary} mx-auto mb-3`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>Please select check-in and check-out dates above to see available rooms</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {bookingData.check_in} to {bookingData.check_out}</p>
+                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                                {rooms.length > 0 ? (
+                                                    rooms.map(room => (
                                                 <div key={room.id} onClick={() => handleRoomSelection(room.id)}
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
@@ -2159,17 +2215,17 @@ export default function App() {
                                                         <p className="text-xs font-bold mt-1">₹{room.price}</p>
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="col-span-full text-center py-8 text-gray-500">
-                                                <p className="text-sm">
-                                                    {bookingData.checkIn && bookingData.checkOut 
-                                                        ? "No rooms available for the selected dates. Please try different dates." 
-                                                        : "Please select check-in and check-out dates first"}
-                                                </p>
+                                                    ))
+                                                ) : (
+                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                                        <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                        <p className="text-sm font-semibold mb-1">No rooms available</p>
+                                                        <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Full Name</label>
