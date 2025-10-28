@@ -1576,8 +1576,8 @@ export default function App() {
 
                                     {/* Smaller Packages Grid - Only show if more than 1 package */}
                                     {packages.length > 1 && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {packages.slice(1).map((pkg) => {
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {packages.slice(1, 5).map((pkg) => {
                                                 const imgIndex = packageImageIndex[pkg.id] || 0;
                                                 const currentImage = pkg.images && pkg.images[imgIndex];
                                                 return (
