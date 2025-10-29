@@ -7,14 +7,66 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Get the correct base URL based on environment
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+  if (!imagePath) {
+    console.warn('getImageUrl: imagePath is empty or null');
+    return '';
+  }
+  
+  // Already a full URL
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
   const baseUrl = process.env.NODE_ENV === 'production' 
     ? 'https://www.teqmates.com' 
     : 'http://localhost:8000';
-  // Ensure imagePath starts with / for proper URL construction
-  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${baseUrl}${path}`;
+  
+  // Normalize the path
+  let path = imagePath;
+  
+  // Remove leading/trailing whitespace
+  path = path.trim();
+  
+  // If path contains backslashes (Windows path), convert to forward slashes
+  path = path.replace(/\\/g, '/');
+  
+  // Remove double slashes (except after protocol)
+  path = path.replace(/([^:])\/\/+/g, '$1/');
+  
+  // Ensure path starts with /
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+  
+  // Handle old paths that might be incorrect
+  // If path doesn't start with /static/ or /uploads/, but contains 'static' or 'uploads', fix it
+  if (!path.startsWith('/static/') && !path.startsWith('/uploads/')) {
+    if (path.includes('static/uploads/')) {
+      // Path like /static/uploads/file.jpg (correct)
+      // Already good
+    } else if (path.includes('/uploads/')) {
+      // Path like /uploads/file.jpg, convert to /static/uploads/file.jpg
+      path = path.replace(/^\/uploads\//, '/static/uploads/');
+    } else if (path.includes('uploads/')) {
+      // Path like static/uploads/file.jpg (missing leading /)
+      path = `/static/${path}`;
+    } else {
+      // Try to add /static/ prefix if it looks like an upload path
+      // Check if it ends with common image extensions
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+      if (imageExtensions.some(ext => path.toLowerCase().endsWith(ext))) {
+        // If it's not already under static or uploads, assume it should be in static/uploads
+        if (!path.includes('static') && !path.includes('uploads')) {
+          const fileName = path.split('/').pop();
+          path = `/static/uploads/${fileName}`;
+        }
+      }
+    }
+  }
+  
+  const fullUrl = `${baseUrl}${path}`;
+  console.log(`getImageUrl: "${imagePath}" -> "${fullUrl}"`);
+  return fullUrl;
 };
 
 const API_URL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
@@ -174,34 +226,38 @@ export default function ResortCMS() {
 
     const handleDelete = async (endpoint, id, name) => {
         if (window.confirm(`Are you sure you want to delete this ${name}?`)) {
-            // Optimistically remove from UI immediately
-            setResortData(prev => {
-                if (endpoint.includes('header-banner')) {
-                    return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
-                } else if (endpoint.includes('gallery')) {
-                    return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
-                } else if (endpoint.includes('reviews')) {
-                    return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
-                } else if (endpoint.includes('resort-info')) {
-                    return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
-                } else if (endpoint.includes('signature-experiences')) {
-                    return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
-                } else if (endpoint.includes('plan-weddings')) {
-                    return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
-                } else if (endpoint.includes('nearby-attractions')) {
-                    return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
-                }
-                return prev;
-            });
-            
             try {
-                await api.delete(`${endpoint}/${id}`);
+                // Remove trailing slash from endpoint and construct proper URL
+                const cleanEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint;
+                await api.delete(`${cleanEndpoint}/${id}`);
                 toast.success(`${name} deleted successfully!`);
+                
+                // Remove from UI after successful deletion
+                setResortData(prev => {
+                    if (endpoint.includes('header-banner')) {
+                        return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('gallery')) {
+                        return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('reviews')) {
+                        return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('resort-info')) {
+                        return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('signature-experiences')) {
+                        return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('plan-weddings')) {
+                        return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('nearby-attractions')) {
+                        return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
+                    }
+                    return prev;
+                });
+                
                 // Optionally refresh to sync with server
                 fetchAll();
             } catch (err) {
                 console.error("Delete error:", err);
-                toast.error(`Failed to delete ${name}.`);
+                const errorMsg = err.response?.data?.detail || err.message || `Failed to delete ${name}`;
+                toast.error(errorMsg);
                 // Re-fetch to restore original state if delete failed
                 fetchAll();
             }
