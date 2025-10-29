@@ -71,8 +71,17 @@ const BookingDetailsModal = ({ booking, onClose, onImageClick }) => {
   if (!booking) return null;
 
   const roomInfo = booking.rooms && booking.rooms.length > 0
-    ? booking.rooms.map(room => `${room.number} (${room.type})`).join(", ")
-    : "N/A";
+    ? booking.rooms.map(room => {
+        // Handle package bookings (nested room structure) vs regular bookings
+        if (booking.is_package) {
+          // Package bookings: room has nested room object
+          return room.room ? `${room.room.number} (${room.room.type})` : '-';
+        } else {
+          // Regular bookings: room has number and type directly
+          return `${room.number} (${room.type})`;
+        }
+      }).filter(Boolean).join(", ") || '-'
+    : "-";
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -1374,7 +1383,18 @@ const Bookings = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      {b.rooms && b.rooms.length > 0 ? b.rooms.map(room => `${room.number} (${room.type})`).join(", ") : "N/A"}
+                      {b.rooms && b.rooms.length > 0 ? (
+                        b.rooms.map(room => {
+                          // Handle package bookings (nested room structure) vs regular bookings
+                          if (b.is_package) {
+                            // Package bookings: room has nested room object
+                            return room.room ? `${room.room.number} (${room.room.type})` : '-';
+                          } else {
+                            // Regular bookings: room has number and type directly
+                            return `${room.number} (${room.type})`;
+                          }
+                        }).filter(Boolean).join(", ") || '-'
+                      ) : "-"}
                     </td>
                     <td className="p-4 text-gray-800">{b.check_in}</td>
                     <td className="p-4 text-gray-800">{b.check_out}</td>
