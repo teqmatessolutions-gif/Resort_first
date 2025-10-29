@@ -2096,12 +2096,12 @@ export default function App() {
                         <section className="relative w-full min-h-screen overflow-hidden">
                             {planWeddings.filter(w => w.is_active).slice(0, 1).map((wedding) => (
                                 <div key={wedding.id}>
-                        {/* Background Image with Parallax Effect */}
+                        {/* Background Image - Static (no animation) */}
                         <div className="absolute inset-0">
                             <img 
                                             src={getImageUrl(wedding.image_url)} 
                                             alt={wedding.title} 
-                                className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
+                                className="w-full h-full object-cover" 
                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
                             />
                             {/* Gradient Overlay */}
