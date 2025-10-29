@@ -67,18 +67,28 @@ const ImageModal = ({ imageUrl, onClose }) => {
     </div>
   );
 };
-const BookingDetailsModal = ({ booking, onClose, onImageClick }) => {
+const BookingDetailsModal = ({ booking, onClose, onImageClick, roomIdToRoom }) => {
   if (!booking) return null;
 
   const roomInfo = booking.rooms && booking.rooms.length > 0
     ? booking.rooms.map(room => {
         // Handle package bookings (nested room structure) vs regular bookings
         if (booking.is_package) {
-          // Package bookings: room has nested room object
-          return room.room ? `${room.room.number} (${room.room.type})` : '-';
+          // Package bookings: room has nested room object or only room_id
+          if (room?.room?.number) return `${room.room.number} (${room.room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
         } else {
           // Regular bookings: room has number and type directly
-          return `${room.number} (${room.type})`;
+          if (room?.number) return `${room.number} (${room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
         }
       }).filter(Boolean).join(", ") || '-'
     : "-";
@@ -364,6 +374,13 @@ const Bookings = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [totalBookings, setTotalBookings] = useState(0);
   const [hasMoreBookings, setHasMoreBookings] = useState(true);
+
+  // Map of roomId -> room for robust display when API omits nested room payloads
+  const roomIdToRoom = useMemo(() => {
+    const map = {};
+    (allRooms || []).forEach(r => { if (r && r.id) map[r.id] = r; });
+    return map;
+  }, [allRooms]);
 
   const authHeader = useCallback(() => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -1455,6 +1472,7 @@ const Bookings = () => {
             booking={modalBooking}
             onClose={() => setModalBooking(null)}
             onImageClick={(imageUrl) => setSelectedImage(imageUrl)}
+            roomIdToRoom={roomIdToRoom}
           />
         )}
         {bookingToExtend && (
