@@ -7,7 +7,7 @@ class HeaderBanner(Base):
     __tablename__ = "header_banner"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255))
-    subtitle = Column(String(255))
+    subtitle = Column(Text)  # Changed from String(255) to Text to allow longer descriptions
     image_url = Column(String(255))
     is_active = Column(Boolean, default=True)
 
