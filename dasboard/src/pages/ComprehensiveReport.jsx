@@ -74,6 +74,7 @@ export default function ComprehensiveReport() {
           packageBookingsRes,
           employeesRes,
           checkInByEmployeeRes,
+          serviceChargesRes,
         ] = await Promise.all([
           API.get("/expenses", { params }),
           API.get("/food-orders", { params }),
@@ -81,11 +82,12 @@ export default function ComprehensiveReport() {
           API.get("/packages/bookingsall", { params: { ...params, skip: 0, limit: 1000 } }).catch(() => ({ data: [] })),
           API.get("/employees", { params }),
           API.get("/reports/checkin-by-employee", { params }).catch(() => ({ data: [] })),
+          API.get("/reports/service-charges", { params: { ...params, skip: 0, limit: 1000 } }).catch(() => ({ data: [] })),
         ]);
 
         setReportData({
           expenses: expensesRes.data || [],
-          serviceCharges: [], // No service charges endpoint available
+          serviceCharges: serviceChargesRes.data || [],
           foodOrders: foodOrdersRes.data || [],
           roomBookings: roomBookingsRes.data?.bookings || roomBookingsRes.data || [],
           packageBookings: packageBookingsRes.data || [],
@@ -264,20 +266,24 @@ export default function ComprehensiveReport() {
 
           {/* Service Charges */}
           <SectionCard title="Service Charges" icon={<ConciergeBell className="text-teal-600" />} loading={loading} count={reportData.serviceCharges.length}>
-            <DataTable
-              headers={["Room", "Service", "Amount", "Assigned To", "Status", "Date"]}
-              data={reportData.serviceCharges}
-              renderRow={(item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.room_number || 'N/A'}</td>
-                  <td className="p-3">{item.service_name || 'N/A'}</td>
-                  <td className="p-3">{formatCurrency(item.amount)}</td>
-                  <td className="p-3">{item.employee_name || 'N/A'}</td>
-                  <td className="p-3">{item.status}</td>
-                  <td className="p-3">{formatDate(item.created_at)}</td>
-                </tr>
-              )}
-            />
+            {reportData.serviceCharges.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No service charges available</div>
+            ) : (
+              <DataTable
+                headers={["Room", "Service", "Amount", "Assigned To", "Status", "Date"]}
+                data={reportData.serviceCharges}
+                renderRow={(item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="p-3 font-semibold">{item.room_number || '-'}</td>
+                    <td className="p-3">{item.service_name || '-'}</td>
+                    <td className="p-3">{formatCurrency(item.amount)}</td>
+                    <td className="p-3">{item.employee_name || '-'}</td>
+                    <td className="p-3">{item.status || '-'}</td>
+                    <td className="p-3">{formatDate(item.created_at)}</td>
+                  </tr>
+                )}
+              />
+            )}
           </SectionCard>
           </div>
         </AnimatePresence>
