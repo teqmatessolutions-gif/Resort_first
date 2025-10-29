@@ -368,8 +368,22 @@ export default function ResortCMS() {
                     <ManagementSection title="Gallery" onAdd={() => openModal(sectionConfigs.gallery)} isLoading={isLoading}>
                         {resortData.gallery.length > 0 ? resortData.gallery.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <p className="text-xs text-gray-600">{item.caption}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.caption || 'Gallery image'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load gallery image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-600">{item.caption || 'No caption'}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.gallery, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
                                     <button onClick={() => handleDelete(sectionConfigs.gallery.endpoint, item.id, 'gallery image')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>

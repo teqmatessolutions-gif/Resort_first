@@ -197,17 +197,49 @@ async def create_gallery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    file_path = f"{UPLOAD_DIR}/{image.filename}"
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        if not os.access(UPLOAD_DIR, os.W_OK):
+            raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+        if not image.filename:
+            raise HTTPException(status_code=400, detail="No filename provided for image")
+        
+        # Generate unique filename to avoid conflicts
+        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        unique_filename = f"gallery_{uuid.uuid4().hex}.{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+        
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=500, detail="File was not saved successfully")
 
-    normalized_path = file_path.replace('\\', '/')
-    obj = schemas.GalleryCreate(
-        caption=caption,
-        is_active=is_active,
-        image_url=f"/{normalized_path}"
-    )
-    return crud.create(db, models.Gallery, obj)
+        # Create URL path (relative to static mount)
+        normalized_path = file_path.replace('\\', '/')
+        if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+            image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+        else:
+            image_url = normalized_path.lstrip('/')
+        
+        if not image_url.startswith('static/'):
+            image_url = f"static/uploads/{unique_filename}"
+        
+        image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
+        
+        obj = schemas.GalleryCreate(
+            caption=caption,
+            is_active=is_active,
+            image_url=image_url
+        )
+        return crud.create(db, models.Gallery, obj)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_detail = f"Failed to create gallery image: {str(e)}\n{traceback.format_exc()}"
+        print(f"ERROR: {error_detail}")
+        raise HTTPException(status_code=500, detail=f"Failed to create gallery image: {str(e)}")
 
 
 @router.put("/gallery/{item_id}", response_model=schemas.Gallery)
@@ -219,20 +251,57 @@ async def update_gallery(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    image_url = None
-    if image:
-        file_path = f"{UPLOAD_DIR}/{image.filename}"
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
-        normalized_path = file_path.replace('\\', '/')
-        image_url = f"/{normalized_path}"
+    try:
+        image_url = None
+        if image:
+            os.makedirs(UPLOAD_DIR, exist_ok=True)
+            if not os.access(UPLOAD_DIR, os.W_OK):
+                raise HTTPException(status_code=500, detail=f"Upload directory is not writable: {UPLOAD_DIR}")
+            if not image.filename:
+                raise HTTPException(status_code=400, detail="No filename provided for image")
+            
+            # Generate unique filename to avoid conflicts
+            file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+            unique_filename = f"gallery_{uuid.uuid4().hex}.{file_ext}"
+            file_path = os.path.join(UPLOAD_DIR, unique_filename)
+            
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(image.file, buffer)
+            
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=500, detail="File was not saved successfully")
 
-    obj = schemas.GalleryCreate(
-        caption=caption,
-        is_active=is_active,
-        image_url=image_url
-    )
-    return crud.update(db, models.Gallery, item_id, obj)
+            # Create URL path (relative to static mount)
+            normalized_path = file_path.replace('\\', '/')
+            if normalized_path.startswith(BASE_DIR.replace('\\', '/')):
+                image_url = normalized_path.replace(BASE_DIR.replace('\\', '/'), '').lstrip('/')
+            else:
+                image_url = normalized_path.lstrip('/')
+            
+            if not image_url.startswith('static/'):
+                image_url = f"static/uploads/{unique_filename}"
+            
+            image_url = f"/{image_url}" if not image_url.startswith('/') else image_url
+
+        # If no new image provided, keep existing image_url
+        if image_url is None:
+            existing = crud.get_by_id(db, models.Gallery, item_id)
+            if existing:
+                image_url = existing.image_url
+
+        obj = schemas.GalleryCreate(
+            caption=caption,
+            is_active=is_active,
+            image_url=image_url
+        )
+        return crud.update(db, models.Gallery, item_id, obj)
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        error_detail = f"Failed to update gallery image: {str(e)}\n{traceback.format_exc()}"
+        print(f"ERROR: {error_detail}")
+        raise HTTPException(status_code=500, detail=f"Failed to update gallery image: {str(e)}")
 
 
 @router.delete("/gallery/{item_id}")
