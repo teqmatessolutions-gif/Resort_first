@@ -73,12 +73,14 @@ export default function ComprehensiveReport() {
           roomBookingsRes,
           packageBookingsRes,
           employeesRes,
+          checkInByEmployeeRes,
         ] = await Promise.all([
           API.get("/expenses", { params }),
           API.get("/food-orders", { params }),
           API.get("/bookings", { params }),
           API.get("/packages/bookingsall", { params: { ...params, skip: 0, limit: 1000 } }).catch(() => ({ data: [] })),
           API.get("/employees", { params }),
+          API.get("/reports/checkin-by-employee", { params }).catch(() => ({ data: [] })),
         ]);
 
         setReportData({
@@ -88,7 +90,7 @@ export default function ComprehensiveReport() {
           roomBookings: roomBookingsRes.data?.bookings || roomBookingsRes.data || [],
           packageBookings: packageBookingsRes.data || [],
           employees: employeesRes.data || [],
-          checkInByEmployee: [], // No checkin by employee endpoint available
+          checkInByEmployee: checkInByEmployeeRes.data || [],
         });
       } catch (err) {
         console.error("Failed to fetch comprehensive report data:", err);
@@ -136,16 +138,20 @@ export default function ComprehensiveReport() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Check-ins by Employee */}
           <SectionCard title="Check-ins by Employee" icon={<UserCheck className="text-green-600" />} loading={loading} count={reportData.checkInByEmployee.length}>
-            <DataTable
-              headers={["Employee Name", "Guests Checked-in"]}
-              data={reportData.checkInByEmployee}
-              renderRow={(item) => (
-                <tr key={item.employee_name} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.employee_name}</td>
-                  <td className="p-3 font-bold text-lg text-indigo-700">{item.checkin_count}</td>
-                </tr>
-              )}
-            />
+            {reportData.checkInByEmployee.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No check-in data available</div>
+            ) : (
+              <DataTable
+                headers={["Employee Name", "Guests Checked-in"]}
+                data={reportData.checkInByEmployee}
+                renderRow={(item, index) => (
+                  <tr key={item.employee_name || `employee-${index}`} className="hover:bg-gray-50">
+                    <td className="p-3 font-semibold">{item.employee_name || '-'}</td>
+                    <td className="p-3 font-bold text-lg text-indigo-700">{item.checkin_count || 0}</td>
+                  </tr>
+                )}
+              />
+            )}
           </SectionCard>
 
           {/* Employees */}
