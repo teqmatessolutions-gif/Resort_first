@@ -91,6 +91,7 @@ export default function ReportsDashboard() {
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState("all"); // 'day', 'week', 'month', 'all'
   const [kpiData, setKpiData] = useState({});
+  const [roomMap, setRoomMap] = useState({}); // room_id -> number
   const [chartData, setChartData] = useState({ revenue_breakdown: [], weekly_performance: [] });
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,21 +169,34 @@ export default function ReportsDashboard() {
         const queryString = params.toString();
 
         // Only fetch data that's actually needed, reduce API calls
-        const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          // Working production endpoints
-          API.get(`/bookings?${queryString}`),
-          // If not available, UI will show "No data available"
-          API.get(`/report/package-bookings?${queryString}`).catch(() => ({ data: [] })),
-          API.get(`/food-orders?${queryString}`),
-          API.get(`/expenses?${queryString}`),
-          API.get(`/employees?${queryString}`),
+        // Try richer /reports endpoints first; gracefully fall back to base endpoints in production
+        const roomBookingsReq = API.get(`/bookings?${queryString}`);
+        const packageBookingsReq = API.get(`/reports/package-bookings?${queryString}`).catch(() => ({ data: [] }));
+        const foodOrdersReq = API.get(`/reports/food-orders?${queryString}`).catch(() => API.get(`/food-orders?${queryString}`));
+        const expensesReq = API.get(`/reports/expenses?${queryString}`).catch(() => API.get(`/expenses?${queryString}`));
+        const employeesReq = API.get(`/employees?${queryString}`);
+        const roomsReq = API.get(`/rooms?skip=0&limit=1000`).catch(() => ({ data: [] }));
+        const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes, roomsRes] = await Promise.all([
+          roomBookingsReq, packageBookingsReq, foodOrdersReq, expensesReq, employeesReq, roomsReq
         ]);
+
+        // Build room map for food orders display if only room_id is present
+        const map = {};
+        (roomsRes.data || []).forEach(r => { map[r.id] = r.number; });
+        setRoomMap(map);
         
         // Use a single state update to prevent blinking
+        // Normalize food orders to include room_number and created_at if possible
+        const normalizedFood = (foodOrdersRes.data || []).map(o => ({
+          ...o,
+          room_number: o.room_number || (o.room_id && map[o.room_id]) || '-',
+          created_at: o.created_at || o.createdAt || '-',
+        }));
+
         setDetailedData({
           roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
-          foodOrders: foodOrdersRes.data || [],
+          foodOrders: normalizedFood,
           expenses: expensesRes.data || [],
           employees: employeesRes.data || [],
         });
@@ -219,14 +233,27 @@ export default function ReportsDashboard() {
       // Map data types to API paths explicitly
       const endpointMap = {
         roomBookings: '/bookings',
-        packageBookings: '/report/package-bookings',
-        foodOrders: '/food-orders',
-        expenses: '/expenses',
+        packageBookings: '/reports/package-bookings',
+        foodOrders: '/reports/food-orders',
+        expenses: '/reports/expenses',
         employees: '/employees',
       };
       const path = endpointMap[dataType] || `/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
-      const response = await API.get(`${path}?${queryString}`);
-      const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
+      const response = await API.get(`${path}?${queryString}`).catch(async () => {
+        // Fallback to base endpoints
+        const fallback = {
+          roomBookings: '/bookings',
+          packageBookings: '/report/package-bookings',
+          foodOrders: '/food-orders',
+          expenses: '/expenses',
+          employees: '/employees',
+        };
+        return API.get(`${fallback[dataType]}?${queryString}`);
+      });
+      let newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
+      if (dataType === 'foodOrders') {
+        newData = newData.map(o => ({ ...o, room_number: o.room_number || (o.room_id && roomMap[o.room_id]) || '-', created_at: o.created_at || o.createdAt || '-' }));
+      }
 
       // Use functional update to prevent race conditions
       setDetailedData(prev => ({
