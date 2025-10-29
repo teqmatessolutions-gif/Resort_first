@@ -193,12 +193,28 @@ export default function ReportsDashboard() {
           created_at: o.created_at || o.createdAt || '-',
         }));
 
+        // Normalize expenses to avoid N/A and ensure consistent keys
+        const normalizedExpenses = (expensesRes.data || []).map(e => ({
+          category: e.category || '-',
+          description: e.description || '-',
+          amount: e.amount != null ? e.amount : '-',
+          expense_date: e.expense_date || e.date || '-',
+        }));
+
+        // Normalize employees: convert join_date -> hire_date, role object -> role name
+        const normalizedEmployees = (employeesRes.data || []).map(emp => ({
+          name: emp.name || '-',
+          role: (emp.role?.name) || emp.role || '-',
+          salary: emp.salary != null ? emp.salary : '-',
+          hire_date: emp.hire_date || emp.join_date || '-',
+        }));
+
         setDetailedData({
           roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
           foodOrders: normalizedFood,
-          expenses: expensesRes.data || [],
-          employees: employeesRes.data || [],
+          expenses: normalizedExpenses,
+          employees: normalizedEmployees,
         });
       } catch (err) {
         console.error("Failed to fetch detailed data:", err);
