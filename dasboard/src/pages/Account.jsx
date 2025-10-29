@@ -169,18 +169,19 @@ export default function ReportsDashboard() {
 
         // Only fetch data that's actually needed, reduce API calls
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          API.get(`/bookings?${queryString}`),
+          // Use report endpoints for consistency and lighter payloads
+          API.get(`/report/room-bookings?${queryString}`),
           // Use report endpoint for package bookings
           API.get(`/report/package-bookings?${queryString}`),
           // Use report endpoint for food orders so columns match
           API.get(`/report/food-orders?${queryString}`),
-          API.get(`/expenses?${queryString}`),
+          API.get(`/report/expenses?${queryString}`),
           API.get(`/employees?${queryString}`),
         ]);
         
         // Use a single state update to prevent blinking
         setDetailedData({
-          roomBookings: roomBookingsRes.data.bookings || [],
+          roomBookings: roomBookingsRes.data || [],
           packageBookings: packageBookingsRes.data || [],
           foodOrders: foodOrdersRes.data || [],
           expenses: expensesRes.data || [],
@@ -218,10 +219,10 @@ export default function ReportsDashboard() {
 
       // Map data types to API paths explicitly
       const endpointMap = {
-        roomBookings: '/bookings',
+        roomBookings: '/report/room-bookings',
         packageBookings: '/report/package-bookings',
-        foodOrders: '/food-orders',
-        expenses: '/expenses',
+        foodOrders: '/report/food-orders',
+        expenses: '/report/expenses',
         employees: '/employees',
       };
       const path = endpointMap[dataType] || `/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
