@@ -44,7 +44,7 @@ const DataTable = ({ headers, data, renderRow }) => (
 );
 
 const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString()}`;
-const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
+const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : '-';
 
 export default function ComprehensiveReport() {
   const [loading, setLoading] = useState(true);
@@ -189,7 +189,7 @@ export default function ComprehensiveReport() {
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="p-3 font-mono text-xs">{item.id}</td>
                   <td className="p-3 font-semibold">{item.guest_name}</td>
-                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || 'N/A'}</td>
+                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || '-'}</td>
                   <td className="p-3">{formatDate(item.check_in)}</td>
                   <td className="p-3">{formatDate(item.check_out)}</td>
                   <td className="p-3">
@@ -211,8 +211,8 @@ export default function ComprehensiveReport() {
               renderRow={(item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
                   <td className="p-3 font-semibold">{item.guest_name}</td>
-                  <td className="p-3">{item.package?.title || 'N/A'}</td>
-                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || 'N/A'}</td>
+                  <td className="p-3">{item.package?.title || '-'}</td>
+                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || '-'}</td>
                   <td className="p-3">{`${item.adults || 0}A, ${item.children || 0}C`}</td>
                   <td className="p-3">{formatDate(item.check_in)}</td>
                   <td className="p-3">{formatCurrency(item.package?.price)}</td>
@@ -233,10 +233,10 @@ export default function ComprehensiveReport() {
               data={reportData.foodOrders}
               renderRow={(item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.room_number || 'N/A'}</td>
+                  <td className="p-3 font-semibold">{item.room_number || '-'}</td>
                   <td className="p-3">{item.item_count || 0}</td>
                   <td className="p-3">{formatCurrency(item.amount)}</td>
-                  <td className="p-3">{item.employee_name || 'N/A'}</td>
+                  <td className="p-3">{item.employee_name || '-'}</td>
                   <td className="p-3">{item.status}</td>
                   <td className="p-3">{formatDate(item.created_at)}</td>
                 </tr>
