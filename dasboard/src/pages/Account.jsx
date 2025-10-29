@@ -169,13 +169,12 @@ export default function ReportsDashboard() {
 
         // Only fetch data that's actually needed, reduce API calls
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          // Use standard bookings endpoint (confirmed working in production)
+          // Working production endpoints
           API.get(`/bookings?${queryString}`),
-          // Use report endpoint for package bookings
-          API.get(`/report/package-bookings?${queryString}`),
-          // Use report endpoint for food orders so columns match
-          API.get(`/report/food-orders?${queryString}`),
-          API.get(`/report/expenses?${queryString}`),
+          // If not available, UI will show "No data available"
+          API.get(`/report/package-bookings?${queryString}`).catch(() => ({ data: [] })),
+          API.get(`/food-orders?${queryString}`),
+          API.get(`/expenses?${queryString}`),
           API.get(`/employees?${queryString}`),
         ]);
         
@@ -221,8 +220,8 @@ export default function ReportsDashboard() {
       const endpointMap = {
         roomBookings: '/bookings',
         packageBookings: '/report/package-bookings',
-        foodOrders: '/report/food-orders',
-        expenses: '/report/expenses',
+        foodOrders: '/food-orders',
+        expenses: '/expenses',
         employees: '/employees',
       };
       const path = endpointMap[dataType] || `/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
