@@ -77,17 +77,17 @@ export default function ComprehensiveReport() {
           API.get("/expenses", { params }),
           API.get("/food-orders", { params }),
           API.get("/bookings", { params }),
-          API.get("/packages", { params }),
+          API.get("/packages/bookingsall", { params: { ...params, skip: 0, limit: 1000 } }).catch(() => ({ data: [] })),
           API.get("/employees", { params }),
         ]);
 
         setReportData({
-          expenses: expensesRes.data,
+          expenses: expensesRes.data || [],
           serviceCharges: [], // No service charges endpoint available
-          foodOrders: foodOrdersRes.data,
-          roomBookings: roomBookingsRes.data.bookings || [],
-          packageBookings: packageBookingsRes.data,
-          employees: employeesRes.data,
+          foodOrders: foodOrdersRes.data || [],
+          roomBookings: roomBookingsRes.data?.bookings || roomBookingsRes.data || [],
+          packageBookings: packageBookingsRes.data || [],
+          employees: employeesRes.data || [],
           checkInByEmployee: [], // No checkin by employee endpoint available
         });
       } catch (err) {
@@ -155,10 +155,10 @@ export default function ComprehensiveReport() {
               data={reportData.employees}
               renderRow={(item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.name}</td>
-                  <td className="p-3">{item.role}</td>
+                  <td className="p-3 font-semibold">{item.name || '-'}</td>
+                  <td className="p-3">{(item.role?.name || item.role) || '-'}</td>
                   <td className="p-3">{formatCurrency(item.salary)}</td>
-                  <td className="p-3">{formatDate(item.hire_date)}</td>
+                  <td className="p-3">{formatDate(item.join_date || item.hire_date)}</td>
                 </tr>
               )}
             />
@@ -171,10 +171,10 @@ export default function ComprehensiveReport() {
               data={reportData.expenses}
               renderRow={(item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.category}</td>
-                  <td className="p-3">{item.description}</td>
+                  <td className="p-3 font-semibold">{item.category || '-'}</td>
+                  <td className="p-3">{item.description || '-'}</td>
                   <td className="p-3">{formatCurrency(item.amount)}</td>
-                  <td className="p-3">{formatDate(item.expense_date)}</td>
+                  <td className="p-3">{formatDate(item.date || item.expense_date)}</td>
                 </tr>
               )}
             />
@@ -185,21 +185,29 @@ export default function ComprehensiveReport() {
             <DataTable
               headers={["ID", "Guest", "Rooms", "Check-in", "Check-out", "Status", "Total"]}
               data={reportData.roomBookings}
-              renderRow={(item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-mono text-xs">{item.id}</td>
-                  <td className="p-3 font-semibold">{item.guest_name}</td>
-                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || '-'}</td>
-                  <td className="p-3">{formatDate(item.check_in)}</td>
-                  <td className="p-3">{formatDate(item.check_out)}</td>
-                  <td className="p-3">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'booked' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="p-3">{formatCurrency(item.total_amount)}</td>
-                </tr>
-              )}
+              renderRow={(item) => {
+                // Handle rooms - can be RoomOut[] (direct) or BookingRoom[] with nested room
+                const roomNumbers = item.rooms?.map(r => {
+                  if (r.number) return r.number; // RoomOut
+                  if (r.room?.number) return r.room.number; // BookingRoom with nested room
+                  return null;
+                }).filter(Boolean).join(', ') || '-';
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="p-3 font-mono text-xs">{item.id}</td>
+                    <td className="p-3 font-semibold">{item.guest_name || '-'}</td>
+                    <td className="p-3">{roomNumbers}</td>
+                    <td className="p-3">{formatDate(item.check_in)}</td>
+                    <td className="p-3">{formatDate(item.check_out)}</td>
+                    <td className="p-3">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'booked' ? 'bg-green-100 text-green-800' : item.status === 'checked_out' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {item.status || '-'}
+                      </span>
+                    </td>
+                    <td className="p-3">{formatCurrency(item.total_amount)}</td>
+                  </tr>
+                );
+              }}
             />
           </SectionCard>
 
@@ -208,21 +216,25 @@ export default function ComprehensiveReport() {
             <DataTable
               headers={["Guest", "Package", "Rooms", "Guests", "Check-in", "Total", "Status"]}
               data={reportData.packageBookings}
-              renderRow={(item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.guest_name}</td>
-                  <td className="p-3">{item.package?.title || '-'}</td>
-                  <td className="p-3">{item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || '-'}</td>
-                  <td className="p-3">{`${item.adults || 0}A, ${item.children || 0}C`}</td>
-                  <td className="p-3">{formatDate(item.check_in)}</td>
-                  <td className="p-3">{formatCurrency(item.package?.price)}</td>
-                  <td className="p-3">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'booked' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                      {item.status}
-                    </span>
-                  </td>
-                </tr>
-              )}
+              renderRow={(item) => {
+                // Handle rooms - PackageBookingRoomOut has room: Optional[RoomOut]
+                const roomNumbers = item.rooms?.map(r => r.room?.number).filter(Boolean).join(', ') || '-';
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="p-3 font-semibold">{item.guest_name || '-'}</td>
+                    <td className="p-3">{item.package?.title || '-'}</td>
+                    <td className="p-3">{roomNumbers}</td>
+                    <td className="p-3">{`${item.adults || 0}A, ${item.children || 0}C`}</td>
+                    <td className="p-3">{formatDate(item.check_in)}</td>
+                    <td className="p-3">{formatCurrency(item.package?.price || item.total_amount || 0)}</td>
+                    <td className="p-3">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'booked' ? 'bg-green-100 text-green-800' : item.status === 'checked_out' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                        {item.status || '-'}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              }}
             />
           </SectionCard>
 
@@ -233,12 +245,12 @@ export default function ComprehensiveReport() {
               data={reportData.foodOrders}
               renderRow={(item) => (
                 <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-3 font-semibold">{item.room_number || '-'}</td>
-                  <td className="p-3">{item.item_count || 0}</td>
+                  <td className="p-3 font-semibold">{item.room_number || item.room?.number || '-'}</td>
+                  <td className="p-3">{item.item_count || (item.items?.length || 0)}</td>
                   <td className="p-3">{formatCurrency(item.amount)}</td>
-                  <td className="p-3">{item.employee_name || '-'}</td>
-                  <td className="p-3">{item.status}</td>
-                  <td className="p-3">{formatDate(item.created_at)}</td>
+                  <td className="p-3">{item.employee_name || item.employee?.name || '-'}</td>
+                  <td className="p-3">{item.status || '-'}</td>
+                  <td className="p-3">{formatDate(item.created_at || item.createdAt)}</td>
                 </tr>
               )}
             />
