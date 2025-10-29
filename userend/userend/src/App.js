@@ -1179,10 +1179,10 @@ export default function App() {
                 try {
                     const contentType = response.headers.get("content-type");
                     if (contentType && contentType.includes("application/json")) {
-                        const errorData = await response.json();
+                const errorData = await response.json();
                         console.error("Package Booking Error Response:", errorData);
                         
-                        // Check if it's a validation error from the backend
+                // Check if it's a validation error from the backend
                         if (errorData.detail) {
                             if (typeof errorData.detail === 'string') {
                                 errorMessage = errorData.detail;
@@ -1190,7 +1190,7 @@ export default function App() {
                                 // Handle Pydantic validation errors
                                 const errors = errorData.detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
                                 errorMessage = `Validation error: ${errors}`;
-                            } else {
+                } else {
                                 errorMessage = JSON.stringify(errorData.detail);
                             }
                         }
@@ -1496,18 +1496,18 @@ export default function App() {
             {/* Luxury Navigation Dots - Only show if multiple banners */}
             {bannerData.length > 1 && (
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
-                    {bannerData.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setCurrentBannerIndex(index)}
-                            className={`transition-all duration-300 ${
-                                index === currentBannerIndex
-                                    ? "w-12 h-1 bg-amber-400 rounded-full"
-                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
-                            }`}
-                        />
-                    ))}
-                </div>
+                {bannerData.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => setCurrentBannerIndex(index)}
+                        className={`transition-all duration-300 ${
+                            index === currentBannerIndex
+                                ? "w-12 h-1 bg-amber-400 rounded-full"
+                                : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                        }`}
+                    />
+                ))}
+            </div>
             )}
         </>
     ) : (
@@ -1603,50 +1603,50 @@ export default function App() {
                                     {packages.length > 1 && (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                             {packages.slice(1, 4).map((pkg) => {
-                                                const imgIndex = packageImageIndex[pkg.id] || 0;
-                                                const currentImage = pkg.images && pkg.images[imgIndex];
-                                                return (
-                                                    <div 
-                                                        key={pkg.id} 
+                                        const imgIndex = packageImageIndex[pkg.id] || 0;
+                                        const currentImage = pkg.images && pkg.images[imgIndex];
+                                        return (
+                                            <div 
+                                                key={pkg.id} 
                                                         className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border}`}
-                                                    >
+                                            >
                                                         {/* Image Container */}
                                                         <div className="relative h-64 overflow-hidden">
-                                                            <img 
+                                                    <img 
                                                                 src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
-                                                                alt={pkg.title} 
-                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                            />
-                                                            {/* Image Slider Dots */}
-                                                            {pkg.images && pkg.images.length > 1 && (
-                                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
-                                                                    {pkg.images.map((_, imgIdx) => (
-                                                                        <button
-                                                                            key={imgIdx}
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
-                                                                            }}
-                                                                            className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
-                                                                        />
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                        alt={pkg.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                    {/* Image Slider Dots */}
+                                                    {pkg.images && pkg.images.length > 1 && (
+                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                            {pkg.images.map((_, imgIdx) => (
+                                                                <button
+                                                                    key={imgIdx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                    }}
+                                                                    className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                         </div>
 
                                                         {/* Content - Simplified like Mountain Shadows */}
                                                         <div className={`p-6 ${theme.bgCard}`}>
                                                             <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
-                                                                {pkg.title}
-                                                            </h3>
+                                                            {pkg.title}
+                                                        </h3>
                                                             <p className={`text-base ${theme.textSecondary} font-medium`}>
                                                                 (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
                                                             </p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                         </div>
                                     )}
                                 </div>
@@ -1711,7 +1711,7 @@ export default function App() {
                                             Showing all <span className="font-semibold ${theme.textPrimary}">{rooms.length}</span> rooms
                                         </p>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                         {rooms.map((room, index) => (
                                         <div 
                                             key={room.id} 
@@ -1736,17 +1736,17 @@ export default function App() {
 
                                                 {/* Availability Badge - Only show when dates are selected */}
                                                 {bookingData.check_in && bookingData.check_out && (
-                                                    <div className="absolute top-4 right-4">
+                                                <div className="absolute top-4 right-4">
                                                         {roomAvailability[room.id] ? (
                                                             <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
                                                                 Available
-                                                            </span>
+                                                    </span>
                                                         ) : (
                                                             <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-red-500 text-white">
                                                                 Booked
                                                             </span>
                                                         )}
-                                                    </div>
+                                                </div>
                                                 )}
 
                                                 {/* Hover Effect Overlay */}
@@ -1802,7 +1802,7 @@ export default function App() {
                                             </div>
                                         </div>
                                     ))}
-                                    </div>
+                                </div>
                                 </>
                             ) : (
                                 <div className="text-center py-12">
@@ -1844,9 +1844,9 @@ export default function App() {
                                                 <img 
                                                     src={getImageUrl(experience.image_url)} 
                                                     alt={experience.title} 
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                                             </div>
 
@@ -1914,19 +1914,19 @@ export default function App() {
                                                         <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded-full">
                                                             +{service.images.length - 1}
                                                         </span>
-                                                    </div>
+                                                </div>
                                                 )}
                                             </div>
 
                                             {/* Content */}
                                             <div className="p-4 space-y-3">
                                                 <h3 className={`text-lg font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
-                                                    {service.name}
-                                                </h3>
+                                                        {service.name}
+                                                    </h3>
                                                 <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
-                                                    {service.description}
-                                                </p>
-                                            </div>
+                                                        {service.description}
+                                                    </p>
+                                                </div>
                                         </div>
                                     ))}
                                 </div>
@@ -2074,60 +2074,60 @@ export default function App() {
                         <section className="relative w-full min-h-screen overflow-hidden">
                             {planWeddings.filter(w => w.is_active).slice(0, 1).map((wedding) => (
                                 <div key={wedding.id}>
-                                    {/* Background Image with Parallax Effect */}
-                                    <div className="absolute inset-0">
-                                        <img 
+                        {/* Background Image with Parallax Effect */}
+                        <div className="absolute inset-0">
+                            <img 
                                             src={getImageUrl(wedding.image_url)} 
                                             alt={wedding.title} 
-                                            className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
+                                className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
-                                        />
-                                        {/* Gradient Overlay */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
-                                    </div>
+                            />
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
+                        </div>
 
-                                    {/* Content Overlay */}
+                        {/* Content Overlay */}
                                     <div className="relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-                                        <div className="max-w-5xl mx-auto text-center text-white">
-                                            {/* Badge */}
-                                            <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
-                                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
-                                                    ✦ Perfect Venue ✦
-                                                </span>
-                                            </div>
+                            <div className="max-w-5xl mx-auto text-center text-white">
+                                {/* Badge */}
+                                <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                    <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                        ✦ Perfect Venue ✦
+                                    </span>
+                                </div>
 
-                                            {/* Main Title */}
-                                            <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
+                                {/* Main Title */}
+                                <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
                                                 {wedding.title.split(' ').slice(0, 3).join(' ')}<br/>
-                                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                    <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
                                                     {wedding.title.split(' ').slice(3).join(' ') || 'WEDDING DESTINATION'}
                                                 </span>
-                                            </h2>
+                                </h2>
 
-                                            {/* Description */}
-                                            <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
+                                {/* Description */}
+                                <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
                                                 {wedding.description}
                                             </p>
-                                        </div>
-                                    </div>
                                 </div>
+                            </div>
+                        </div>
                             ))}
-                        </section>
+                    </section>
                     )}
 
                     {/* Nearby Attractions Section - Mountain Shadows Style */}
                     {nearbyAttractions.length > 0 && nearbyAttractions.some(a => a.is_active) && (
                         <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
-                            <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                                 <div className="text-center mb-16">
                                     <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
-                                        ✦ Explore ✦
-                                    </span>
+                                    ✦ Explore ✦
+                                </span>
                                     <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
-                                        NEARBY ATTRACTIONS
-                                    </h2>
-                                </div>
-                                
+                                    NEARBY ATTRACTIONS
+                                </h2>
+                            </div>
+
                                 {/* Split Layout - Image Left, Text Right or vice versa */}
                                 <div className="space-y-12">
                                     {nearbyAttractions.filter(attr => attr.is_active).map((attraction, index) => (
@@ -2142,9 +2142,9 @@ export default function App() {
                                                         src={getImageUrl(attraction.image_url)} 
                                                         alt={attraction.title} 
                                                         className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
-                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                    />
-                                                </div>
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            </div>
                                                 
                                                 {/* Content Section */}
                                                 <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
@@ -2156,12 +2156,12 @@ export default function App() {
                                                         {attraction.description}
                                                     </p>
                                                 </div>
-                                            </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
-                        </section>
+                        </div>
+                    </section>
                     )}
 
 
@@ -2274,14 +2274,14 @@ export default function App() {
                                 {bookingData.check_in && bookingData.check_out && (
                                     <div className="pt-4 space-y-3 border-t border-gray-200 dark:border-neutral-700">
                                         <p className={`text-sm ${theme.textSecondary} text-center`}>Continue with booking:</p>
-                                        <button 
-                                            onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
-                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                        >
-                                            <BedDouble className="w-5 h-5" />
-                                            <span>Book a Room</span>
-                                        </button>
-                                        <button 
+                                <button 
+                                    onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
+                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                >
+                                    <BedDouble className="w-5 h-5" />
+                                    <span>Book a Room</span>
+                                </button>
+                                <button 
                                             onClick={() => { 
                                                 setIsGeneralBookingOpen(false);
                                                 // Copy dates from bookingData to packageBookingData
@@ -2292,11 +2292,11 @@ export default function App() {
                                                 }));
                                                 setIsPackageSelectionOpen(true); 
                                             }}
-                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                        >
-                                            <Package className="w-5 h-5" />
-                                            <span>Book a Package</span>
-                                        </button>
+                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                >
+                                    <Package className="w-5 h-5" />
+                                    <span>Book a Package</span>
+                                </button>
                                     </div>
                                 )}
                             </div>
@@ -2329,16 +2329,16 @@ export default function App() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex space-x-4">
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
                                             <input type="date" name="check_in" value={bookingData.check_in || ''} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
                                     </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
@@ -2350,7 +2350,7 @@ export default function App() {
                                     ) : (
                                         <>
                                             <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {bookingData.check_in} to {bookingData.check_out}</p>
-                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                                 {rooms.length > 0 ? (
                                                     rooms.map(room => (
                                                 <div key={room.id} onClick={() => handleRoomSelection(room.id)}
@@ -2369,15 +2369,15 @@ export default function App() {
                                                         <p className="text-xs font-bold mt-1">₹{room.price}</p>
                                                     </div>
                                                 </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
                                                         <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                                         <p className="text-sm font-semibold mb-1">No rooms available</p>
                                                         <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
-                                                    </div>
-                                                )}
                                             </div>
+                                        )}
+                                    </div>
                                         </>
                                     )}
                                 </div>
@@ -2445,16 +2445,16 @@ export default function App() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex space-x-4">
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
                                             <input type="date" name="check_in" value={packageBookingData.check_in || ''} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
                                     </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
@@ -2466,7 +2466,7 @@ export default function App() {
                                     ) : (
                                         <>
                                             <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
-                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                                 {rooms.length > 0 ? (
                                                     rooms.map(room => {
                                                         const isAvailable = Object.keys(packageRoomAvailability).length === 0 || packageRoomAvailability[room.id] !== false;
@@ -2498,14 +2498,14 @@ export default function App() {
                                                 </div>
                                                         );
                                                     })
-                                                ) : (
-                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
                                                         <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                                         <p className="text-sm font-semibold mb-1">No rooms available</p>
                                                         <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
-                                                    </div>
-                                                )}
                                             </div>
+                                        )}
+                                    </div>
                                         </>
                                     )}
                                 </div>
@@ -2626,7 +2626,7 @@ export default function App() {
                         </div>
                     </div>
                 )}
-
+                
                 {/* Service Booking Modal */}
                 {isServiceBookingFormOpen && (
                     <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
