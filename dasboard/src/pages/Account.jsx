@@ -215,7 +215,16 @@ export default function ReportsDashboard() {
       params.append('limit', PAGE_LIMIT);
       const queryString = params.toString();
 
-      const response = await API.get(`/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
+      // Map data types to API paths explicitly
+      const endpointMap = {
+        roomBookings: '/bookings',
+        packageBookings: '/report/package-bookings',
+        foodOrders: '/food-orders',
+        expenses: '/expenses',
+        employees: '/employees',
+      };
+      const path = endpointMap[dataType] || `/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      const response = await API.get(`${path}?${queryString}`);
       const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
 
       // Use functional update to prevent race conditions
