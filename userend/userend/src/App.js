@@ -2107,7 +2107,7 @@ export default function App() {
                     
                     {/* Plan Your Wedding Section - Dynamic with Slider */}
                     {planWeddings.length > 0 && planWeddings.some(w => w.is_active) && (
-                        <section className="relative w-full min-h-screen overflow-hidden">
+                        <section className="relative w-full h-[600px] md:h-[700px] overflow-hidden">
                             {planWeddings.filter(w => w.is_active).map((wedding, index) => (
                                 <div key={wedding.id}>
                                     {/* Background Images with Animation and Auto-Change */}
@@ -2127,7 +2127,7 @@ export default function App() {
                                     </div>
 
                                     {/* Content Overlay */}
-                                    <div className={`relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-in-out ${index === currentWeddingIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                                    <div className={`relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-in-out ${index === currentWeddingIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                                         <div className="max-w-5xl mx-auto text-center text-white">
                                             {/* Badge */}
                                             <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
@@ -2155,7 +2155,7 @@ export default function App() {
                             
                             {/* Navigation Dots */}
                             {planWeddings.filter(w => w.is_active).length > 1 && (
-                                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                                <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
                                     {planWeddings.filter(w => w.is_active).map((_, index) => (
                                         <button
                                             key={index}
