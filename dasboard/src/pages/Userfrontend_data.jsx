@@ -429,9 +429,23 @@ export default function ResortCMS() {
                     <ManagementSection title="✦ Signature Experiences ✦" onAdd={() => openModal(sectionConfigs.signatureExperiences)} isLoading={isLoading}>
                         {resortData.signatureExperiences.length > 0 ? resortData.signatureExperiences.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Signature experience'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load signature experience image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.signatureExperiences, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
@@ -444,9 +458,23 @@ export default function ResortCMS() {
                     <ManagementSection title="Plan Your Wedding" onAdd={() => openModal(sectionConfigs.planWeddings)} isLoading={isLoading}>
                         {resortData.planWeddings.length > 0 ? resortData.planWeddings.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Plan wedding'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load plan wedding image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.planWeddings, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
@@ -459,9 +487,23 @@ export default function ResortCMS() {
                     <ManagementSection title="Nearby Attractions" onAdd={() => openModal(sectionConfigs.nearbyAttractions)} isLoading={isLoading}>
                         {resortData.nearbyAttractions.length > 0 ? resortData.nearbyAttractions.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Nearby attraction'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load nearby attraction image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.nearbyAttractions, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
