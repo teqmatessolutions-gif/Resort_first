@@ -169,8 +169,8 @@ export default function ReportsDashboard() {
 
         // Only fetch data that's actually needed, reduce API calls
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          // Use report endpoints for consistency and lighter payloads
-          API.get(`/report/room-bookings?${queryString}`),
+          // Use standard bookings endpoint (confirmed working in production)
+          API.get(`/bookings?${queryString}`),
           // Use report endpoint for package bookings
           API.get(`/report/package-bookings?${queryString}`),
           // Use report endpoint for food orders so columns match
@@ -181,7 +181,7 @@ export default function ReportsDashboard() {
         
         // Use a single state update to prevent blinking
         setDetailedData({
-          roomBookings: roomBookingsRes.data || [],
+          roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
           foodOrders: foodOrdersRes.data || [],
           expenses: expensesRes.data || [],
@@ -219,7 +219,7 @@ export default function ReportsDashboard() {
 
       // Map data types to API paths explicitly
       const endpointMap = {
-        roomBookings: '/report/room-bookings',
+        roomBookings: '/bookings',
         packageBookings: '/report/package-bookings',
         foodOrders: '/report/food-orders',
         expenses: '/report/expenses',
