@@ -29,13 +29,13 @@ const KpiCard = ({ title, value, icon, prefix = "", suffix = "", loading }) => {
   );
 };
 
-const SectionCard = ({ title, icon, children, loading }) => {
+const SectionCard = ({ title, icon, children, loading, className = "" }) => {
   if (loading) {
     return <div className="bg-gray-200 h-96 rounded-2xl animate-pulse"></div>;
   }
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-xl p-6 flex flex-col"
+      className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}

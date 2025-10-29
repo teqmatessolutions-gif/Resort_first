@@ -62,7 +62,13 @@ def update_room_statuses(db: Session):
                     print(f"Error updating room {room.id}: {room_error}")
                     continue
             
-            db.commit()
+            try:
+                db.commit()
+            except Exception as commit_err:
+                # Roll back any failed commit to avoid pending transaction errors
+                db.rollback()
+                print(f"Commit failed during room status update: {commit_err}")
+                return 0
             if updated_count > 0:
                 print(f"Updated room statuses for {updated_count} out of {len(rooms)} rooms")
             return updated_count

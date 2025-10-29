@@ -31,7 +31,7 @@ def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100,
         # Get regular bookings with room details, ordered by latest first
         query = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         )
         
         # Apply ordering
@@ -110,7 +110,7 @@ def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends
     else: # Regular booking
         booking = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         ).filter(Booking.id == booking_id).first()
 
         if not booking:

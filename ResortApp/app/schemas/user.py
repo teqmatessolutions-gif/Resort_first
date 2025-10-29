@@ -48,7 +48,7 @@ class AdminSetupRequest(BaseModel):
 
 class UserOut(UserBase):
     id: int
-    role: RoleOut
+    role: Optional[RoleOut] = None
     phone: Optional[str]
     is_active: bool
     model_config = ConfigDict(from_attributes=True)

@@ -838,7 +838,7 @@ export default function App() {
         if (bannerData.length > 1) {
             const interval = setInterval(() => {
                 setCurrentBannerIndex((prev) => (prev + 1) % bannerData.length);
-            }, 5000); // Change image every 5 seconds
+            }, 9000); // Slower transition: change image every 9 seconds
             return () => clearInterval(interval);
         } else if (bannerData.length === 1) {
             setCurrentBannerIndex(0); // Ensure first banner is shown
