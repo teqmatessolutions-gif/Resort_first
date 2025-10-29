@@ -1585,11 +1585,11 @@ export default function App() {
                                                             <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
                                                                 ₹{featuredPkg.price}
                                                             </span>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
                                                                 className={`px-8 py-3 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2`}
                                                             >
-                                                                KNOW MORE
+                                                                Book Now
                                                                 <ChevronRight className="w-5 h-5" />
                                                             </button>
                                                         </div>
@@ -1608,7 +1608,8 @@ export default function App() {
                                         return (
                                             <div 
                                                 key={pkg.id} 
-                                                        className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border}`}
+                                                onClick={() => handleOpenPackageBookingForm(pkg.id)}
+                                                className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer`}
                                             >
                                                         {/* Image Container */}
                                                         <div className="relative h-64 overflow-hidden">
@@ -1618,6 +1619,14 @@ export default function App() {
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                     />
+                                                            {/* Quick Book button overlay */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md hover:bg-amber-600"
+                                                            >
+                                                                Book Now
+                                                            </button>
                                                     {/* Image Slider Dots */}
                                                     {pkg.images && pkg.images.length > 1 && (
                                                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
@@ -1643,6 +1652,19 @@ export default function App() {
                                                             <p className={`text-base ${theme.textSecondary} font-medium`}>
                                                                 (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
                                                             </p>
+                                                            {/* CTA Row */}
+                                                            <div className="mt-4 flex items-center justify-between">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                    className={`px-5 py-2 rounded-full border-2 ${theme.border} ${theme.textAccent} font-semibold hover:${theme.bgSecondary} transition-all duration-300`}
+                                                                >
+                                                                    Book Now
+                                                                </button>
+                                                                <span className={`text-sm ${theme.textSecondary}`}>
+                                                                    Tap card to book
+                                                                </span>
+                                                            </div>
                                                 </div>
                                             </div>
                                         );
