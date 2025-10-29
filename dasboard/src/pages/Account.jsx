@@ -170,9 +170,10 @@ export default function ReportsDashboard() {
         // Only fetch data that's actually needed, reduce API calls
         const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
           API.get(`/bookings?${queryString}`),
-          // Use report endpoint for package bookings instead of packages catalog
+          // Use report endpoint for package bookings
           API.get(`/report/package-bookings?${queryString}`),
-          API.get(`/food-orders?${queryString}`),
+          // Use report endpoint for food orders so columns match
+          API.get(`/report/food-orders?${queryString}`),
           API.get(`/expenses?${queryString}`),
           API.get(`/employees?${queryString}`),
         ]);
