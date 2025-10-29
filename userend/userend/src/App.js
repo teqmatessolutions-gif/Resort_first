@@ -846,6 +846,19 @@ export default function App() {
         }
     }, [bannerData.length]);
 
+    // Auto-change wedding images
+    useEffect(() => {
+        const activeWeddings = planWeddings.filter(w => w.is_active);
+        if (activeWeddings.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentWeddingIndex((prev) => (prev + 1) % activeWeddings.length);
+            }, 9000); // Change image every 9 seconds
+            return () => clearInterval(interval);
+        } else if (activeWeddings.length === 1) {
+            setCurrentWeddingIndex(0); // Ensure first wedding is shown
+        }
+    }, [planWeddings]);
+
     const toggleChat = () => setIsChatOpen(!isChatOpen);
 
     // Handlers for opening booking modals
