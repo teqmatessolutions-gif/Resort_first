@@ -677,6 +677,7 @@ export default function App() {
     const [planWeddings, setPlanWeddings] = useState([]);
     const [nearbyAttractions, setNearbyAttractions] = useState([]);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [currentWeddingIndex, setCurrentWeddingIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
@@ -2091,50 +2092,72 @@ export default function App() {
                         </div>
                     </section>
                     
-                    {/* Plan Your Wedding Section - Dynamic */}
+                    {/* Plan Your Wedding Section - Dynamic with Slider */}
                     {planWeddings.length > 0 && planWeddings.some(w => w.is_active) && (
                         <section className="relative w-full min-h-screen overflow-hidden">
-                            {planWeddings.filter(w => w.is_active).slice(0, 1).map((wedding) => (
+                            {planWeddings.filter(w => w.is_active).map((wedding, index) => (
                                 <div key={wedding.id}>
-                        {/* Background Image - Static (no animation) */}
-                        <div className="absolute inset-0">
-                            <img 
+                                    {/* Background Images with Animation and Auto-Change */}
+                                    <div className="absolute inset-0">
+                                        <img 
                                             src={getImageUrl(wedding.image_url)} 
                                             alt={wedding.title} 
-                                className="w-full h-full object-cover" 
+                                            className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentWeddingIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
+                                            style={{
+                                                animationDelay: `${index * 2}s`,
+                                                animationDirection: index % 2 === 0 ? 'alternate' : 'alternate-reverse'
+                                            }}
                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
-                            />
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
-                        </div>
+                                        />
+                                        {/* Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
+                                    </div>
 
-                        {/* Content Overlay */}
-                                    <div className="relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-                            <div className="max-w-5xl mx-auto text-center text-white">
-                                {/* Badge */}
-                                <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
-                                    <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
-                                        ✦ Perfect Venue ✦
-                                    </span>
-                                </div>
+                                    {/* Content Overlay */}
+                                    <div className={`relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-in-out ${index === currentWeddingIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                                        <div className="max-w-5xl mx-auto text-center text-white">
+                                            {/* Badge */}
+                                            <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                                    ✦ Perfect Venue ✦
+                                                </span>
+                                            </div>
 
-                                {/* Main Title */}
-                                <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
+                                            {/* Main Title */}
+                                            <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
                                                 {wedding.title.split(' ').slice(0, 3).join(' ')}<br/>
-                                    <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
                                                     {wedding.title.split(' ').slice(3).join(' ') || 'WEDDING DESTINATION'}
                                                 </span>
-                                </h2>
+                                            </h2>
 
-                                {/* Description */}
-                                <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
+                                            {/* Description */}
+                                            <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
                                                 {wedding.description}
                                             </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
                             ))}
-                    </section>
+                            
+                            {/* Navigation Dots */}
+                            {planWeddings.filter(w => w.is_active).length > 1 && (
+                                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                                    {planWeddings.filter(w => w.is_active).map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentWeddingIndex(index)}
+                                            className={`transition-all duration-300 ${
+                                                index === currentWeddingIndex
+                                                    ? "w-12 h-1 bg-amber-400 rounded-full"
+                                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                                            }`}
+                                            aria-label={`Go to slide ${index + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </section>
                     )}
 
                     {/* Nearby Attractions Section - Mountain Shadows Style */}
