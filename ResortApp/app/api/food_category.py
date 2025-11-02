@@ -29,7 +29,7 @@ def create_category(name: str = Form(...), image: UploadFile = File(None), db: S
 
 
 @router.get("/", response_model=list[FoodCategoryOut])
-def read_all(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def read_all(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_categories(db, skip=skip, limit=limit)
 
 @router.put("/{cat_id}", response_model=FoodCategoryOut)

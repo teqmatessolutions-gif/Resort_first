@@ -26,7 +26,7 @@ class PaginatedBookingResponse(BaseModel):
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 @router.get("", response_model=PaginatedBookingResponse)
-def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100, order_by: str = "id", order: str = "desc"):
+def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20, order_by: str = "id", order: str = "desc"):
     try:
         # Get regular bookings with room details, ordered by latest first
         query = db.query(Booking).options(

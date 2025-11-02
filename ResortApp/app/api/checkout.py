@@ -23,13 +23,13 @@ router = APIRouter(prefix="/bill", tags=["checkout"])
 
 
 @router.get("/checkouts", response_model=List[CheckoutFull])
-def get_all_checkouts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
+def get_all_checkouts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 20):
     """Retrieves a list of all completed checkouts, ordered by most recent."""
     checkouts = db.query(Checkout).order_by(Checkout.id.desc()).offset(skip).limit(limit).all()
     return checkouts if checkouts else []
 
 @router.get("/active-rooms", response_model=List[dict])
-def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
+def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 20):
     """
     Returns a list of active rooms available for checkout with two options:
     1. Individual rooms (for single room checkout)

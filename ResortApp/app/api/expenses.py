@@ -59,7 +59,7 @@ async def create_expense(
     }
 
 @router.get("/", response_model=list[ExpenseOut])
-def get_expenses(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_expenses(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     expenses = expense_crud.get_all_expenses(db, skip=skip, limit=limit)
     result = []
     for exp in expenses:

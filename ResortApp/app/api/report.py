@@ -83,7 +83,7 @@ def get_food_orders(
     to_date: Optional[date] = Query(None, description="End date for filtering (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     query = (
         db.query(models.FoodOrder)
@@ -242,7 +242,7 @@ def get_service_charges(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     query = (
         db.query(models.AssignedService)
@@ -279,7 +279,7 @@ def get_room_charges(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     query = (
         db.query(models.Checkout)
@@ -311,7 +311,7 @@ def get_rent_records(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     if not hasattr(models, "Rent"):
         raise HTTPException(status_code=404, detail="Rent model not found")
@@ -344,7 +344,7 @@ def get_all_expenses(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     """Retrieves a list of all expenses."""
     query = db.query(models.Expense)
@@ -372,7 +372,7 @@ def get_all_room_bookings(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     """Retrieves a list of all standard room bookings."""
     query = db.query(models.Booking)
@@ -404,7 +404,7 @@ def get_all_package_bookings(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     """Retrieves a list of all package bookings."""
     # Use an inner join to filter out orphaned bookings where the package has been deleted.
@@ -423,7 +423,7 @@ def get_all_employees(
     to_date: Optional[date] = Query(None),
     db: Session = Depends(get_db),
     skip: int = 0,
-    limit: int = 100
+    limit: int = 20
 ):
     """Retrieves a list of all active employees and their salaries."""
     # The Employee model itself doesn't have an 'is_active' flag. We assume all listed employees are active.
@@ -484,6 +484,7 @@ class GuestSuggestion(BaseModel):
 @router.get("/guest-suggestions", response_model=List[GuestSuggestion])
 def get_guest_suggestions(
     db: Session = Depends(get_db),
+    skip: int = 0,
     limit: int = 20
 ):
     """
@@ -495,6 +496,7 @@ def get_guest_suggestions(
         db.query(models.Booking.guest_name, models.Booking.guest_email, models.Booking.guest_mobile)
         .distinct(models.Booking.guest_email, models.Booking.guest_mobile)
         .order_by(models.Booking.guest_email, models.Booking.guest_mobile, models.Booking.id.desc())
+        .offset(skip)
         .limit(limit)
     )
 
@@ -503,6 +505,7 @@ def get_guest_suggestions(
         db.query(models.PackageBooking.guest_name, models.PackageBooking.guest_email, models.PackageBooking.guest_mobile)
         .distinct(models.PackageBooking.guest_email, models.PackageBooking.guest_mobile)
         .order_by(models.PackageBooking.guest_email, models.PackageBooking.guest_mobile, models.PackageBooking.id.desc())
+        .offset(skip)
         .limit(limit)
     )
 

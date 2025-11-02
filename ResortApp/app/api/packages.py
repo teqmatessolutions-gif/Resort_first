@@ -191,7 +191,7 @@ def book_package_guest_api(
     return result
 
 @router.get("/bookingsall", response_model=List[PackageBookingOut])
-def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     # It's possible for a package to be deleted, leaving an orphaned booking.
     # We must filter to only include bookings that still have a valid package_id.
     # We also need to eagerly load the related package and room data for the frontend.
@@ -202,7 +202,7 @@ def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100)
 
 
 @router.get("/", response_model=List[PackageOut])
-def list_packages(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_packages(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     # Query directly in the endpoint to apply pagination
     return db.query(Package).offset(skip).limit(limit).all()
 

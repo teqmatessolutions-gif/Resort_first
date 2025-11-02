@@ -24,7 +24,7 @@ print(f"Upload directory set to: {UPLOAD_DIR}")  # Debug log
 
 # ---------- Header & Banner ----------
 @router.get("/header-banner/", response_model=list[schemas.HeaderBanner])
-def list_header_banner(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_header_banner(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.HeaderBanner, skip=skip, limit=limit)
 
 
@@ -164,7 +164,7 @@ def delete_header_banner(item_id: int, db: Session = Depends(get_db), current_us
 
 # ---------- Check Availability ----------
 @router.get("/check-availability/", response_model=list[schemas.CheckAvailability])
-def list_check_availability(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_check_availability(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.CheckAvailability, skip=skip, limit=limit)
 
 
@@ -185,7 +185,7 @@ def delete_check_availability(item_id: int, db: Session = Depends(get_db), curre
 
 # ---------- Gallery ----------
 @router.get("/gallery/", response_model=list[schemas.Gallery])
-def list_gallery(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_gallery(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.Gallery, skip=skip, limit=limit)
 
 
@@ -311,7 +311,7 @@ def delete_gallery(item_id: int, db: Session = Depends(get_db), current_user: Us
 
 # ---------- Reviews ----------
 @router.get("/reviews/", response_model=list[schemas.Review])
-def list_reviews(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_reviews(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.Review, skip=skip, limit=limit)
 
 
@@ -344,7 +344,7 @@ def delete_review(item_id: int, db: Session = Depends(get_db), current_user: Use
 
 # ---------- Resort Info ----------
 @router.get("/resort-info/", response_model=list[schemas.ResortInfo])
-def list_resort_info(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_resort_info(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.ResortInfo, skip=skip, limit=limit)
 
 
@@ -374,7 +374,7 @@ def delete_resort_info(item_id: int, db: Session = Depends(get_db), current_user
 
 # ---------- Signature Experiences ----------
 @router.get("/signature-experiences/", response_model=list[schemas.SignatureExperience])
-def list_signature_experiences(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_signature_experiences(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.SignatureExperience, skip=skip, limit=limit)
 
 
@@ -504,7 +504,7 @@ def delete_signature_experience(item_id: int, db: Session = Depends(get_db), cur
 
 # ---------- Plan Your Wedding ----------
 @router.get("/plan-weddings/", response_model=list[schemas.PlanWedding])
-def list_plan_weddings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_plan_weddings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.PlanWedding, skip=skip, limit=limit)
 
 
@@ -634,7 +634,7 @@ def delete_plan_wedding(item_id: int, db: Session = Depends(get_db), current_use
 
 # ---------- Nearby Attractions ----------
 @router.get("/nearby-attractions/", response_model=list[schemas.NearbyAttraction])
-def list_nearby_attractions(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_nearby_attractions(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_all(db, models.NearbyAttraction, skip=skip, limit=limit)
 
 

@@ -57,5 +57,5 @@ def setup_initial_admin(setup_data: AdminSetupRequest, db: Session = Depends(get
     return new_admin_user
 
 @router.get("/")
-def get_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
+def get_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 20):
     return db.query(User).options(joinedload(User.role)).offset(skip).limit(limit).all()
