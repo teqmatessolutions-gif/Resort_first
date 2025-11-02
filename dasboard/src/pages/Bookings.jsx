@@ -728,36 +728,96 @@ const Bookings = () => {
     };
   }, [selectedRoomDetails]);
 
-  const filteredBookings = useMemo(() => {
-    console.log("=== FILTERING BOOKINGS ===");
-    console.log("Status filter selected:", statusFilter);
-    console.log("Total bookings:", bookings.length);
-    console.log("Sample booking statuses:", bookings.slice(0, 5).map(b => ({ id: b.id, status: b.status, is_package: b.is_package })));
+  // Generate unique booking ID for sharing
+  const generateBookingId = (booking) => {
+    const prefix = booking.is_package ? "PK" : "BK";
+    const paddedId = String(booking.id).padStart(6, '0');
+    return `${prefix}-${paddedId}`;
+  };
+
+  // Share booking via Email
+  const shareViaEmail = (booking) => {
+    const bookingId = generateBookingId(booking);
+    const rooms = booking.rooms && booking.rooms.length > 0
+      ? booking.rooms.map(r => {
+          if (booking.is_package) {
+            return r.room ? `Room ${r.room.number} (${r.room.type})` : '-';
+          } else {
+            return `Room ${r.number} (${r.type})`;
+          }
+        }).filter(Boolean).join(", ")
+      : "N/A";
+
+    const subject = encodeURIComponent(`Booking Confirmation - ${bookingId}`);
+    const body = encodeURIComponent(
+      `Dear ${booking.guest_name},\n\n` +
+      `Your booking has been confirmed!\n\n` +
+      `Booking ID: ${bookingId}\n` +
+      `Booking Type: ${booking.is_package ? "Package" : "Room"}\n` +
+      `Rooms: ${rooms}\n` +
+      `Check-in: ${booking.check_in}\n` +
+      `Check-out: ${booking.check_out}\n` +
+      `Guests: ${booking.adults} Adults, ${booking.children} Children\n` +
+      `Status: ${booking.status}\n\n` +
+      `Thank you for choosing our resort!\n\n` +
+      `Best regards,\nResort Team`
+    );
+    window.location.href = `mailto:${booking.guest_email}?subject=${subject}&body=${body}`;
+  };
+
+  // Share booking via WhatsApp
+  const shareViaWhatsApp = (booking) => {
+    const bookingId = generateBookingId(booking);
+    const mobile = booking.guest_mobile?.replace(/[^\d]/g, '') || '';
     
+    if (!mobile) {
+      showBannerMessage("error", "Mobile number not available for this booking.");
+      return;
+    }
+
+    const rooms = booking.rooms && booking.rooms.length > 0
+      ? booking.rooms.map(r => {
+          if (booking.is_package) {
+            return r.room ? `Room ${r.room.number} (${r.room.type})` : '-';
+          } else {
+            return `Room ${r.number} (${r.type})`;
+          }
+        }).filter(Boolean).join(", ")
+      : "N/A";
+
+    const message = encodeURIComponent(
+      `Dear ${booking.guest_name},\n\n` +
+      `Your booking has been confirmed!\n\n` +
+      `Booking ID: ${bookingId}\n` +
+      `Booking Type: ${booking.is_package ? "Package" : "Room"}\n` +
+      `Rooms: ${rooms}\n` +
+      `Check-in: ${booking.check_in}\n` +
+      `Check-out: ${booking.check_out}\n` +
+      `Guests: ${booking.adults} Adults, ${booking.children} Children\n` +
+      `Status: ${booking.status}\n\n` +
+      `Thank you for choosing our resort!`
+    );
+    window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
+  };
+
+  const filteredBookings = useMemo(() => {
     return bookings
       .filter((b) => {
-        // Normalize status values to handle both hyphens and underscores - remove ALL special characters
-        const normalizedBookingStatus = b.status?.toLowerCase().replace(/[-_]/g, '');
-        const normalizedFilterStatus = statusFilter?.toLowerCase().replace(/[-_]/g, '');
-        const statusMatch = statusFilter === "All" || normalizedBookingStatus === normalizedFilterStatus;
+        // Normalize status values - handle both hyphens and underscores
+        let normalizedBookingStatus = b.status?.toLowerCase().trim();
+        let normalizedFilterStatus = statusFilter?.toLowerCase().trim();
         
-        // Debug logging for status mismatch
-        if (statusFilter !== "All" && !statusMatch) {
-          console.log("❌ STATUS MISMATCH:", {
-            id: b.id,
-            bookingStatus: b.status,
-            normalizedBookingStatus,
-            filterStatus: statusFilter,
-            normalizedFilterStatus,
-            is_package: b.is_package
-          });
-        } else if (statusFilter !== "All" && statusMatch) {
-          console.log("✅ STATUS MATCH:", {
-            id: b.id,
-            status: b.status,
-            is_package: b.is_package
-          });
-        }
+        // Normalize: replace underscores and hyphens with standard format
+        normalizedBookingStatus = normalizedBookingStatus?.replace(/[-_]/g, '-');
+        normalizedFilterStatus = normalizedFilterStatus?.replace(/[-_]/g, '-');
+        
+        // Handle case variations and exact match - works for both regular and package bookings
+        const statusMatch = statusFilter === "All" || 
+          normalizedBookingStatus === normalizedFilterStatus ||
+          (normalizedBookingStatus === "checked-out" && normalizedFilterStatus === "checked-out") ||
+          (normalizedBookingStatus === "checked_out" && normalizedFilterStatus === "checked-out") ||
+          (normalizedBookingStatus === "checked-in" && normalizedFilterStatus === "checked-in") ||
+          (normalizedBookingStatus === "checked_in" && normalizedFilterStatus === "checked-in");
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
         // Fix: Apply date filter to both check-in and check-out dates
@@ -1386,7 +1446,10 @@ const Bookings = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <td className="p-4">{b.id}</td>
+                    <td className="p-4">
+                      <div className="font-mono text-sm">{generateBookingId(b)}</div>
+                      <div className="text-xs text-gray-500">ID: {b.id}</div>
+                    </td>
                     <td className="p-4 font-medium text-gray-900">
                       {b.guest_name}
                     </td>
@@ -1447,6 +1510,24 @@ const Bookings = () => {
                       >
                         Cancel
                       </button>
+                      {b.guest_email && (
+                        <button
+                          onClick={() => shareViaEmail(b)}
+                          className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-purple-700 transition-colors"
+                          title={`Share Booking ID: ${generateBookingId(b)} via Email`}
+                        >
+                          📧 Email
+                        </button>
+                      )}
+                      {b.guest_mobile && (
+                        <button
+                          onClick={() => shareViaWhatsApp(b)}
+                          className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors"
+                          title={`Share Booking ID: ${generateBookingId(b)} via WhatsApp`}
+                        >
+                          💬 WhatsApp
+                        </button>
+                      )}
                     </td>
                   </motion.tr>
                 ))
