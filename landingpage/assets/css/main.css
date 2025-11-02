@@ -810,7 +810,11 @@ section,
   background-color: var(--background-color);
   padding: 60px 0;
   scroll-margin-top: 98px;
-  overflow: clip;
+  overflow: visible;
+}
+
+.hero {
+  overflow: visible !important;
 }
 
 @media (max-width: 1199px) {
