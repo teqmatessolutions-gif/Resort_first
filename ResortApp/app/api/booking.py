@@ -1,6 +1,7 @@
 # booking.py
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session, joinedload, load_only
+from sqlalchemy import and_, or_
 from typing import List
 from app.utils.auth import get_db, get_current_user
 from app.models.booking import Booking, BookingRoom
@@ -219,9 +220,16 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
 def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Find or create guest user based on email and mobile
     guest_user_id = None
-    # Normalize email and mobile - convert empty strings to None
-    guest_email = booking.guest_email.strip() if booking.guest_email and isinstance(booking.guest_email, str) else None
-    guest_mobile = booking.guest_mobile.strip() if booking.guest_mobile and isinstance(booking.guest_mobile, str) else None
+    # Normalize email and mobile - convert empty strings to None, handle None safely
+    try:
+        guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+    except (AttributeError, TypeError):
+        guest_email = None
+    
+    try:
+        guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+    except (AttributeError, TypeError):
+        guest_mobile = None
     
     if guest_email or guest_mobile:
         try:
@@ -374,9 +382,16 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     """
     # Find or create guest user based on email and mobile
     guest_user_id = None
-    # Normalize email and mobile - convert empty strings to None
-    guest_email = booking.guest_email.strip() if booking.guest_email and isinstance(booking.guest_email, str) else None
-    guest_mobile = booking.guest_mobile.strip() if booking.guest_mobile and isinstance(booking.guest_mobile, str) else None
+    # Normalize email and mobile - convert empty strings to None, handle None safely
+    try:
+        guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+    except (AttributeError, TypeError):
+        guest_email = None
+    
+    try:
+        guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+    except (AttributeError, TypeError):
+        guest_mobile = None
     
     if guest_email or guest_mobile:
         try:
@@ -391,13 +406,26 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
             print(f"Warning: Could not create/link guest user: {str(e)}")
     
     # Check for duplicate booking with same details and dates
-    duplicate_booking = db.query(Booking).filter(
-        (Booking.guest_email == booking.guest_email) & 
-        (Booking.guest_mobile == booking.guest_mobile) &
-        (Booking.check_in == booking.check_in) &
-        (Booking.check_out == booking.check_out) &
+    # Build filter conditions using normalized email/mobile
+    duplicate_filters = [
+        (Booking.check_in == booking.check_in),
+        (Booking.check_out == booking.check_out),
         (Booking.status.in_(['booked', 'checked-in']))
-    ).first()
+    ]
+    
+    # Add email filter if normalized email exists
+    if guest_email:
+        duplicate_filters.append(Booking.guest_email == guest_email)
+    else:
+        duplicate_filters.append((Booking.guest_email.is_(None)) | (Booking.guest_email == ''))
+    
+    # Add mobile filter if normalized mobile exists
+    if guest_mobile:
+        duplicate_filters.append(Booking.guest_mobile == guest_mobile)
+    else:
+        duplicate_filters.append((Booking.guest_mobile.is_(None)) | (Booking.guest_mobile == ''))
+    
+    duplicate_booking = db.query(Booking).filter(and_(*duplicate_filters)).first()
     
     if duplicate_booking:
         raise HTTPException(
@@ -406,11 +434,24 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
         )
 
     # Check for an existing booking to reuse guest details for consistency
-    existing_booking = db.query(Booking).filter(
-        (Booking.guest_email == booking.guest_email) & (Booking.guest_mobile == booking.guest_mobile)
-    ).order_by(Booking.id.desc()).first()
+    # Build filter conditions using normalized email/mobile
+    existing_filters = []
+    
+    # Add email filter if normalized email exists
+    if guest_email:
+        existing_filters.append(Booking.guest_email == guest_email)
+    else:
+        existing_filters.append((Booking.guest_email.is_(None)) | (Booking.guest_email == ''))
+    
+    # Add mobile filter if normalized mobile exists
+    if guest_mobile:
+        existing_filters.append(Booking.guest_mobile == guest_mobile)
+    else:
+        existing_filters.append((Booking.guest_mobile.is_(None)) | (Booking.guest_mobile == ''))
+    
+    existing_booking = db.query(Booking).filter(and_(*existing_filters)).order_by(Booking.id.desc()).first()
 
-    guest_name_to_use = booking.guest_name
+    guest_name_to_use = booking.guest_name or "Guest User"
     if existing_booking:
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
@@ -434,8 +475,8 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
 
     db_booking = Booking(
         guest_name=guest_name_to_use,
-        guest_mobile=booking.guest_mobile,
-        guest_email=booking.guest_email,
+        guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
+        guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
         check_in=booking.check_in,
         check_out=booking.check_out,
         adults=booking.adults,
