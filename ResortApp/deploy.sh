@@ -332,10 +332,24 @@ SSL_KEY_PATH=/etc/letsencrypt/live/$DOMAIN/privkey.pem
 LANDING_PAGE_PATH=../landingpage
 DASHBOARD_PATH=../dasboard/build
 USEREND_PATH=../userend/userend/build
+
+# SMTP Email Configuration (Required for booking confirmation emails)
+# IMPORTANT: Update these values with your actual SMTP credentials
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password-here
+SMTP_FROM_EMAIL=noreply@elysianretreat.com
+SMTP_FROM_NAME=Elysian Retreat
+SMTP_USE_TLS=true
 EOF
 
 # Copy environment file to .env
 cp .env.production .env
+
+print_status "SMTP Configuration Note:"
+print_warning "Please update SMTP settings in .env.production with your actual email credentials"
+print_warning "See SMTP_SETUP_GUIDE.md for detailed instructions"
 
 print_section "INITIALIZING DATABASE"
 
