@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
 from typing import List
+from datetime import date, datetime
 
 # Assume your utility and model imports are set up correctly
 from app.utils.auth import get_db, get_current_user
@@ -170,7 +171,13 @@ def _calculate_bill_for_single_room(db: Session, room_number: str):
     
     # 3. Calculate charges for THIS ROOM ONLY
     charges = BillBreakdown()
-    stay_days = max(1, (booking.check_out - booking.check_in).days)
+    
+    # Calculate effective checkout date:
+    # If actual checkout date (today) > booking.check_out (late checkout): use today
+    # If actual checkout date (today) < booking.check_out (early checkout): use booking.check_out
+    today = date.today()
+    effective_checkout_date = max(today, booking.check_out)
+    stay_days = max(1, (effective_checkout_date - booking.check_in).days)
     
     if is_package:
         # Package price is per room, per night
@@ -202,7 +209,8 @@ def _calculate_bill_for_single_room(db: Session, room_number: str):
     
     return {
         "booking": booking, "room": room, "charges": charges,
-        "is_package": is_package, "stay_nights": stay_days, "number_of_guests": number_of_guests
+        "is_package": is_package, "stay_nights": stay_days, "number_of_guests": number_of_guests,
+        "effective_checkout_date": effective_checkout_date
     }
 
 def _calculate_bill_for_entire_booking(db: Session, room_number: str):
@@ -264,7 +272,13 @@ def _calculate_bill_for_entire_booking(db: Session, room_number: str):
 
     # 4. Calculate total charges across ALL rooms
     charges = BillBreakdown()
-    stay_days = max(1, (booking.check_out - booking.check_in).days)
+    
+    # Calculate effective checkout date:
+    # If actual checkout date (today) > booking.check_out (late checkout): use today
+    # If actual checkout date (today) < booking.check_out (early checkout): use booking.check_out
+    today = date.today()
+    effective_checkout_date = max(today, booking.check_out)
+    stay_days = max(1, (effective_checkout_date - booking.check_in).days)
 
     if is_package:
         # The package price is per room, per night.
@@ -301,7 +315,8 @@ def _calculate_bill_for_entire_booking(db: Session, room_number: str):
 
     return {
         "booking": booking, "all_rooms": all_rooms, "charges": charges, 
-        "is_package": is_package, "stay_nights": stay_days, "number_of_guests": number_of_guests
+        "is_package": is_package, "stay_nights": stay_days, "number_of_guests": number_of_guests,
+        "effective_checkout_date": effective_checkout_date
     }
 
 
@@ -314,24 +329,26 @@ def get_bill_for_booking(room_number: str, checkout_mode: str = "multiple", db: 
     """
     if checkout_mode == "single":
         bill_data = _calculate_bill_for_single_room(db, room_number)
+        effective_checkout = bill_data.get("effective_checkout_date", bill_data["booking"].check_out)
         return BillSummary(
             guest_name=bill_data["booking"].guest_name,
             room_numbers=[bill_data["room"].number],
             number_of_guests=bill_data["number_of_guests"],
             stay_nights=bill_data["stay_nights"],
             check_in=bill_data["booking"].check_in,
-            check_out=bill_data["booking"].check_out,
+            check_out=effective_checkout,  # Use effective checkout date (today if late, booking.check_out if early)
             charges=bill_data["charges"]
         )
     else:
         bill_data = _calculate_bill_for_entire_booking(db, room_number)
+        effective_checkout = bill_data.get("effective_checkout_date", bill_data["booking"].check_out)
         return BillSummary(
             guest_name=bill_data["booking"].guest_name,
             room_numbers=sorted([room.number for room in bill_data["all_rooms"]]),
             number_of_guests=bill_data["number_of_guests"],
             stay_nights=bill_data["stay_nights"],
             check_in=bill_data["booking"].check_in,
-            check_out=bill_data["booking"].check_out,
+            check_out=effective_checkout,  # Use effective checkout date (today if late, booking.check_out if early)
             charges=bill_data["charges"]
         )
 
@@ -372,6 +389,11 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             discount_amount = max(0, request.discount_amount or 0)
             grand_total = max(0, subtotal + tax_amount - discount_amount)
             
+            # Get effective checkout date for billing (today if late checkout, booking.check_out if early)
+            effective_checkout = bill_data.get("effective_checkout_date", booking.check_out)
+            # Convert date to datetime for checkout_date field
+            effective_checkout_datetime = datetime.combine(effective_checkout, datetime.min.time())
+            
             # Create checkout record for single room (don't set booking_id to allow multiple checkouts per booking)
             new_checkout = Checkout(
                 booking_id=None,  # Don't link to booking for single room checkout
@@ -386,7 +408,8 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
                 payment_method=request.payment_method,
                 payment_status="Paid",
                 guest_name=booking.guest_name,
-                room_number=room.number
+                room_number=room.number,
+                checkout_date=effective_checkout_datetime  # Use effective checkout date
             )
             db.add(new_checkout)
             
@@ -471,6 +494,11 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             discount_amount = max(0, request.discount_amount or 0)
             grand_total = max(0, subtotal + tax_amount - discount_amount)
             
+            # Get effective checkout date for billing (today if late checkout, booking.check_out if early)
+            effective_checkout = bill_data.get("effective_checkout_date", booking.check_out)
+            # Convert date to datetime for checkout_date field
+            effective_checkout_datetime = datetime.combine(effective_checkout, datetime.min.time())
+            
             # Create a single checkout record for the entire booking
             new_checkout = Checkout(
                 booking_id=booking.id if not is_package else None,
@@ -485,7 +513,8 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
                 payment_method=request.payment_method,
                 payment_status="Paid",
                 guest_name=booking.guest_name,
-                room_number=", ".join(sorted([room.number for room in all_rooms]))
+                room_number=", ".join(sorted([room.number for room in all_rooms])),
+                checkout_date=effective_checkout_datetime  # Use effective checkout date
             )
             db.add(new_checkout)
             
