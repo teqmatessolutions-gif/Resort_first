@@ -64,22 +64,36 @@ def book_package_api(
 ):
     result = crud_package.book_package(db, booking)
     
-    # Send confirmation email if email address is provided
+    # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email and result:
         try:
             from app.utils.email import send_email, create_booking_confirmation_email
+            from datetime import datetime, date
             
             # Get package details
             package = db.query(Package).filter(Package.id == booking.package_id).first()
             
-            # Get room details
-            rooms_data = [
-                {
-                    'number': pbr.room.number if pbr.room else 'N/A',
-                    'type': pbr.room.type if pbr.room else 'N/A'
-                }
-                for pbr in result.rooms if pbr.room
-            ]
+            # Calculate stay duration
+            check_in_date = result.check_in if isinstance(result.check_in, date) else datetime.strptime(str(result.check_in), '%Y-%m-%d').date()
+            check_out_date = result.check_out if isinstance(result.check_out, date) else datetime.strptime(str(result.check_out), '%Y-%m-%d').date()
+            stay_nights = max(1, (check_out_date - check_in_date).days)
+            
+            # Calculate package charges (package price per night per room)
+            package_price = package.price if package else 0
+            package_charges = package_price * stay_nights * len(booking.room_ids) if booking.room_ids else package_price * stay_nights
+            
+            # Get room details with prices
+            rooms_data = []
+            for pbr in result.rooms:
+                if pbr.room:
+                    rooms_data.append({
+                        'number': pbr.room.number,
+                        'type': pbr.room.type or 'Standard',
+                        'price': pbr.room.price or 0
+                    })
+            
+            # Format booking ID (PK-000001)
+            formatted_booking_id = f"PK-{str(result.id).zfill(6)}"
             
             email_html = create_booking_confirmation_email(
                 guest_name=result.guest_name,
@@ -88,12 +102,17 @@ def book_package_api(
                 check_in=str(result.check_in),
                 check_out=str(result.check_out),
                 rooms=rooms_data,
-                package_name=package.title if package else None
+                total_amount=package_charges,
+                package_name=package.title if package else None,
+                guests={'adults': booking.adults, 'children': booking.children},
+                guest_mobile=booking.guest_mobile,
+                package_charges=package_charges,
+                stay_nights=stay_nights
             )
             
             send_email(
                 to_email=booking.guest_email,
-                subject=f"Package Booking Confirmation #{result.id} - Elysian Retreat",
+                subject=f"Package Booking Confirmation {formatted_booking_id} - Elysian Retreat",
                 html_content=email_html,
                 to_name=result.guest_name
             )
@@ -113,22 +132,36 @@ def book_package_guest_api(
     """
     result = crud_package.book_package(db, booking)
     
-    # Send confirmation email if email address is provided
+    # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email and result:
         try:
             from app.utils.email import send_email, create_booking_confirmation_email
+            from datetime import datetime, date
             
             # Get package details
             package = db.query(Package).filter(Package.id == booking.package_id).first()
             
-            # Get room details
-            rooms_data = [
-                {
-                    'number': pbr.room.number if pbr.room else 'N/A',
-                    'type': pbr.room.type if pbr.room else 'N/A'
-                }
-                for pbr in result.rooms if pbr.room
-            ]
+            # Calculate stay duration
+            check_in_date = result.check_in if isinstance(result.check_in, date) else datetime.strptime(str(result.check_in), '%Y-%m-%d').date()
+            check_out_date = result.check_out if isinstance(result.check_out, date) else datetime.strptime(str(result.check_out), '%Y-%m-%d').date()
+            stay_nights = max(1, (check_out_date - check_in_date).days)
+            
+            # Calculate package charges (package price per night per room)
+            package_price = package.price if package else 0
+            package_charges = package_price * stay_nights * len(booking.room_ids) if booking.room_ids else package_price * stay_nights
+            
+            # Get room details with prices
+            rooms_data = []
+            for pbr in result.rooms:
+                if pbr.room:
+                    rooms_data.append({
+                        'number': pbr.room.number,
+                        'type': pbr.room.type or 'Standard',
+                        'price': pbr.room.price or 0
+                    })
+            
+            # Format booking ID (PK-000001)
+            formatted_booking_id = f"PK-{str(result.id).zfill(6)}"
             
             email_html = create_booking_confirmation_email(
                 guest_name=result.guest_name,
@@ -137,12 +170,17 @@ def book_package_guest_api(
                 check_in=str(result.check_in),
                 check_out=str(result.check_out),
                 rooms=rooms_data,
-                package_name=package.title if package else None
+                total_amount=package_charges,
+                package_name=package.title if package else None,
+                guests={'adults': booking.adults, 'children': booking.children},
+                guest_mobile=booking.guest_mobile,
+                package_charges=package_charges,
+                stay_nights=stay_nights
             )
             
             send_email(
                 to_email=booking.guest_email,
-                subject=f"Package Booking Confirmation #{result.id} - Elysian Retreat",
+                subject=f"Package Booking Confirmation {formatted_booking_id} - Elysian Retreat",
                 html_content=email_html,
                 to_name=result.guest_name
             )
