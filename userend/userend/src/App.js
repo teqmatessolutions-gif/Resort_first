@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 // Lucide React is used for elegant icons
 import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, ChevronDown, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
+// Currency formatting utility
+import { formatCurrency } from './utils/currency';
 
 // Custom hook to detect if an element is in the viewport
 const useOnScreen = (ref, rootMargin = "0px") => {
@@ -1597,7 +1599,7 @@ export default function App() {
                                                         </p>
                                                         <div className="flex items-center justify-between flex-wrap gap-4">
                                                             <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
-                                                                ₹{featuredPkg.price}
+                                                                {formatCurrency(featuredPkg.price)}
                                                             </span>
                                                             <button
                                                                 onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
@@ -1816,7 +1818,7 @@ export default function App() {
                                                     <div>
                                                         <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary}`}>Starting from</p>
                                                         <p className={`text-3xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
-                                                            ₹{room.price}
+                                                            {formatCurrency(room.price)}
                                                             <span className={`text-sm ${theme.textCardSecondary || theme.textSecondary} font-normal`}>/night</span>
                                                         </p>
                                                     </div>
@@ -2424,7 +2426,7 @@ export default function App() {
                                                         <p className="font-semibold text-xs">Room {room.number}</p>
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        <p className="text-xs font-bold mt-1">{formatCurrency(room.price)}</p>
                                                     </div>
                                                 </div>
                                             ))
@@ -2548,7 +2550,7 @@ export default function App() {
                                                         <p className="font-semibold text-xs">Room {room.number}</p>
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        <p className="text-xs font-bold mt-1">{formatCurrency(room.price)}</p>
                                                         {!isAvailable && (
                                                             <p className="text-xs text-red-600 font-bold mt-1">Unavailable</p>
                                                         )}
@@ -2661,7 +2663,7 @@ export default function App() {
                                                         </p>
                                                         <div className={`flex items-center justify-between pt-3 border-t ${theme.cardBorder || theme.border}`}>
                                                             <span className={`text-2xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
-                                                                ₹{pkg.price}
+                                                                {formatCurrency(pkg.price)}
                                                             </span>
                                                             <button 
                                                                 className={`px-6 py-2 text-sm font-bold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow-lg ${theme.buttonHover} transition-all duration-300 transform hover:scale-105`}
