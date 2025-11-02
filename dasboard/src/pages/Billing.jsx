@@ -203,7 +203,9 @@ const Billing = () => {
     setBillData(null);
     setDiscount(0); // Reset discount when fetching a new bill
     try {
-      const res = await api.get(`/bill/${roomNumber}?checkout_mode=${checkoutMode}`);
+      // Extract actual room number from composite key if needed
+      const actualRoomNumber = roomNumber.includes('-') ? roomNumber.split('-')[1] : roomNumber;
+      const res = await api.get(`/bill/${actualRoomNumber}?checkout_mode=${checkoutMode}`);
       if (res.data && res.data.room_numbers) {
         setBillData(res.data);
         const roomCount = res.data.room_numbers.length;
@@ -244,7 +246,9 @@ const Billing = () => {
     }
     setLoading(true);
     try {
-      const res = await api.post(`/bill/checkout/${roomNumber}`, {
+      // Extract actual room number from composite key if needed
+      const actualRoomNumber = roomNumber.includes('-') ? roomNumber.split('-')[1] : roomNumber;
+      const res = await api.post(`/bill/checkout/${actualRoomNumber}`, {
         payment_method: paymentMethod,
         discount_amount: discountAmount,
         checkout_mode: checkoutMode,
@@ -510,26 +514,73 @@ const Billing = () => {
               id="room-select"
               value={roomNumber}
               onChange={(e) => {
-                const selected = activeRooms.find(b => b.room_number === e.target.value);
-                setRoomNumber(e.target.value);
-                if (selected) {
-                  setCheckoutMode(selected.checkout_mode || "multiple");
-                  setBillData(null); // Clear bill data when selection changes
+                const value = e.target.value;
+                if (!value) {
+                  setRoomNumber("");
+                  setCheckoutMode("multiple");
+                  setBillData(null);
+                  return;
+                }
+                // Use composite key: booking_id-room_number-checkout_mode
+                const parts = value.split('-');
+                if (parts.length >= 3) {
+                  const [bookingId, roomNum, mode] = parts;
+                  const selected = activeRooms.find(b => 
+                    b.booking_id.toString() === bookingId && 
+                    b.room_number === roomNum && 
+                    b.checkout_mode === mode
+                  );
+                  setRoomNumber(value);
+                  if (selected) {
+                    setCheckoutMode(selected.checkout_mode || mode || "multiple");
+                    setBillData(null); // Clear bill data when selection changes
+                  }
+                } else {
+                  // Fallback for old format (shouldn't happen, but just in case)
+                  const selected = activeRooms.find(b => b.room_number === value);
+                  setRoomNumber(value);
+                  if (selected) {
+                    setCheckoutMode(selected.checkout_mode || "multiple");
+                    setBillData(null);
+                  }
                 }
               }}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="">-- Select a Room or Booking to Checkout --</option>
-              {activeRooms.map((booking, index) => (
-                <option key={`${booking.room_number}-${booking.checkout_mode}-${index}`} value={booking.room_number}>
-                  {booking.display_label || `${booking.room_numbers?.join(', ') || booking.room_number} (${booking.guest_name})`}
-                </option>
-              ))}
+              {activeRooms.map((booking, index) => {
+                // Create unique composite key: booking_id-room_number-checkout_mode
+                const uniqueValue = `${booking.booking_id}-${booking.room_number}-${booking.checkout_mode}`;
+                return (
+                  <option key={`${uniqueValue}-${index}`} value={uniqueValue}>
+                    {booking.display_label || `${booking.room_numbers?.join(', ') || booking.room_number} (${booking.guest_name})`}
+                  </option>
+                );
+              })}
             </select>
-            {roomNumber && activeRooms.find(b => b.room_number === roomNumber) && (() => {
-              const selected = activeRooms.find(b => b.room_number === roomNumber);
-              const mode = selected?.checkout_mode || "multiple";
-              const isMultiple = mode === "multiple";
+            {roomNumber && (() => {
+              // Parse composite key to find the correct selection
+              let selected = null;
+              let actualMode = "multiple";
+              
+              if (roomNumber.includes('-')) {
+                const parts = roomNumber.split('-');
+                if (parts.length >= 3) {
+                  const [bookingId, roomNum, mode] = parts;
+                  selected = activeRooms.find(b => 
+                    b.booking_id.toString() === bookingId && 
+                    b.room_number === roomNum && 
+                    b.checkout_mode === mode
+                  );
+                  actualMode = selected?.checkout_mode || mode || "multiple";
+                }
+              } else {
+                // Fallback for old format
+                selected = activeRooms.find(b => b.room_number === roomNumber);
+                actualMode = selected?.checkout_mode || "multiple";
+              }
+              
+              const isMultiple = actualMode === "multiple";
               return (
                 <div className={`mt-2 p-3 ${isMultiple ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'} border rounded-lg text-sm ${isMultiple ? 'text-blue-800' : 'text-green-800'}`}>
                   <p className="font-semibold">
