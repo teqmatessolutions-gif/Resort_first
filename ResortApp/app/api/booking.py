@@ -217,18 +217,33 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         rooms=[br.room for br in booking_with_rooms.booking_rooms if br.room]
     )
     
-    # Send confirmation email if email address is provided
+    # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email:
         try:
             from app.utils.email import send_email, create_booking_confirmation_email
+            from datetime import datetime, date
             
-            rooms_data = [
-                {
-                    'number': br.room.number if br.room else 'N/A',
-                    'type': br.room.type if br.room else 'N/A'
-                }
-                for br in booking_with_rooms.booking_rooms if br.room
-            ]
+            # Calculate stay duration
+            check_in_date = booking.check_in if isinstance(booking.check_in, date) else datetime.strptime(str(booking.check_in), '%Y-%m-%d').date()
+            check_out_date = booking.check_out if isinstance(booking.check_out, date) else datetime.strptime(str(booking.check_out), '%Y-%m-%d').date()
+            stay_nights = max(1, (check_out_date - check_in_date).days)
+            
+            # Calculate room charges
+            room_charges = 0
+            rooms_data = []
+            for br in booking_with_rooms.booking_rooms:
+                if br.room:
+                    room_price = br.room.price or 0
+                    room_charges_per_room = room_price * stay_nights
+                    room_charges += room_charges_per_room
+                    rooms_data.append({
+                        'number': br.room.number,
+                        'type': br.room.type or 'Standard',
+                        'price': room_price
+                    })
+            
+            # Format booking ID (BK-000001)
+            formatted_booking_id = f"BK-{str(booking_with_rooms.id).zfill(6)}"
             
             email_html = create_booking_confirmation_email(
                 guest_name=guest_name_to_use,
@@ -236,12 +251,17 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
                 booking_type='room',
                 check_in=str(booking.check_in),
                 check_out=str(booking.check_out),
-                rooms=rooms_data
+                rooms=rooms_data,
+                total_amount=room_charges,
+                guests={'adults': booking.adults, 'children': booking.children},
+                guest_mobile=booking.guest_mobile,
+                room_charges=room_charges,
+                stay_nights=stay_nights
             )
             
             send_email(
                 to_email=booking.guest_email,
-                subject=f"Booking Confirmation #{booking_with_rooms.id} - Elysian Retreat",
+                subject=f"Booking Confirmation {formatted_booking_id} - Elysian Retreat",
                 html_content=email_html,
                 to_name=guest_name_to_use
             )
@@ -326,18 +346,33 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
         .first()
     )
     
-    # Send confirmation email if email address is provided
+    # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email:
         try:
             from app.utils.email import send_email, create_booking_confirmation_email
+            from datetime import datetime, date
             
-            rooms_data = [
-                {
-                    'number': br.room.number if br.room else 'N/A',
-                    'type': br.room.type if br.room else 'N/A'
-                }
-                for br in booking_with_rooms.booking_rooms if br.room
-            ]
+            # Calculate stay duration
+            check_in_date = booking.check_in if isinstance(booking.check_in, date) else datetime.strptime(str(booking.check_in), '%Y-%m-%d').date()
+            check_out_date = booking.check_out if isinstance(booking.check_out, date) else datetime.strptime(str(booking.check_out), '%Y-%m-%d').date()
+            stay_nights = max(1, (check_out_date - check_in_date).days)
+            
+            # Calculate room charges
+            room_charges = 0
+            rooms_data = []
+            for br in booking_with_rooms.booking_rooms:
+                if br.room:
+                    room_price = br.room.price or 0
+                    room_charges_per_room = room_price * stay_nights
+                    room_charges += room_charges_per_room
+                    rooms_data.append({
+                        'number': br.room.number,
+                        'type': br.room.type or 'Standard',
+                        'price': room_price
+                    })
+            
+            # Format booking ID (BK-000001)
+            formatted_booking_id = f"BK-{str(db_booking.id).zfill(6)}"
             
             email_html = create_booking_confirmation_email(
                 guest_name=guest_name_to_use,
@@ -345,12 +380,17 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
                 booking_type='room',
                 check_in=str(booking.check_in),
                 check_out=str(booking.check_out),
-                rooms=rooms_data
+                rooms=rooms_data,
+                total_amount=room_charges,
+                guests={'adults': booking.adults, 'children': booking.children},
+                guest_mobile=booking.guest_mobile,
+                room_charges=room_charges,
+                stay_nights=stay_nights
             )
             
             send_email(
                 to_email=booking.guest_email,
-                subject=f"Booking Confirmation #{db_booking.id} - Elysian Retreat",
+                subject=f"Booking Confirmation {formatted_booking_id} - Elysian Retreat",
                 html_content=email_html,
                 to_name=guest_name_to_use
             )
