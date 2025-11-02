@@ -1581,7 +1581,12 @@ const Bookings = () => {
                         <button
                           onClick={() => setBookingToExtend(b)}
                           className="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                          disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
+                          disabled={(() => {
+                            if (!b.status) return true;
+                            const normalizedStatus = b.status.toLowerCase().replace(/[-_]/g, '-');
+                            // Enable extend button for both "booked" and "checked-in" statuses
+                            return !["booked", "checked-in"].includes(normalizedStatus);
+                          })()}
                         >
                           Extend
                         </button>
