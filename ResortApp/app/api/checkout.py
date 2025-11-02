@@ -30,29 +30,157 @@ def get_all_checkouts(db: Session = Depends(get_db), current_user: User = Depend
 @router.get("/active-rooms", response_model=List[dict])
 def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
     """
-    Returns a list of unique rooms that are part of an active, non-checked-out booking.
+    Returns a list of active rooms available for checkout with two options:
+    1. Individual rooms (for single room checkout)
+    2. Grouped bookings (for multiple room checkout together)
     Used to populate the checkout dropdown on the frontend.
     """
     # Fetch active bookings and package bookings with their rooms preloaded
     active_bookings = db.query(Booking).options(
         joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
-    ).filter(Booking.status.in_(['checked-in', 'booked'])).all()
+    ).filter(Booking.status.in_(['checked-in', 'checked_in', 'booked'])).all()
     
     active_package_bookings = db.query(PackageBooking).options(
         joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room)
-    ).filter(PackageBooking.status.in_(['checked-in', 'booked'])).all()
+    ).filter(PackageBooking.status.in_(['checked-in', 'checked_in', 'booked'])).all()
     
-    rooms = {}
+    result = []
+    
+    # Process regular bookings
     for booking in active_bookings:
-        for link in booking.booking_rooms:
-            if link.room and link.room.number not in rooms:
-                rooms[link.room.number] = {"number": link.room.number, "guest_name": booking.guest_name}
-    for pkg_booking in active_package_bookings:
-        for link in pkg_booking.rooms:
-            if link.room and link.room.number not in rooms:
-                rooms[link.room.number] = {"number": link.room.number, "guest_name": pkg_booking.guest_name}
+        room_numbers = sorted([link.room.number for link in booking.booking_rooms if link.room])
+        if room_numbers:
+            # Add individual room options (one per room)
+            for room_num in room_numbers:
+                result.append({
+                    "room_number": room_num,
+                    "room_numbers": [room_num],  # Single room
+                    "guest_name": booking.guest_name,
+                    "booking_id": booking.id,
+                    "booking_type": "regular",
+                    "checkout_mode": "single",
+                    "display_label": f"Room {room_num} ({booking.guest_name})"
+                })
+            
+            # Add grouped booking option (all rooms together) - only if more than 1 room
+            if len(room_numbers) > 1:
+                first_room = room_numbers[0]
+                result.append({
+                    "room_number": first_room,  # Primary room for checkout API
+                    "room_numbers": room_numbers,  # All rooms in this booking
+                    "guest_name": booking.guest_name,
+                    "booking_id": booking.id,
+                    "booking_type": "regular",
+                    "checkout_mode": "multiple",
+                    "display_label": f"All Rooms in Booking #{booking.id}: {', '.join(room_numbers)} ({booking.guest_name})"
+                })
     
-    return sorted(list(rooms.values()), key=lambda x: x['number'])[skip:skip+limit]
+    # Process package bookings
+    for pkg_booking in active_package_bookings:
+        room_numbers = sorted([link.room.number for link in pkg_booking.rooms if link.room])
+        if room_numbers:
+            # Add individual room options (one per room)
+            for room_num in room_numbers:
+                result.append({
+                    "room_number": room_num,
+                    "room_numbers": [room_num],  # Single room
+                    "guest_name": pkg_booking.guest_name,
+                    "booking_id": pkg_booking.id,
+                    "booking_type": "package",
+                    "checkout_mode": "single",
+                    "display_label": f"Room {room_num} ({pkg_booking.guest_name})"
+                })
+            
+            # Add grouped booking option (all rooms together) - only if more than 1 room
+            if len(room_numbers) > 1:
+                first_room = room_numbers[0]
+                result.append({
+                    "room_number": first_room,  # Primary room for checkout API
+                    "room_numbers": room_numbers,  # All rooms in this booking
+                    "guest_name": pkg_booking.guest_name,
+                    "booking_id": pkg_booking.id,
+                    "booking_type": "package",
+                    "checkout_mode": "multiple",
+                    "display_label": f"All Rooms in Package #{pkg_booking.id}: {', '.join(room_numbers)} ({pkg_booking.guest_name})"
+                })
+    
+    # Sort by booking ID descending (most recent first)
+    result = sorted(result, key=lambda x: x['booking_id'], reverse=True)
+    return result[skip:skip+limit]
+
+def _calculate_bill_for_single_room(db: Session, room_number: str):
+    """
+    Calculates bill for a single room only, regardless of how many rooms are in the booking.
+    """
+    # 1. Find the room
+    room = db.query(Room).filter(Room.number == room_number).first()
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found.")
+    
+    # 2. Find the active parent booking (regular or package) linked to this room
+    booking, is_package = None, False
+    
+    booking_link = (db.query(BookingRoom)
+                    .join(Booking)
+                    .options(joinedload(BookingRoom.booking))
+                    .filter(BookingRoom.room_id == room.id, Booking.status.in_(['checked-in', 'checked_in', 'booked']))
+                    .order_by(Booking.id.desc()).first())
+    
+    if booking_link:
+        booking = booking_link.booking
+        if booking.status not in ['checked-in', 'checked_in', 'booked']:
+            raise HTTPException(status_code=400, detail=f"Booking is not in a valid state for checkout. Current status: {booking.status}")
+    else:
+        package_link = (db.query(PackageBookingRoom)
+                        .join(PackageBooking)
+                        .options(joinedload(PackageBookingRoom.package_booking))
+                        .filter(PackageBookingRoom.room_id == room.id, PackageBooking.status.in_(['checked-in', 'checked_in', 'booked']))
+                        .order_by(PackageBooking.id.desc()).first())
+        if package_link:
+            booking = package_link.package_booking
+            is_package = True
+            if booking.status not in ['checked-in', 'checked_in', 'booked']:
+                raise HTTPException(status_code=400, detail=f"Package booking is not in a valid state for checkout. Current status: {booking.status}")
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail=f"No active booking found for room {room_number}.")
+    
+    # 3. Calculate charges for THIS ROOM ONLY
+    charges = BillBreakdown()
+    stay_days = max(1, (booking.check_out - booking.check_in).days)
+    
+    if is_package:
+        # Package price is per room, per night
+        package_price_per_room = booking.package.price if booking.package else 0
+        charges.package_charges = package_price_per_room * stay_days
+        charges.room_charges = 0
+    else:
+        charges.package_charges = 0
+        charges.room_charges = (room.price or 0) * stay_days
+    
+    # Get food and service charges for THIS ROOM ONLY
+    unbilled_food_order_items = (db.query(FoodOrderItem)
+                                 .join(FoodOrder)
+                                 .options(joinedload(FoodOrderItem.food_item))
+                                 .filter(FoodOrder.room_id == room.id, FoodOrder.billing_status == "unbilled")
+                                 .all())
+    
+    unbilled_services = db.query(AssignedService).options(joinedload(AssignedService.service)).filter(AssignedService.room_id == room.id, AssignedService.billing_status == "unbilled").all()
+    
+    charges.food_charges = sum(item.quantity * item.food_item.price for item in unbilled_food_order_items if item.food_item)
+    charges.service_charges = sum(ass.service.charges for ass in unbilled_services)
+    
+    charges.food_items = [{"item_name": item.food_item.name, "quantity": item.quantity, "amount": item.quantity * item.food_item.price} for item in unbilled_food_order_items if item.food_item]
+    charges.service_items = [{"service_name": ass.service.name, "charges": ass.service.charges} for ass in unbilled_services]
+    
+    charges.total_due = sum([charges.room_charges, charges.food_charges, charges.service_charges, charges.package_charges])
+    
+    number_of_guests = getattr(booking, 'number_of_guests', 1)
+    
+    return {
+        "booking": booking, "room": room, "charges": charges,
+        "is_package": is_package, "stay_nights": stay_days, "number_of_guests": number_of_guests
+    }
 
 def _calculate_bill_for_entire_booking(db: Session, room_number: str):
     """
@@ -69,23 +197,30 @@ def _calculate_bill_for_entire_booking(db: Session, room_number: str):
     
     # Eagerly load the booking relationship to avoid extra queries
     # Order by descending ID to get the MOST RECENT booking for the room first.
+    # Handle both 'checked-in' and 'checked_in' status formats
     booking_link = (db.query(BookingRoom)
                     .join(Booking)
                     .options(joinedload(BookingRoom.booking)) # Eager load the booking
-                    .filter(BookingRoom.room_id == initial_room.id, Booking.status.in_(['checked-in', 'booked']))
+                    .filter(BookingRoom.room_id == initial_room.id, Booking.status.in_(['checked-in', 'checked_in', 'booked']))
                     .order_by(Booking.id.desc()).first())
 
     if booking_link:
         booking = booking_link.booking
+        # Validate booking status before proceeding
+        if booking.status not in ['checked-in', 'checked_in', 'booked']:
+            raise HTTPException(status_code=400, detail=f"Booking is not in a valid state for checkout. Current status: {booking.status}")
     else:
         package_link = (db.query(PackageBookingRoom)
                         .join(PackageBooking)
                         .options(joinedload(PackageBookingRoom.package_booking)) # Eager load the booking
-                        .filter(PackageBookingRoom.room_id == initial_room.id, PackageBooking.status.in_(['checked-in', 'booked']))
+                        .filter(PackageBookingRoom.room_id == initial_room.id, PackageBooking.status.in_(['checked-in', 'checked_in', 'booked']))
                         .order_by(PackageBooking.id.desc()).first())
         if package_link:
             booking = package_link.package_booking
             is_package = True
+            # Validate booking status before proceeding
+            if booking.status not in ['checked-in', 'checked_in', 'booked']:
+                raise HTTPException(status_code=400, detail=f"Package booking is not in a valid state for checkout. Current status: {booking.status}")
 
     if not booking:
         raise HTTPException(status_code=404, detail=f"No active booking found for room {room_number}.")
@@ -148,84 +283,179 @@ def _calculate_bill_for_entire_booking(db: Session, room_number: str):
 
 
 @router.get("/{room_number}", response_model=BillSummary)
-def get_bill_for_booking(room_number: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_bill_for_booking(room_number: str, checkout_mode: str = "multiple", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
-    Returns a bill summary for the ENTIRE booking associated with the given room number.
+    Returns a bill summary for the booking associated with the given room number.
+    If checkout_mode is 'single', calculates bill for that room only.
+    If checkout_mode is 'multiple', calculates bill for all rooms in the booking.
     """
-    bill_data = _calculate_bill_for_entire_booking(db, room_number)
-    return BillSummary(
-        guest_name=bill_data["booking"].guest_name,
-        room_numbers=sorted([room.number for room in bill_data["all_rooms"]]),
-        number_of_guests=bill_data["number_of_guests"],
-        stay_nights=bill_data["stay_nights"],
-        check_in=bill_data["booking"].check_in,
-        check_out=bill_data["booking"].check_out,
-        charges=bill_data["charges"]
-    )
+    if checkout_mode == "single":
+        bill_data = _calculate_bill_for_single_room(db, room_number)
+        return BillSummary(
+            guest_name=bill_data["booking"].guest_name,
+            room_numbers=[bill_data["room"].number],
+            number_of_guests=bill_data["number_of_guests"],
+            stay_nights=bill_data["stay_nights"],
+            check_in=bill_data["booking"].check_in,
+            check_out=bill_data["booking"].check_out,
+            charges=bill_data["charges"]
+        )
+    else:
+        bill_data = _calculate_bill_for_entire_booking(db, room_number)
+        return BillSummary(
+            guest_name=bill_data["booking"].guest_name,
+            room_numbers=sorted([room.number for room in bill_data["all_rooms"]]),
+            number_of_guests=bill_data["number_of_guests"],
+            stay_nights=bill_data["stay_nights"],
+            check_in=bill_data["booking"].check_in,
+            check_out=bill_data["booking"].check_out,
+            charges=bill_data["charges"]
+        )
 
 
 @router.post("/checkout/{room_number}", response_model=CheckoutSuccess)
 def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
-    Finalizes the checkout for the ENTIRE booking associated with the given room number.
-    This action is atomic and will update the booking and all associated rooms.
+    Finalizes the checkout for a room or entire booking.
+    If checkout_mode is 'single', only the specified room is checked out.
+    If checkout_mode is 'multiple', all rooms in the booking are checked out together.
     """
-    bill_data = _calculate_bill_for_entire_booking(db, room_number)
-
-    booking = bill_data["booking"]
-
-    # The most reliable way to prevent duplicate checkouts is to check the booking's status directly.
-    if booking.status == "checked_out":
-        raise HTTPException(status_code=409, detail=f"This booking has already been checked out.")
-
-    all_rooms = bill_data["all_rooms"]
-    charges = bill_data["charges"]
-    is_package = bill_data["is_package"]
-    room_ids = [room.id for room in all_rooms]
-
-    try:
-        # Calculate final bill with taxes
-        subtotal = charges.total_due
-        tax_amount = subtotal * 0.05  # Standard 5% Tax
-        # Apply discount from the request, ensuring it's not negative
-        discount_amount = max(0, request.discount_amount or 0)
-        grand_total = max(0, subtotal + tax_amount - discount_amount)
-
-        # Create a single checkout record for the entire booking
-        new_checkout = Checkout(
-            booking_id=booking.id if not is_package else None,
-            package_booking_id=booking.id if is_package else None,
-            room_total=charges.room_charges,
-            food_total=charges.food_charges,
-            service_total=charges.service_charges,
-            package_total=charges.package_charges,
-            tax_amount=tax_amount,
-            discount_amount=discount_amount,
-            grand_total=grand_total,
-            payment_method=request.payment_method,
-            payment_status="Paid",
-            guest_name=booking.guest_name,
-            room_number=", ".join(sorted([room.number for room in all_rooms]))
-        )
-        db.add(new_checkout)
-
-        # Atomically update all related records
-        db.query(FoodOrder).filter(FoodOrder.room_id.in_(room_ids), FoodOrder.billing_status == "unbilled").update({"billing_status": "billed"})
-        db.query(AssignedService).filter(AssignedService.room_id.in_(room_ids), AssignedService.billing_status == "unbilled").update({"billing_status": "billed"})
+    checkout_mode = request.checkout_mode or "multiple"
+    
+    if checkout_mode == "single":
+        # Single room checkout
+        bill_data = _calculate_bill_for_single_room(db, room_number)
+        booking = bill_data["booking"]
+        room = bill_data["room"]
+        charges = bill_data["charges"]
+        is_package = bill_data["is_package"]
         
-        booking.status = "checked_out"
-        db.query(Room).filter(Room.id.in_(room_ids)).update({"status": "Available"})
-
-        db.commit()
-        db.refresh(new_checkout)
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {str(e)}")
-
-    # Return the data from the newly created checkout record
-    return CheckoutSuccess(
-        checkout_id=new_checkout.id,
-        grand_total=new_checkout.grand_total,
-        checkout_date=new_checkout.checkout_date
-    )
+        # Check if room is already checked out
+        if room.status == "Available":
+            raise HTTPException(status_code=409, detail=f"Room {room_number} has already been checked out.")
+        
+        # Validate booking is in a valid state
+        if booking.status not in ['checked-in', 'checked_in', 'booked']:
+            raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
+        
+        try:
+            # Calculate final bill with taxes
+            subtotal = charges.total_due
+            tax_amount = subtotal * 0.05
+            discount_amount = max(0, request.discount_amount or 0)
+            grand_total = max(0, subtotal + tax_amount - discount_amount)
+            
+            # Create checkout record for single room (don't set booking_id to allow multiple checkouts per booking)
+            new_checkout = Checkout(
+                booking_id=None,  # Don't link to booking for single room checkout
+                package_booking_id=None,
+                room_total=charges.room_charges,
+                food_total=charges.food_charges,
+                service_total=charges.service_charges,
+                package_total=charges.package_charges,
+                tax_amount=tax_amount,
+                discount_amount=discount_amount,
+                grand_total=grand_total,
+                payment_method=request.payment_method,
+                payment_status="Paid",
+                guest_name=booking.guest_name,
+                room_number=room.number
+            )
+            db.add(new_checkout)
+            
+            # Update only this room's related records
+            db.query(FoodOrder).filter(FoodOrder.room_id == room.id, FoodOrder.billing_status == "unbilled").update({"billing_status": "billed"})
+            db.query(AssignedService).filter(AssignedService.room_id == room.id, AssignedService.billing_status == "unbilled").update({"billing_status": "billed"})
+            
+            # Update room status only (don't change booking status)
+            room.status = "Available"
+            
+            # Check if all rooms in booking are checked out, then update booking status
+            if is_package:
+                remaining_rooms = [link.room for link in booking.rooms if link.room.status != "Available"]
+            else:
+                remaining_rooms = [link.room for link in booking.booking_rooms if link.room.status != "Available"]
+            
+            if not remaining_rooms:
+                # All rooms checked out, mark booking as checked out
+                booking.status = "checked_out"
+            
+            db.commit()
+            db.refresh(new_checkout)
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {str(e)}")
+        
+        return CheckoutSuccess(
+            checkout_id=new_checkout.id,
+            grand_total=new_checkout.grand_total,
+            checkout_date=new_checkout.checkout_date
+        )
+    
+    else:
+        # Multiple room checkout (entire booking)
+        bill_data = _calculate_bill_for_entire_booking(db, room_number)
+        
+        booking = bill_data["booking"]
+        
+        # The most reliable way to prevent duplicate checkouts is to check the booking's status directly.
+        # Handle both 'checked_out' and 'checked-out' status formats
+        if booking.status in ["checked_out", "checked-out"]:
+            raise HTTPException(status_code=409, detail=f"This booking has already been checked out.")
+        
+        # Validate booking is in a valid state for checkout
+        if booking.status not in ['checked-in', 'checked_in', 'booked']:
+            raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
+        
+        all_rooms = bill_data["all_rooms"]
+        charges = bill_data["charges"]
+        is_package = bill_data["is_package"]
+        room_ids = [room.id for room in all_rooms]
+        
+        try:
+            # Calculate final bill with taxes
+            subtotal = charges.total_due
+            tax_amount = subtotal * 0.05  # Standard 5% Tax
+            # Apply discount from the request, ensuring it's not negative
+            discount_amount = max(0, request.discount_amount or 0)
+            grand_total = max(0, subtotal + tax_amount - discount_amount)
+            
+            # Create a single checkout record for the entire booking
+            new_checkout = Checkout(
+                booking_id=booking.id if not is_package else None,
+                package_booking_id=booking.id if is_package else None,
+                room_total=charges.room_charges,
+                food_total=charges.food_charges,
+                service_total=charges.service_charges,
+                package_total=charges.package_charges,
+                tax_amount=tax_amount,
+                discount_amount=discount_amount,
+                grand_total=grand_total,
+                payment_method=request.payment_method,
+                payment_status="Paid",
+                guest_name=booking.guest_name,
+                room_number=", ".join(sorted([room.number for room in all_rooms]))
+            )
+            db.add(new_checkout)
+            
+            # Atomically update all related records
+            db.query(FoodOrder).filter(FoodOrder.room_id.in_(room_ids), FoodOrder.billing_status == "unbilled").update({"billing_status": "billed"})
+            db.query(AssignedService).filter(AssignedService.room_id.in_(room_ids), AssignedService.billing_status == "unbilled").update({"billing_status": "billed"})
+            
+            booking.status = "checked_out"
+            db.query(Room).filter(Room.id.in_(room_ids)).update({"status": "Available"})
+            
+            db.commit()
+            db.refresh(new_checkout)
+            
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {str(e)}")
+        
+        # Return the data from the newly created checkout record
+        return CheckoutSuccess(
+            checkout_id=new_checkout.id,
+            grand_total=new_checkout.grand_total,
+            checkout_date=new_checkout.checkout_date
+        )

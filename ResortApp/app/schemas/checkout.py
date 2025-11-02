@@ -67,3 +67,4 @@ class CheckoutSuccess(BaseModel):
 class CheckoutRequest(BaseModel):
     payment_method: str = Field(..., description="The method of payment (e.g., 'Card', 'Cash').")
     discount_amount: Optional[float] = Field(0.0, description="Optional discount amount to be applied.")
+    checkout_mode: Optional[str] = Field("multiple", description="Checkout mode: 'single' for single room checkout or 'multiple' for all rooms in booking.")

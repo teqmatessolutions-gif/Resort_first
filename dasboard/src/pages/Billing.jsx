@@ -97,6 +97,7 @@ const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6'];
 const Billing = () => {
   const navigate = useNavigate(); // Not used here, but good practice if you use react-router for navigation
   const [roomNumber, setRoomNumber] = useState("");
+  const [checkoutMode, setCheckoutMode] = useState("multiple");
   const [billData, setBillData] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("Card");
   const [discount, setDiscount] = useState(0);
@@ -181,18 +182,27 @@ const Billing = () => {
 
   const handleGetBill = async () => {
     if (!roomNumber) {
-      showBannerMessage("error", "Please enter a room number.");
+      showBannerMessage("error", "Please select a booking to checkout.");
       return;
     }
     setLoading(true);
     setBillData(null);
     setDiscount(0); // Reset discount when fetching a new bill
     try {
-      const res = await api.get(`/bill/${roomNumber}`);
-      setBillData(res.data);
-      showBannerMessage("success", "Bill for the entire booking retrieved successfully.");
+      const res = await api.get(`/bill/${roomNumber}?checkout_mode=${checkoutMode}`);
+      if (res.data && res.data.room_numbers) {
+        setBillData(res.data);
+        const roomCount = res.data.room_numbers.length;
+        const modeText = checkoutMode === "single" ? "single room" : "all rooms in the booking";
+        showBannerMessage("success", `Bill retrieved for ${roomCount} room(s) (${modeText}).`);
+      } else {
+        throw new Error("Invalid bill data received");
+      }
     } catch (error) {
-      showBannerMessage("error", `Error: ${error.response?.data?.detail || error.message}`);
+      const errorMessage = error.response?.data?.detail || error.message || "Failed to fetch bill";
+      showBannerMessage("error", `Error: ${errorMessage}`);
+      setBillData(null);
+      console.error("Error fetching bill:", error);
     } finally {
       setLoading(false);
     }
@@ -203,26 +213,59 @@ const Billing = () => {
       showBannerMessage("error", "Please retrieve the bill before checkout.");
       return;
     }
+    if (!roomNumber) {
+      showBannerMessage("error", "No booking selected for checkout.");
+      return;
+    }
+    // Validate discount amount
+    const discountAmount = parseFloat(discount) || 0;
+    if (discountAmount < 0) {
+      showBannerMessage("error", "Discount amount cannot be negative.");
+      return;
+    }
+    if (discountAmount > billData.charges.total_due * 1.05) {
+      showBannerMessage("error", "Discount cannot exceed the grand total.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post(`/bill/checkout/${roomNumber}`, {
         payment_method: paymentMethod,
-        discount_amount: parseFloat(discount) || 0,
+        discount_amount: discountAmount,
+        checkout_mode: checkoutMode,
       });
+      const roomCount = billData.room_numbers?.length || 1;
+      const modeText = checkoutMode === "single" ? "single room" : "all rooms";
       setBillData(null);
       setDiscount(0);
       setRoomNumber(""); // Clear input on successful checkout
-      showBannerMessage("success", `${res.data.message} (ID: ${res.data.checkout_id})`);
-      fetchInitialData(); // Refresh all data
+      setCheckoutMode("multiple"); // Reset to default
+      showBannerMessage("success", `Checkout successful! ${roomCount} room(s) (${modeText}) checked out. Checkout ID: ${res.data.checkout_id}`);
+      // Refresh all data after successful checkout
+      setTimeout(() => {
+        fetchInitialData();
+      }, 1000);
     } catch (error) {
-      const errorMessage = `Error: ${error.response?.data?.detail || error.message}`;
-      showBannerMessage("error", errorMessage);
+      const errorMessage = error.response?.data?.detail || error.message || "Checkout failed";
+      showBannerMessage("error", `Error: ${errorMessage}`);
       // If it's a conflict error, it means it's already checked out. Clear the form.
       if (error.response?.status === 409) {
         setBillData(null);
         setDiscount(0);
         setRoomNumber("");
+        // Refresh active rooms list
+        setTimeout(() => {
+          fetchInitialData();
+        }, 1000);
+      } else if (error.response?.status === 404) {
+        // Booking not found - might have been checked out already
+        setBillData(null);
+        setRoomNumber("");
+        setTimeout(() => {
+          fetchInitialData();
+        }, 1000);
       }
+      console.error("Checkout error:", error);
     } finally {
       setLoading(false);
     }
@@ -446,28 +489,51 @@ const Billing = () => {
           <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Process New Checkout</h2>
           <div className="mb-4">
             <label htmlFor="room-select" className="block text-gray-700 font-medium mb-2">
-              Select a Room from an Active Booking
+              Select a Room or Booking to Checkout
             </label>
             <select
               id="room-select"
               value={roomNumber}
-              onChange={(e) => setRoomNumber(e.target.value)}
+              onChange={(e) => {
+                const selected = activeRooms.find(b => b.room_number === e.target.value);
+                setRoomNumber(e.target.value);
+                if (selected) {
+                  setCheckoutMode(selected.checkout_mode || "multiple");
+                  setBillData(null); // Clear bill data when selection changes
+                }
+              }}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="">-- Select a Room --</option>
-              {activeRooms.map(room => (
-                <option key={room.number} value={room.number}>
-                  Room {room.number} ({room.guest_name})
+              <option value="">-- Select a Room or Booking to Checkout --</option>
+              {activeRooms.map((booking, index) => (
+                <option key={`${booking.room_number}-${booking.checkout_mode}-${index}`} value={booking.room_number}>
+                  {booking.display_label || `${booking.room_numbers?.join(', ') || booking.room_number} (${booking.guest_name})`}
                 </option>
               ))}
             </select>
+            {roomNumber && activeRooms.find(b => b.room_number === roomNumber) && (() => {
+              const selected = activeRooms.find(b => b.room_number === roomNumber);
+              const mode = selected?.checkout_mode || "multiple";
+              const isMultiple = mode === "multiple";
+              return (
+                <div className={`mt-2 p-3 ${isMultiple ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'} border rounded-lg text-sm ${isMultiple ? 'text-blue-800' : 'text-green-800'}`}>
+                  <p className="font-semibold">
+                    {isMultiple ? "⚠️ Important: This will checkout ALL rooms in the booking" : "✓ Single Room Checkout: Only this room will be checked out"}
+                  </p>
+                  <p className="mt-1">Rooms: {selected?.room_numbers?.join(', ') || roomNumber}</p>
+                  {selected?.room_numbers && selected.room_numbers.length > 1 && !isMultiple && (
+                    <p className="mt-1 text-xs italic">Other rooms in this booking will remain checked in.</p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <button
             onClick={handleGetBill}
             className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mb-4"
             disabled={loading}
           >
-            {loading ? "Fetching Bill..." : "Get Bill for Entire Booking"}
+            {loading ? "Fetching Bill..." : checkoutMode === "single" ? "Get Bill for Single Room" : "Get Bill for Entire Booking"}
           </button>
 
           {billData && (
