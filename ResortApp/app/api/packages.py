@@ -130,7 +130,23 @@ def book_package_guest_api(
     """
     Public endpoint for guests to book a package without authentication.
     """
-    result = crud_package.book_package(db, booking)
+    try:
+        result = crud_package.book_package(db, booking)
+    except HTTPException:
+        # Re-raise HTTP exceptions (like validation errors) as-is
+        raise
+    except Exception as e:
+        # Log the full error for debugging
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in book_package_guest_api: {str(e)}")
+        print(f"Traceback: {error_trace}")
+        
+        # Return a user-friendly error message
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create package booking: {str(e)}"
+        )
     
     # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email and result:
