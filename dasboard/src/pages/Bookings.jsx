@@ -800,6 +800,27 @@ const Bookings = () => {
     window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
   };
 
+  // Calculate status counts for better filter clarity
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: bookings.length,
+      booked: 0,
+      cancelled: 0,
+      'checked-in': 0,
+      'checked-out': 0,
+    };
+    
+    bookings.forEach((b) => {
+      const normalizedStatus = (b.status || '').toLowerCase().replace(/[-_]/g, '-').trim();
+      if (normalizedStatus === 'booked') counts.booked++;
+      else if (normalizedStatus === 'cancelled') counts.cancelled++;
+      else if (normalizedStatus === 'checked-in' || normalizedStatus === 'checked_in') counts['checked-in']++;
+      else if (normalizedStatus === 'checked-out' || normalizedStatus === 'checked_out') counts['checked-out']++;
+    });
+    
+    return counts;
+  }, [bookings]);
+
   const filteredBookings = useMemo(() => {
     return bookings
       .filter((b) => {
@@ -1391,34 +1412,65 @@ const Bookings = () => {
         {/* Bookings Table */}
         <div className="bg-white p-3 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg overflow-x-auto -mx-2 sm:mx-0">
           <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-between items-start sm:items-center mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-700 w-full sm:w-auto">All Bookings</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-700">All Bookings</h2>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Showing {filteredBookings.length} of {statusCounts.all} bookings
+              </span>
+            </div>
             <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
-              <select // Status Filter
-                value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
-              >
-                <option value="All">All Statuses</option>
-                <option value="booked">Booked</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="checked-in">Checked-in</option>
-                <option value="checked-out">Checked-out</option>
-              </select>
-              <select // Room Number Filter
-                value={roomNumberFilter} onChange={(e) => setRoomNumberFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
-              >
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">Filter by Status:</label>
+                <select // Status Filter
+                  value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
+                  <option value="All">All Statuses ({statusCounts.all})</option>
+                  <option value="booked">📅 Booked ({statusCounts.booked})</option>
+                  <option value="checked-in">✅ Checked-in ({statusCounts['checked-in']})</option>
+                  <option value="checked-out">🚪 Checked-out ({statusCounts['checked-out']})</option>
+                  <option value="cancelled">❌ Cancelled ({statusCounts.cancelled})</option>
+                </select>
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">Filter by Room:</label>
+                <select // Room Number Filter
+                  value={roomNumberFilter} onChange={(e) => setRoomNumberFilter(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
                 {allRoomNumbers.map(roomNumber => (
                   <option key={roomNumber} value={roomNumber}>{roomNumber === "All" ? "All Rooms" : `Room ${roomNumber}`}</option>
                 ))}
-              </select>
-              <input // From Date
-                type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
-              />
-              <input // To Date
-                type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
-              />
+                </select>
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">From Date:</label>
+                <input // From Date
+                  type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                />
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">To Date:</label>
+                <input // To Date
+                  type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                />
+              </div>
+              {(statusFilter !== "All" || roomNumberFilter !== "All" || fromDate || toDate) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter("All");
+                    setRoomNumberFilter("All");
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium px-3 py-2 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors self-end sm:self-center"
+                  title="Clear all filters"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           </div>
 
