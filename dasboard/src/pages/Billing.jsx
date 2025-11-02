@@ -730,12 +730,11 @@ const Billing = () => {
               </tbody>
             </table>
           </div>
-            {hasMoreCheckouts && (
-              <div ref={loadMoreRef} className="text-center p-4">
-                {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
-              </div>
-            )}
-          </div>
+          {hasMoreCheckouts && (
+            <div ref={loadMoreRef} className="text-center p-4">
+              {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
+            </div>
+          )}
         </div>
 
         <CheckoutDetailModal checkout={selectedCheckout} onClose={() => setSelectedCheckout(null)} />
