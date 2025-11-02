@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from typing import List
 from datetime import date, datetime
 
@@ -368,15 +368,34 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
     
     if checkout_mode == "single":
         # Single room checkout
+        # First, check if room exists and is already checked out BEFORE calculating bill
+        room = db.query(Room).filter(Room.number == room_number).first()
+        if not room:
+            raise HTTPException(status_code=404, detail=f"Room {room_number} not found.")
+        
+        if room.status == "Available":
+            raise HTTPException(
+                status_code=409, 
+                detail=f"Room {room_number} has already been checked out and is currently available. Please select a different room."
+            )
+        
+        # Now calculate bill
         bill_data = _calculate_bill_for_single_room(db, room_number)
         booking = bill_data["booking"]
-        room = bill_data["room"]
         charges = bill_data["charges"]
         is_package = bill_data["is_package"]
         
-        # Check if room is already checked out
-        if room.status == "Available":
-            raise HTTPException(status_code=409, detail=f"Room {room_number} has already been checked out.")
+        # Check if there's already a checkout for this specific room today (to prevent duplicates)
+        today = date.today()
+        existing_room_checkout = db.query(Checkout).filter(
+            Checkout.room_number == room_number,
+            func.date(Checkout.checkout_date) == today
+        ).first()
+        if existing_room_checkout:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Room {room_number} was already checked out today (Checkout ID: {existing_room_checkout.id}). Please refresh the page to see updated room status."
+            )
         
         # Validate booking is in a valid state
         if booking.status not in ['checked-in', 'checked_in', 'booked']:
@@ -394,10 +413,32 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             # Convert date to datetime for checkout_date field
             effective_checkout_datetime = datetime.combine(effective_checkout, datetime.min.time())
             
-            # Create checkout record for single room (don't set booking_id to allow multiple checkouts per booking)
+            # Create checkout record for single room
+            # For single room checkout, we need to link to booking_id/package_booking_id for display
+            # However, unique constraint on booking_id prevents multiple single-room checkouts from same booking
+            # Solution: Only set booking_id/package_booking_id if this is the first checkout for this booking
+            # Otherwise, leave it NULL and rely on room_number for tracking
+            
+            # Check if there's already a checkout with this booking_id (multiple room checkout case)
+            existing_booking_checkout = None
+            if not is_package:
+                existing_booking_checkout = db.query(Checkout).filter(Checkout.booking_id == booking.id).first()
+            else:
+                existing_booking_checkout = db.query(Checkout).filter(Checkout.package_booking_id == booking.id).first()
+            
+            # Set booking_id/package_booking_id only if no checkout exists for this booking yet
+            # This ensures at least one checkout per booking shows the booking_id
+            booking_id_to_set = None
+            package_booking_id_to_set = None
+            
+            if not existing_booking_checkout:
+                # First checkout for this booking - set the IDs
+                booking_id_to_set = booking.id if not is_package else None
+                package_booking_id_to_set = booking.id if is_package else None
+            
             new_checkout = Checkout(
-                booking_id=None,  # Don't link to booking for single room checkout
-                package_booking_id=None,
+                booking_id=booking_id_to_set,  # Set only for first checkout per booking
+                package_booking_id=package_booking_id_to_set,  # Set only for first checkout per booking
                 room_total=charges.room_charges,
                 food_total=charges.food_charges,
                 service_total=charges.service_charges,
