@@ -942,6 +942,36 @@ section,
   transition: all 0.3s ease;
 }
 
+/* Trial Dropdown Animation */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trial-preview-card {
+  animation: fadeInDown 0.3s ease;
+}
+
+.trial-option-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Active state for dropdown button */
+.btn-trial-header.active,
+.btn-trial-app.active,
+#trialDropdownBtnCTA.active,
+#trialDropdownBtnService.active {
+  transform: translateY(0) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.5) !important;
+}
+
 .hero .btn-watch-video {
   display: none; /* Hide the process video button */
   font-size: 16px;

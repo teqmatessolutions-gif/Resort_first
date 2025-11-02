@@ -70,10 +70,46 @@
         <i class="mobile-nav-toggle d-xl-none bi bi-list"></i>
       </nav>
 
-      <div class="d-flex gap-2 flex-md-shrink-0">
-        <a href="https://www.teqmates.com/admin" target="_blank" class="btn-trial-header" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);">
-          <i class="bi bi-play-circle"></i> Try App
-        </a>
+      <div class="d-flex gap-2 flex-md-shrink-0 align-items-center">
+        <div class="dropdown position-relative">
+          <button class="btn-trial-header" id="trialDropdownBtn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 10px 20px; border-radius: 25px; border: none; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; transition: all 0.3s; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3); cursor: pointer;">
+            <i class="bi bi-play-circle"></i> Try App <i class="bi bi-chevron-down" style="font-size: 0.8em;"></i>
+          </button>
+          <div class="trial-preview-card" id="trialPreviewCard" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); padding: 25px; min-width: 320px; z-index: 1000; animation: fadeInDown 0.3s ease;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <div style="font-size: 3rem; margin-bottom: 10px;">🏨✨</div>
+              <h4 style="color: #012970; font-weight: 700; margin-bottom: 5px;">Resort Management System</h4>
+              <p style="color: #6c757d; font-size: 0.9rem; margin: 0;">Choose your experience</p>
+            </div>
+            <div class="d-flex flex-column gap-3">
+              <a href="https://www.teqmates.com/admin" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                  <i class="bi bi-shield-lock"></i>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 700; font-size: 1.1rem;">Admin Dashboard</div>
+                  <div style="font-size: 0.85rem; opacity: 0.9;">Manage bookings, rooms & billing</div>
+                </div>
+                <i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <a href="https://www.teqmates.com/resort" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                  <i class="bi bi-person-circle"></i>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-weight: 700; font-size: 1.1rem;">Guest Portal</div>
+                  <div style="font-size: 0.85rem; opacity: 0.9;">Book rooms & explore packages</div>
+                </div>
+                <i class="bi bi-box-arrow-up-right"></i>
+              </a>
+            </div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; text-align: center;">
+              <p style="color: #6c757d; font-size: 0.85rem; margin: 0;">
+                <i class="bi bi-info-circle" style="color: #10b981;"></i> Free trial • No credit card required
+              </p>
+            </div>
+          </div>
+        </div>
         <a class="btn-getstarted" href="#getStartedModal" data-bs-toggle="modal">Get Started</a>
       </div>
 
@@ -92,9 +128,45 @@
             <p data-aos="fade-up" data-aos-delay="100">Your technology partner for Custom Software, Digital Marketing, Web & Mobile Apps, UI/UX Design, Cloud & DevOps, and ongoing support.</p>
             <div class="d-flex flex-column flex-md-row gap-3" data-aos="fade-up" data-aos-delay="200">
               <a href="#getStartedModal" class="btn-get-started" data-bs-toggle="modal">Get Started <i class="bi bi-arrow-right"></i></a>
-              <a href="https://www.teqmates.com/admin" target="_blank" class="btn-trial-app" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
-                <i class="bi bi-play-circle"></i> Try Resort App <i class="bi bi-box-arrow-up-right" style="font-size: 0.9em;"></i>
-              </a>
+              <div class="dropdown position-relative">
+                <button class="btn-trial-app" id="trialDropdownBtnHero" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 14px 32px; border-radius: 50px; border: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); cursor: pointer;">
+                  <i class="bi bi-play-circle"></i> Try Resort App <i class="bi bi-chevron-down" style="font-size: 0.9em;"></i>
+                </button>
+                <div class="trial-preview-card" id="trialPreviewCardHero" style="display: none; position: absolute; top: calc(100% + 15px); left: 0; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); padding: 25px; min-width: 350px; z-index: 1000; animation: fadeInDown 0.3s ease;">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🏨✨</div>
+                    <h4 style="color: #012970; font-weight: 700; margin-bottom: 5px;">Resort Management System</h4>
+                    <p style="color: #6c757d; font-size: 0.9rem; margin: 0;">Choose your experience</p>
+                  </div>
+                  <div class="d-flex flex-column gap-3">
+                    <a href="https://www.teqmates.com/admin" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                      <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                        <i class="bi bi-shield-lock"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1.1rem;">Admin Dashboard</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">Manage bookings, rooms & billing</div>
+                      </div>
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    <a href="https://www.teqmates.com/resort" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                      <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                        <i class="bi bi-person-circle"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1.1rem;">Guest Portal</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">Book rooms & explore packages</div>
+                      </div>
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  </div>
+                  <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; text-align: center;">
+                    <p style="color: #6c757d; font-size: 0.85rem; margin: 0;">
+                      <i class="bi bi-info-circle" style="color: #10b981;"></i> Free trial • No credit card required
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="col-lg-6 order-1 order-lg-2 hero-img" data-aos="zoom-out">
@@ -457,9 +529,49 @@
               <i class="bi bi-building icon" style="color: #10b981; font-size: 2.5rem;"></i>
               <h3 style="color: #10b981;">Resort Management System</h3>
               <p>Complete resort management solution for bookings, billing, room management, food orders, and guest services. Try our live demo!</p>
-              <a href="https://www.teqmates.com/admin" target="_blank" class="read-more stretched-link" style="color: #10b981; font-weight: 700;">
-                <span>Try Free Trial <i class="bi bi-box-arrow-up-right"></i></span>
-              </a>
+              <div class="dropdown position-relative">
+                <button id="trialDropdownBtnService" 
+                        style="background: transparent; border: 2px solid #10b981; color: #10b981; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s;"
+                        onmouseover="this.style.background='#10b981'; this.style.color='white';"
+                        onmouseout="this.style.background='transparent'; this.style.color='#10b981';">
+                  <span>Try Free Trial</span>
+                  <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="trial-preview-card" id="trialPreviewCardService" style="display: none; position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); padding: 25px; min-width: 340px; z-index: 1000; animation: fadeInDown 0.3s ease;">
+                  <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🏨✨</div>
+                    <h4 style="color: #012970; font-weight: 700; margin-bottom: 5px;">Resort Management System</h4>
+                    <p style="color: #6c757d; font-size: 0.9rem; margin: 0;">Choose your experience</p>
+                  </div>
+                  <div class="d-flex flex-column gap-3">
+                    <a href="https://www.teqmates.com/admin" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                      <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                        <i class="bi bi-shield-lock"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1.1rem;">Admin Dashboard</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">Manage bookings, rooms & billing</div>
+                      </div>
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    <a href="https://www.teqmates.com/resort" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 15px 20px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 12px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                      <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 10px; font-size: 1.5rem;">
+                        <i class="bi bi-person-circle"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <div style="font-weight: 700; font-size: 1.1rem;">Guest Portal</div>
+                        <div style="font-size: 0.85rem; opacity: 0.9;">Book rooms & explore packages</div>
+                      </div>
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  </div>
+                  <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e9ecef; text-align: center;">
+                    <p style="color: #6c757d; font-size: 0.85rem; margin: 0;">
+                      <i class="bi bi-info-circle" style="color: #10b981;"></i> Free trial • No credit card required
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div><!-- End Service Item -->
 
@@ -499,14 +611,50 @@
                 Experience our complete resort management solution with a free trial. Manage bookings, billing, rooms, food orders, and guest services all in one place.
               </p>
               <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
-                <a href="https://www.teqmates.com/admin" target="_blank" 
-                   style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 18px 45px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.2rem; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);"
-                   onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 35px rgba(16, 185, 129, 0.5)';"
-                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 25px rgba(16, 185, 129, 0.4)';">
-                  <i class="bi bi-play-circle-fill" style="font-size: 1.5rem;"></i>
-                  Start Free Trial Now
-                  <i class="bi bi-box-arrow-up-right"></i>
-                </a>
+                <div class="dropdown position-relative">
+                  <button id="trialDropdownBtnCTA" 
+                          style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 18px 45px; border-radius: 50px; border: none; font-weight: 700; font-size: 1.2rem; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s; box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4); cursor: pointer;"
+                          onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 10px 35px rgba(16, 185, 129, 0.5)';"
+                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 25px rgba(16, 185, 129, 0.4)';">
+                    <i class="bi bi-play-circle-fill" style="font-size: 1.5rem;"></i>
+                    Start Free Trial Now
+                    <i class="bi bi-chevron-down" style="font-size: 1rem;"></i>
+                  </button>
+                  <div class="trial-preview-card" id="trialPreviewCardCTA" style="display: none; position: absolute; top: calc(100% + 15px); left: 50%; transform: translateX(-50%); background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); padding: 30px; min-width: 380px; z-index: 1000; animation: fadeInDown 0.3s ease;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                      <div style="font-size: 3.5rem; margin-bottom: 10px;">🏨✨</div>
+                      <h4 style="color: #012970; font-weight: 700; margin-bottom: 5px; font-size: 1.5rem;">Resort Management System</h4>
+                      <p style="color: #6c757d; font-size: 1rem; margin: 0;">Choose your experience</p>
+                    </div>
+                    <div class="d-flex flex-column gap-3">
+                      <a href="https://www.teqmates.com/admin" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 18px 22px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 15px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; font-size: 1.8rem;">
+                          <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <div style="flex: 1;">
+                          <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 4px;">Admin Dashboard</div>
+                          <div style="font-size: 0.9rem; opacity: 0.9;">Manage bookings, rooms & billing</div>
+                        </div>
+                        <i class="bi bi-box-arrow-up-right" style="font-size: 1.2rem;"></i>
+                      </a>
+                      <a href="https://www.teqmates.com/resort" target="_blank" class="trial-option-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 18px 22px; border-radius: 15px; text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 15px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                        <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; font-size: 1.8rem;">
+                          <i class="bi bi-person-circle"></i>
+                        </div>
+                        <div style="flex: 1;">
+                          <div style="font-weight: 700; font-size: 1.2rem; margin-bottom: 4px;">Guest Portal</div>
+                          <div style="font-size: 0.9rem; opacity: 0.9;">Book rooms & explore packages</div>
+                        </div>
+                        <i class="bi bi-box-arrow-up-right" style="font-size: 1.2rem;"></i>
+                      </a>
+                    </div>
+                    <div style="margin-top: 18px; padding-top: 18px; border-top: 1px solid #e9ecef; text-align: center;">
+                      <p style="color: #6c757d; font-size: 0.9rem; margin: 0;">
+                        <i class="bi bi-info-circle" style="color: #10b981;"></i> Free trial • No credit card required
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <a href="#getStartedModal" class="btn-get-started" data-bs-toggle="modal" 
                    style="background: #f8f9fa; color: #012970; padding: 18px 45px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 1.2rem; border: 2px solid #012970; display: inline-flex; align-items: center; gap: 10px; transition: all 0.3s;"
                    onmouseover="this.style.background='#012970'; this.style.color='white';"
@@ -800,6 +948,66 @@
       </div>
     </div>
   </div>
+
+  <!-- Trial Dropdown JavaScript -->
+  <script>
+    // Function to toggle dropdown
+    function toggleTrialDropdown(btnId, cardId) {
+      const btn = document.getElementById(btnId);
+      const card = document.getElementById(cardId);
+      const isVisible = card.style.display === 'block';
+      
+      // Close all other dropdowns first
+      closeAllTrialDropdowns();
+      
+      if (!isVisible) {
+        card.style.display = 'block';
+        btn.classList.add('active');
+      }
+    }
+    
+    // Function to close all dropdowns
+    function closeAllTrialDropdowns() {
+      const allCards = document.querySelectorAll('.trial-preview-card');
+      const allBtns = document.querySelectorAll('[id^="trialDropdownBtn"]');
+      allCards.forEach(card => card.style.display = 'none');
+      allBtns.forEach(btn => btn.classList.remove('active'));
+    }
+    
+    // Add click event listeners to all trial buttons
+    document.addEventListener('DOMContentLoaded', function() {
+      const trialButtons = [
+        { btn: 'trialDropdownBtn', card: 'trialPreviewCard' },
+        { btn: 'trialDropdownBtnHero', card: 'trialPreviewCardHero' },
+        { btn: 'trialDropdownBtnCTA', card: 'trialPreviewCardCTA' },
+        { btn: 'trialDropdownBtnService', card: 'trialPreviewCardService' }
+      ];
+      
+      trialButtons.forEach(({ btn, card }) => {
+        const button = document.getElementById(btn);
+        if (button) {
+          button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleTrialDropdown(btn, card);
+          });
+        }
+      });
+      
+      // Close dropdowns when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('.dropdown') && !e.target.closest('.trial-preview-card')) {
+          closeAllTrialDropdowns();
+        }
+      });
+      
+      // Close dropdowns when clicking on option buttons (they will navigate)
+      document.querySelectorAll('.trial-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          setTimeout(() => closeAllTrialDropdowns(), 100);
+        });
+      });
+    });
+  </script>
 
   <!-- Scroll Top -->
   <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
