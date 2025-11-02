@@ -219,13 +219,17 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
 def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Find or create guest user based on email and mobile
     guest_user_id = None
-    if booking.guest_email or booking.guest_mobile:
+    # Normalize email and mobile - convert empty strings to None
+    guest_email = booking.guest_email.strip() if booking.guest_email and isinstance(booking.guest_email, str) else None
+    guest_mobile = booking.guest_mobile.strip() if booking.guest_mobile and isinstance(booking.guest_mobile, str) else None
+    
+    if guest_email or guest_mobile:
         try:
             guest_user_id = get_or_create_guest_user(
                 db=db,
-                email=booking.guest_email,
-                mobile=booking.guest_mobile,
-                name=booking.guest_name
+                email=guest_email,
+                mobile=guest_mobile,
+                name=booking.guest_name or "Guest User"
             )
         except Exception as e:
             # Log error but don't fail the booking if user creation fails
@@ -370,13 +374,17 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     """
     # Find or create guest user based on email and mobile
     guest_user_id = None
-    if booking.guest_email or booking.guest_mobile:
+    # Normalize email and mobile - convert empty strings to None
+    guest_email = booking.guest_email.strip() if booking.guest_email and isinstance(booking.guest_email, str) else None
+    guest_mobile = booking.guest_mobile.strip() if booking.guest_mobile and isinstance(booking.guest_mobile, str) else None
+    
+    if guest_email or guest_mobile:
         try:
             guest_user_id = get_or_create_guest_user(
                 db=db,
-                email=booking.guest_email,
-                mobile=booking.guest_mobile,
-                name=booking.guest_name
+                email=guest_email,
+                mobile=guest_mobile,
+                name=booking.guest_name or "Guest User"
             )
         except Exception as e:
             # Log error but don't fail the booking if user creation fails
