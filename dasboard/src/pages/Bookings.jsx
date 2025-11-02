@@ -876,7 +876,31 @@ const Bookings = () => {
         
         return statusMatch && roomNumberMatch && dateMatch;
       })
-      .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
+      .sort((a, b) => {
+        // First, sort by status priority: booked (1), checked-in (2), checked-out (3), cancelled (4)
+        const statusPriority = {
+          'booked': 1,
+          'checked-in': 2,
+          'checked_in': 2,
+          'checked-out': 3,
+          'checked_out': 3,
+          'cancelled': 4
+        };
+        
+        const aStatus = a.status?.toLowerCase().replace(/[-_]/g, '-') || '';
+        const bStatus = b.status?.toLowerCase().replace(/[-_]/g, '-') || '';
+        
+        const aPriority = statusPriority[aStatus] || 99;
+        const bPriority = statusPriority[bStatus] || 99;
+        
+        // If statuses are different, sort by priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // If same status, sort by ID descending (latest first)
+        return b.id - a.id;
+      });
   }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
 
   const handleRoomNumberToggle = (roomNumber) => {
