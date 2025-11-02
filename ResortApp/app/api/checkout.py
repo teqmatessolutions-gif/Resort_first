@@ -345,6 +345,10 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
     """
     checkout_mode = request.checkout_mode or "multiple"
     
+    # Ensure checkout_mode is valid
+    if checkout_mode not in ["single", "multiple"]:
+        checkout_mode = "multiple"  # Default to multiple if invalid
+    
     if checkout_mode == "single":
         # Single room checkout
         bill_data = _calculate_bill_for_single_room(db, room_number)
@@ -408,12 +412,19 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             
         except Exception as e:
             db.rollback()
-            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {str(e)}")
+            error_detail = str(e)
+            # Check for unique constraint violation
+            if "unique constraint" in error_detail.lower() or "duplicate key" in error_detail.lower() or "23505" in error_detail:
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"Checkout failed: A checkout record may already exist for this booking."
+                )
+            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {error_detail}")
         
         return CheckoutSuccess(
             checkout_id=new_checkout.id,
             grand_total=new_checkout.grand_total,
-            checkout_date=new_checkout.checkout_date
+            checkout_date=new_checkout.checkout_date or new_checkout.created_at
         )
     
     else:
@@ -421,9 +432,12 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
         bill_data = _calculate_bill_for_entire_booking(db, room_number)
         
         booking = bill_data["booking"]
+        all_rooms = bill_data["all_rooms"]
+        charges = bill_data["charges"]
+        is_package = bill_data["is_package"]
+        room_ids = [room.id for room in all_rooms]
         
-        # The most reliable way to prevent duplicate checkouts is to check the booking's status directly.
-        # Handle both 'checked_out' and 'checked-out' status formats
+        # Check if booking is already checked out
         if booking.status in ["checked_out", "checked-out"]:
             raise HTTPException(status_code=409, detail=f"This booking has already been checked out.")
         
@@ -431,10 +445,23 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
         if booking.status not in ['checked-in', 'checked_in', 'booked']:
             raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
         
-        all_rooms = bill_data["all_rooms"]
-        charges = bill_data["charges"]
-        is_package = bill_data["is_package"]
-        room_ids = [room.id for room in all_rooms]
+        # Check if a checkout record already exists for this booking (unique constraint)
+        existing_checkout = None
+        if not is_package:
+            existing_checkout = db.query(Checkout).filter(Checkout.booking_id == booking.id).first()
+        else:
+            existing_checkout = db.query(Checkout).filter(Checkout.package_booking_id == booking.id).first()
+        
+        if existing_checkout:
+            raise HTTPException(status_code=409, detail=f"This booking has already been checked out. Checkout ID: {existing_checkout.id}")
+        
+        # Check if any rooms are already checked out
+        already_checked_out_rooms = [room.number for room in all_rooms if room.status == "Available"]
+        if already_checked_out_rooms:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"Some rooms in this booking are already checked out: {', '.join(already_checked_out_rooms)}. Please checkout remaining rooms individually or select rooms that are still checked in."
+            )
         
         try:
             # Calculate final bill with taxes
@@ -474,11 +501,18 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             
         except Exception as e:
             db.rollback()
-            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {str(e)}")
+            error_detail = str(e)
+            # Check for unique constraint violation (postgres error code 23505)
+            if "unique constraint" in error_detail.lower() or "duplicate key" in error_detail.lower() or "23505" in error_detail:
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"This booking has already been checked out. A checkout record already exists for this booking."
+                )
+            raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {error_detail}")
         
         # Return the data from the newly created checkout record
         return CheckoutSuccess(
             checkout_id=new_checkout.id,
             grand_total=new_checkout.grand_total,
-            checkout_date=new_checkout.checkout_date
+            checkout_date=new_checkout.checkout_date or new_checkout.created_at
         )
