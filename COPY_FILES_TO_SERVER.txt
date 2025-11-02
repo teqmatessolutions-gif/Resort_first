@@ -1,0 +1,44 @@
+══════════════════════════════════════════════════════════════
+  COPY FILES FROM LOCAL PC TO SERVER
+══════════════════════════════════════════════════════════════
+
+Since git pull says "already up to date" but your changes aren't on
+GitHub, you need to manually copy the files.
+
+══════════════════════════════════════════════════════════════
+STEP 1: Open New CMD Window on Your PC
+══════════════════════════════════════════════════════════════
+
+Keep your server terminal open, but open a NEW CMD window on your PC.
+
+══════════════════════════════════════════════════════════════
+STEP 2: Copy Files Using SCP
+══════════════════════════════════════════════════════════════
+
+Navigate to your project folder and run these commands:
+
+cd C:\Resort\Resortwithlandingpagenew\Resortwithlandingpage\Resort_first
+
+scp landingpage/index.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/service-details.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/assets/css/main.css root@139.84.211.200:/var/www/resort/Resort_first/landingpage/assets/css/
+
+scp dasboard/src/services/api.js root@139.84.211.200:/var/www/resort/Resort_first/dasboard/src/services/
+
+══════════════════════════════════════════════════════════════
+STEP 3: Rebuild Dashboard on Server
+══════════════════════════════════════════════════════════════
+
+Go back to your server terminal (CMD window) and run:
+
+cd /var/www/resort/Resort_first/dasboard && npm run build
+
+cd /var/www/resort/Resort_first && sudo systemctl restart resort.service && sudo systemctl restart nginx
+
+══════════════════════════════════════════════════════════════
+DONE! Visit https://www.teqmates.com to see changes
+══════════════════════════════════════════════════════════════
+
+

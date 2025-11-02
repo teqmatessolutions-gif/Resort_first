@@ -458,11 +458,11 @@ const Billing = () => {
         <li></li>
       </div>
 
-      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Business Dashboard & Checkout</h1>
+      <div className="p-2 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Business Dashboard & Checkout</h1>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <KpiCard title="Checkouts Today" value={kpiData.checkouts_today} icon={<Hash size={22} className="text-indigo-600"/>} color="bg-indigo-100" />
           <KpiCard title="Total Checkouts" value={kpiData.checkouts_total} icon={<Hash size={22} className="text-green-600"/>} color="bg-green-100" />
           <KpiCard title="Available Rooms" value={kpiData.available_rooms} icon={<BedDouble size={22} className="text-blue-600"/>} color="bg-blue-100" />
@@ -472,7 +472,7 @@ const Billing = () => {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
           <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Weekly Performance</h2>
             <ResponsiveContainer width="100%" height={300}>
@@ -504,8 +504,8 @@ const Billing = () => {
         </div>
 
         {/* Checkout Form */}
-        <div className="bg-white p-6 md:p-8 rounded-xl shadow-md w-full max-w-2xl mx-auto mb-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Process New Checkout</h2>
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-md w-full max-w-2xl mx-auto mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 sm:mb-6">Process New Checkout</h2>
           <div className="mb-4">
             <label htmlFor="room-select" className="block text-gray-700 font-medium mb-2">
               Select a Room or Booking to Checkout
@@ -694,41 +694,42 @@ const Billing = () => {
         </div>
 
         {/* All Checkouts Report */}
-        <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Completed Checkouts</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
+        <div className="bg-white p-3 sm:p-6 rounded-xl shadow-md w-full max-w-7xl mx-auto">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4">Completed Checkouts</h2>
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <table className="min-w-full text-xs sm:text-sm text-left">
               <thead className="bg-gray-50 border-b-2 border-gray-200 text-gray-800 uppercase tracking-wider">
                 <tr>
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Guest</th>
-                  <th className="p-3">Rooms</th>
-                  <th className="p-3">Booking/Package ID</th>
-                  <th className="p-3">Payment</th>
-                  <th className="p-3">Date</th>
-                  <th className="p-3 text-right">Grand Total</th>
+                  <th className="p-2 sm:p-3">ID</th>
+                  <th className="p-2 sm:p-3 hidden sm:table-cell">Guest</th>
+                  <th className="p-2 sm:p-3">Rooms</th>
+                  <th className="p-2 sm:p-3 hidden lg:table-cell">Booking/Package ID</th>
+                  <th className="p-2 sm:p-3 hidden md:table-cell">Payment</th>
+                  <th className="p-2 sm:p-3 hidden lg:table-cell">Date</th>
+                  <th className="p-2 sm:p-3 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {checkouts.length > 0 ? (
                   checkouts.map((c) => (
                     <tr key={c.id} className="hover:bg-indigo-50 cursor-pointer" onClick={() => setSelectedCheckout(c)}>
-                      <td className="p-3 font-medium text-gray-800">{c.id}</td>
-                      <td className="p-3 font-semibold text-gray-900">{c.guest_name}</td>
-                      <td className="p-3 text-gray-800">{c.room_number}</td>
-                      <td className="p-3 text-gray-800">{c.booking_id || c.package_booking_id || 'N/A'}</td>
-                      <td className="p-3 text-gray-800">{c.payment_method}</td>
-                      <td className="p-3 text-gray-800">{new Date(c.created_at).toLocaleDateString()}</td>
-                      <td className="p-3 font-bold text-gray-900 text-right">₹{c.grand_total.toFixed(2)}</td>
+                      <td className="p-2 sm:p-3 font-medium text-gray-800 text-xs sm:text-sm">{c.id}</td>
+                      <td className="p-2 sm:p-3 font-semibold text-gray-900 text-xs sm:text-sm hidden sm:table-cell">{c.guest_name}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm">{c.room_number}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{c.booking_id || c.package_booking_id || 'N/A'}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden md:table-cell">{c.payment_method}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{new Date(c.created_at).toLocaleDateString()}</td>
+                      <td className="p-2 sm:p-3 font-bold text-gray-900 text-right text-xs sm:text-sm">₹{c.grand_total.toFixed(2)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="p-4 text-center text-gray-500">No completed checkouts found.</td>
+                    <td colSpan="7" className="p-4 text-center text-gray-500 text-sm sm:text-base">No completed checkouts found.</td>
                   </tr>
                 )}
               </tbody>
             </table>
+          </div>
             {hasMoreCheckouts && (
               <div ref={loadMoreRef} className="text-center p-4">
                 {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}

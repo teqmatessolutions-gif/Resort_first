@@ -389,7 +389,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Main content area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-10 lg:ml-0 ml-0" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
+        <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8 z-10 lg:ml-0 ml-0" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

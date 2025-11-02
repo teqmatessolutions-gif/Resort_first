@@ -1389,13 +1389,13 @@ const Bookings = () => {
         </div>
 
         {/* Bookings Table */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg overflow-x-auto">
-          <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-700">All Bookings</h2>
-            <div className="flex flex-wrap gap-3 items-center">
+        <div className="bg-white p-3 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg overflow-x-auto -mx-2 sm:mx-0">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-between items-start sm:items-center mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-700 w-full sm:w-auto">All Bookings</h2>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
               <select // Status Filter
                 value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
+                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
               >
                 <option value="All">All Statuses</option>
                 <option value="booked">Booked</option>
@@ -1405,7 +1405,7 @@ const Bookings = () => {
               </select>
               <select // Room Number Filter
                 value={roomNumberFilter} onChange={(e) => setRoomNumberFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
+                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
               >
                 {allRoomNumbers.map(roomNumber => (
                   <option key={roomNumber} value={roomNumber}>{roomNumber === "All" ? "All Rooms" : `Room ${roomNumber}`}</option>
@@ -1413,27 +1413,28 @@ const Bookings = () => {
               </select>
               <input // From Date
                 type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
+                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
               />
               <input // To Date
                 type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
+                className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto"
               />
             </div>
           </div>
 
-          <table className="min-w-full text-sm border-collapse rounded-xl">
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <table className="min-w-full text-xs sm:text-sm border-collapse rounded-xl">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">ID</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guest</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Booking Type</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Rooms</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-in</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-out</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guests</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Status</th>
-                <th className="p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-800">Actions</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">ID</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guest</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden md:table-cell">Type</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Rooms</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden lg:table-cell">Check-in</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden lg:table-cell">Check-out</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden sm:table-cell">Guests</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Status</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1446,14 +1447,14 @@ const Bookings = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <td className="p-4">
-                      <div className="font-mono text-sm">{generateBookingId(b)}</div>
-                      <div className="text-xs text-gray-500">ID: {b.id}</div>
+                    <td className="p-2 sm:p-4">
+                      <div className="font-mono text-xs sm:text-sm">{generateBookingId(b)}</div>
+                      <div className="text-xs text-gray-500 hidden sm:block">ID: {b.id}</div>
                     </td>
-                    <td className="p-4 font-medium text-gray-900">
+                    <td className="p-2 sm:p-4 font-medium text-gray-900 text-xs sm:text-sm">
                       {b.guest_name}
                     </td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4 hidden md:table-cell">
                       {b.is_package ? (
                         <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                           {b.package?.title || 'Package'}
@@ -1462,83 +1463,87 @@ const Bookings = () => {
                         <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">Room</span>
                       )}
                     </td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4 text-xs sm:text-sm">
                       {b.rooms && b.rooms.length > 0 ? (
                         b.rooms.map(room => {
                           // Handle package bookings (nested room structure) vs regular bookings
                           if (b.is_package) {
                             // Package bookings: room has nested room object
-                            return room.room ? `${room.room.number} (${room.room.type})` : '-';
+                            return room.room ? `${room.room.number}${room.room.type ? ` (${room.room.type})` : ''}` : '-';
                           } else {
                             // Regular bookings: room has number and type directly
-                            return `${room.number} (${room.type})`;
+                            return `${room.number}${room.type ? ` (${room.type})` : ''}`;
                           }
                         }).filter(Boolean).join(", ") || '-'
                       ) : "-"}
                     </td>
-                    <td className="p-4 text-gray-800">{b.check_in}</td>
-                    <td className="p-4 text-gray-800">{b.check_out}</td>
-                    <td className="p-4 text-gray-800">{b.adults} A, {b.children} C</td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden lg:table-cell">{b.check_in}</td>
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden lg:table-cell">{b.check_out}</td>
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden sm:table-cell">{b.adults} A, {b.children} C</td>
+                    <td className="p-2 sm:p-4">
                       <BookingStatusBadge status={b.status || "Pending"} />
                     </td>
-                    <td className="p-4 text-center space-x-2">
-                      <button
-                        onClick={() => viewDetails(b.id, b.is_package)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => setBookingToCheckIn(b)}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
-                      >
-                        Check-in
-                      </button>
-                      <button
-                        onClick={() => setBookingToExtend(b)}
-                        className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
-                      >
-                        Extend
-                      </button>
-                      <button
-                        onClick={() => cancelBooking(b.id, b.is_package)}
-                        className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
-                      >
-                        Cancel
-                      </button>
-                      {b.guest_email && (
+                    <td className="p-2 sm:p-4 text-center">
+                      <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
                         <button
-                          onClick={() => shareViaEmail(b)}
-                          className="bg-purple-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-purple-700 transition-colors"
-                          title={`Share Booking ID: ${generateBookingId(b)} via Email`}
+                          onClick={() => viewDetails(b.id, b.is_package)}
+                          className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-700 transition-colors"
                         >
-                          📧 Email
+                          View
                         </button>
-                      )}
-                      {b.guest_mobile && (
                         <button
-                          onClick={() => shareViaWhatsApp(b)}
-                          className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors"
-                          title={`Share Booking ID: ${generateBookingId(b)} via WhatsApp`}
+                          onClick={() => setBookingToCheckIn(b)}
+                          className="bg-yellow-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                         >
-                          💬 WhatsApp
+                          Check-in
                         </button>
-                      )}
+                        <button
+                          onClick={() => setBookingToExtend(b)}
+                          className="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
+                        >
+                          Extend
+                        </button>
+                        <button
+                          onClick={() => cancelBooking(b.id, b.is_package)}
+                          className="bg-red-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
+                        >
+                          Cancel
+                        </button>
+                        {b.guest_email && (
+                          <button
+                            onClick={() => shareViaEmail(b)}
+                            className="bg-purple-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-purple-700 transition-colors"
+                            title={`Share Booking ID: ${generateBookingId(b)} via Email`}
+                          >
+                            📧
+                          </button>
+                        )}
+                        {b.guest_mobile && (
+                          <button
+                            onClick={() => shareViaWhatsApp(b)}
+                            className="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors"
+                            title={`Share Booking ID: ${generateBookingId(b)} via WhatsApp`}
+                          >
+                            💬
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center py-6 text-gray-500 italic">
+                  <td colSpan="9" className="text-center py-6 text-gray-500 italic text-sm sm:text-base">
                     No bookings found.
                   </td>
                 </tr>
               )}
             </tbody>
+            </table>
+          </div>
             {filteredBookings.length > 0 && hasMoreBookings && (
               <div ref={loadMoreRef} className="text-center p-4">
                 {isSubmitting && <span className="text-indigo-600">Loading more bookings...</span>}

@@ -436,26 +436,26 @@ const Dashboard = () => {
         </section>
 
         {/* Tables */}
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <Card title="Latest Bookings">
-            <div className="overflow-x-auto w-full">
-              <table className="min-w-full text-sm">
+            <div className="overflow-x-auto w-full -mx-2 sm:mx-0">
+              <table className="min-w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-700">
                     <Th>Guest</Th>
-                    <Th>Room</Th>
-                    <Th>Check-in</Th>
-                    <Th>Check-out</Th>
+                    <Th className="hidden sm:table-cell">Room</Th>
+                    <Th className="hidden lg:table-cell">Check-in</Th>
+                    <Th className="hidden lg:table-cell">Check-out</Th>
                     <Th>Status</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {latestBookings.map((b) => (
                     <tr key={b.id} className="border-t hover:bg-gray-50">
-                      <Td>{b.guest_name || b.guest || "-"}</Td>
-                      <Td>{b.room?.number ? `#${b.room.number} (${b.room?.type || "-"})` : (b.room_number || "-")}</Td>
-                      <Td>{b.check_in}</Td>
-                      <Td>{b.check_out}</Td>
+                      <Td className="text-xs sm:text-sm">{b.guest_name || b.guest || "-"}</Td>
+                      <Td className="text-xs sm:text-sm hidden sm:table-cell">{b.room?.number ? `#${b.room.number}${b.room?.type ? ` (${b.room.type})` : ''}` : (b.room_number || "-")}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{b.check_in}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{b.check_out}</Td>
                       <Td>
                         <span className={`px-2 py-1 text-xs rounded font-semibold ${
                           String(b.status || "").toLowerCase().includes("cancel")
@@ -473,24 +473,24 @@ const Dashboard = () => {
           </Card>
 
           <Card title="Recent Payments (Billing)">
-            <div className="overflow-x-auto w-full">
-              <table className="min-w-full text-sm">
+            <div className="overflow-x-auto w-full -mx-2 sm:mx-0">
+              <table className="min-w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-700">
                     <Th>Guest</Th>
-                    <Th>Room</Th>
-                    <Th>Method</Th>
+                    <Th className="hidden sm:table-cell">Room</Th>
+                    <Th className="hidden md:table-cell">Method</Th>
                     <Th>Status</Th>
-                    <Th className="text-right">Grand Total</Th>
-                    <Th>Created</Th>
+                    <Th className="text-right">Total</Th>
+                    <Th className="hidden lg:table-cell">Created</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {latestBillings.map((c) => (
                     <tr key={c.id} className="border-t hover:bg-gray-50">
-                      <Td>{c.guest_name || "-"}</Td>
-                      <Td>{c.room_number || "-"}</Td>
-                      <Td className="capitalize">{String(c.payment_method || "").replace("_", " ")}</Td>
+                      <Td className="text-xs sm:text-sm">{c.guest_name || "-"}</Td>
+                      <Td className="text-xs sm:text-sm hidden sm:table-cell">{c.room_number || "-"}</Td>
+                      <Td className="text-xs sm:text-sm capitalize hidden md:table-cell">{String(c.payment_method || "").replace("_", " ")}</Td>
                       <Td className="uppercase">
                         <span className={`px-2 py-1 text-xs rounded font-semibold ${
                           String(c.payment_status || "").toLowerCase() === "paid"
@@ -502,8 +502,8 @@ const Dashboard = () => {
                           {c.payment_status}
                         </span>
                       </Td>
-                      <Td className="text-right font-medium">{fmtCurrency(c.grand_total)}</Td>
-                      <Td>{safeDate(c.created_at)?.toLocaleString() || "-"}</Td>
+                      <Td className="text-right font-medium text-xs sm:text-sm">{fmtCurrency(c.grand_total)}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{safeDate(c.created_at)?.toLocaleDateString() || "-"}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -625,10 +625,10 @@ const Card = ({ title, children }) => (
 );
 
 const Th = ({ children, className = "" }) => (
-  <th className={`px-3 py-2 text-left font-semibold ${className}`}>{children}</th>
+  <th className={`px-2 sm:px-3 py-2 text-left text-xs sm:text-sm font-semibold ${className}`}>{children}</th>
 );
 const Td = ({ children, className = "" }) => (
-  <td className={`px-3 py-2 ${className}`}>{children}</td>
+  <td className={`px-2 sm:px-3 py-2 text-xs sm:text-sm ${className}`}>{children}</td>
 );
 
 export default Dashboard;
