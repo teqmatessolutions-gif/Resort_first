@@ -31,7 +31,7 @@ def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100,
         # Get regular bookings with room details, ordered by latest first
         query = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         )
         
         # Apply ordering
@@ -110,7 +110,7 @@ def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends
     else: # Regular booking
         booking = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         ).filter(Booking.id == booking_id).first()
 
         if not booking:
@@ -217,6 +217,38 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         rooms=[br.room for br in booking_with_rooms.booking_rooms if br.room]
     )
     
+    # Send confirmation email if email address is provided
+    if booking.guest_email:
+        try:
+            from app.utils.email import send_email, create_booking_confirmation_email
+            
+            rooms_data = [
+                {
+                    'number': br.room.number if br.room else 'N/A',
+                    'type': br.room.type if br.room else 'N/A'
+                }
+                for br in booking_with_rooms.booking_rooms if br.room
+            ]
+            
+            email_html = create_booking_confirmation_email(
+                guest_name=guest_name_to_use,
+                booking_id=booking_with_rooms.id,
+                booking_type='room',
+                check_in=str(booking.check_in),
+                check_out=str(booking.check_out),
+                rooms=rooms_data
+            )
+            
+            send_email(
+                to_email=booking.guest_email,
+                subject=f"Booking Confirmation #{booking_with_rooms.id} - Elysian Retreat",
+                html_content=email_html,
+                to_name=guest_name_to_use
+            )
+        except Exception as e:
+            # Log error but don't fail the booking
+            print(f"Failed to send confirmation email: {str(e)}")
+    
     return booking_out
 
 @router.post("/guest", response_model=BookingOut, summary="Create a booking as a guest")
@@ -285,6 +317,47 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
         db.add(BookingRoom(booking_id=db_booking.id, room_id=room_id))
     db.commit()
     db.refresh(db_booking)
+    
+    # Reload with room details for email
+    booking_with_rooms = (
+        db.query(Booking)
+        .options(joinedload(Booking.booking_rooms).joinedload(BookingRoom.room))
+        .filter(Booking.id == db_booking.id)
+        .first()
+    )
+    
+    # Send confirmation email if email address is provided
+    if booking.guest_email:
+        try:
+            from app.utils.email import send_email, create_booking_confirmation_email
+            
+            rooms_data = [
+                {
+                    'number': br.room.number if br.room else 'N/A',
+                    'type': br.room.type if br.room else 'N/A'
+                }
+                for br in booking_with_rooms.booking_rooms if br.room
+            ]
+            
+            email_html = create_booking_confirmation_email(
+                guest_name=guest_name_to_use,
+                booking_id=db_booking.id,
+                booking_type='room',
+                check_in=str(booking.check_in),
+                check_out=str(booking.check_out),
+                rooms=rooms_data
+            )
+            
+            send_email(
+                to_email=booking.guest_email,
+                subject=f"Booking Confirmation #{db_booking.id} - Elysian Retreat",
+                html_content=email_html,
+                to_name=guest_name_to_use
+            )
+        except Exception as e:
+            # Log error but don't fail the booking
+            print(f"Failed to send confirmation email: {str(e)}")
+    
     return db_booking
 
 # -------------------------------

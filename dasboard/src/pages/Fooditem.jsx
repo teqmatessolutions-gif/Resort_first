@@ -2,6 +2,17 @@ import React, { useEffect, useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import API from "../services/api";
 
+// Helper function to construct image URLs
+const getImageUrl = (imagePath) => {
+  if (!imagePath) return 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image';
+  if (imagePath.startsWith('http')) return imagePath;
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://www.teqmates.com' 
+    : 'http://localhost:8000';
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${baseUrl}${path}`;
+};
+
 const bgColors = [
   "bg-red-50",
   "bg-green-50",
@@ -72,7 +83,7 @@ const FoodItems = () => {
     setPrice(item.price);
     setSelectedCategory(item.category_id);
     setAvailable(item.available);
-    setImagePreviews(item.images?.map((img) => `http://localhost:8000/${img.image_url}`) || []);
+    setImagePreviews(item.images?.map((img) => getImageUrl(img.image_url)) || []);
     setImages([]);
   };
 
@@ -250,7 +261,7 @@ const FoodItems = () => {
                   {item.images?.map((img, idx) => (
                     <img
                       key={idx}
-                      src={`http://localhost:8000/${img.image_url}`}
+                      src={getImageUrl(img.image_url)}
                       alt={`Food ${idx}`}
                       className="w-[60px] h-[60px] object-cover border rounded-xl shadow-sm hover:scale-110 transition"
                     />

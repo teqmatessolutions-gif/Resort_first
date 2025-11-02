@@ -117,7 +117,7 @@ const UserHistory = () => {
               >
                 <option value="">-- Select a User --</option>
                 {users.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={user.user_id || user.id}>
                     {user.name} ({user.role})
                   </option>
                 ))}

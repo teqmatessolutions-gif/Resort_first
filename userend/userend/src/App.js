@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 // Lucide React is used for elegant icons
-import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
+import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, ChevronDown, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
 
 // Custom hook to detect if an element is in the viewport
 const useOnScreen = (ref, rootMargin = "0px") => {
@@ -31,14 +31,18 @@ const themes = {
         id: 'dark',
         name: 'Dark',
         icon: <Moon className="w-5 h-5" />,
-        bgPrimary: "bg-neutral-950",
-        bgSecondary: "bg-neutral-900",
-        bgCard: "bg-neutral-900",
+        bgPrimary: "bg-black",
+        bgSecondary: "bg-neutral-950",
+        bgCard: "bg-white",
         textPrimary: "text-white",
         textSecondary: "text-neutral-400",
+        textCardPrimary: "text-neutral-900",
+        textCardSecondary: "text-neutral-600",
         textAccent: "text-amber-400",
+        textCardAccent: "text-amber-600",
         textTitleGradient: "from-gray-200 via-white to-gray-400",
         border: "border-neutral-700",
+        cardBorder: "border-neutral-200",
         borderHover: "hover:border-amber-500/50",
         buttonBg: "bg-amber-500",
         buttonText: "text-neutral-950",
@@ -65,13 +69,17 @@ const themes = {
         bgCard: "bg-white",
         textPrimary: "text-neutral-900",
         textSecondary: "text-neutral-600",
-        textAccent: "text-purple-600",
-        textTitleGradient: "from-neutral-700 via-neutral-900 to-black",
+        textCardPrimary: "text-neutral-900",
+        textCardSecondary: "text-neutral-600",
+        textAccent: "text-amber-600",
+        textCardAccent: "text-amber-600",
+        cardBorder: "border-neutral-300",
+        textTitleGradient: "from-amber-600 via-amber-700 to-neutral-900",
         border: "border-neutral-300",
-        borderHover: "hover:border-purple-600/50",
-        buttonBg: "bg-purple-600",
+        borderHover: "hover:border-amber-500/50",
+        buttonBg: "bg-gradient-to-r from-amber-500 to-amber-600",
         buttonText: "text-white",
-        buttonHover: "hover:bg-purple-500",
+        buttonHover: "hover:from-amber-400 hover:to-amber-500",
         placeholderBg: "bg-neutral-100",
         placeholderText: "text-neutral-500",
         chatBg: "bg-white",
@@ -79,7 +87,7 @@ const themes = {
         chatInputBorder: "border-neutral-200",
         chatInputBg: "bg-neutral-100",
         chatInputPlaceholder: "placeholder-neutral-500",
-        chatUserBg: "bg-purple-600",
+        chatUserBg: "bg-gradient-to-r from-amber-500 to-amber-600",
         chatUserText: "text-white",
         chatModelBg: "bg-neutral-100",
         chatModelText: "text-neutral-900",
@@ -89,88 +97,88 @@ const themes = {
         id: 'ocean',
         name: 'Ocean',
         icon: <Droplet className="w-5 h-5" />,
-        bgPrimary: "bg-blue-950",
-        bgSecondary: "bg-blue-900",
-        bgCard: "bg-blue-900",
-        textPrimary: "text-blue-100",
-        textSecondary: "text-blue-300",
-        textAccent: "text-cyan-400",
-        textTitleGradient: "from-blue-200 via-cyan-300 to-teal-400",
-        border: "border-blue-700",
-        borderHover: "hover:border-cyan-400/50",
-        buttonBg: "bg-cyan-500",
-        buttonText: "text-blue-950",
-        buttonHover: "hover:bg-cyan-400",
-        placeholderBg: "bg-blue-800",
-        placeholderText: "text-blue-400",
-        chatBg: "bg-blue-900",
-        chatHeaderBg: "bg-blue-800",
-        chatInputBorder: "border-blue-700",
-        chatInputBg: "bg-blue-700",
-        chatInputPlaceholder: "placeholder-blue-400",
-        chatUserBg: "bg-cyan-500",
-        chatUserText: "text-blue-950",
-        chatModelBg: "bg-blue-800",
-        chatModelText: "text-blue-100",
-        chatLoaderBg: "bg-blue-400",
+        bgPrimary: "bg-slate-50",
+        bgSecondary: "bg-slate-100",
+        bgCard: "bg-neutral-50",
+        textPrimary: "text-slate-900",
+        textSecondary: "text-slate-600",
+        textAccent: "text-teal-600",
+        textTitleGradient: "from-teal-700 via-cyan-700 to-blue-800",
+        border: "border-slate-300",
+        borderHover: "hover:border-teal-500/50",
+        buttonBg: "bg-gradient-to-r from-teal-500 to-cyan-600",
+        buttonText: "text-white",
+        buttonHover: "hover:from-teal-400 hover:to-cyan-500",
+        placeholderBg: "bg-slate-100",
+        placeholderText: "text-slate-500",
+        chatBg: "bg-white",
+        chatHeaderBg: "bg-slate-100",
+        chatInputBorder: "border-slate-200",
+        chatInputBg: "bg-slate-100",
+        chatInputPlaceholder: "placeholder-slate-500",
+        chatUserBg: "bg-gradient-to-r from-teal-500 to-cyan-600",
+        chatUserText: "text-white",
+        chatModelBg: "bg-slate-100",
+        chatModelText: "text-slate-900",
+        chatLoaderBg: "bg-slate-600",
     },
     forest: {
         id: 'forest',
         name: 'Forest',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-tree-pine"><path d="M17 19h2c.5 0 1-.5 1-1V9c0-2-3-3-3-3H8c-3 0-4 1.5-4 4.5v3.5c0 1.5 1 2 2 2h2"/><path d="M14 15v.5"/><path d="M13 14v.5"/><path d="M12 13v.5"/><path d="M11 12v.5"/><path d="M10 11v.5"/><path d="M9 10v.5"/><path d="M8 9v.5"/><path d="M17 14v.5"/><path d="M16 13v.5"/><path d="M15 12v.5"/><path d="M14 11v.5"/><path d="M13 10v.5"/><path d="M12 9v.5"/><path d="M11 8v.5"/><path d="M10 7v.5"/><path d="M9 6v.5"/><path d="M15 18v1"/><path d="M14 17v1"/><path d="M13 16v1"/><path d="M12 15v1"/><path d="M11 14v1"/><path d="M10 13v1"/><path d="M9 12v1"/><path d="M8 11v1"/><path d="M7 10v1"/><path d="M6 9v1"/><path d="M18 17v1"/><path d="M17 16v1"/><path d="M16 15v1"/><path d="M15 14v1"/><path d="M14 13v1"/><path d="M13 12v1"/><path d="M12 11v1"/><path d="M11 10v1"/><path d="M10 9v1"/><path d="M19 18v1"/><path d="M18 17v1"/><path d="M17 16v1"/><path d="M16 15v1"/><path d="M15 14v1"/><path d="M14 13v1"/><path d="M13 12v1"/><path d="M22 19v2"/><path d="M20 18v1"/><path d="M18 17v1"/><path d="M16 16v1"/><path d="M14 15v1"/><path d="M12 14v1"/><path d="M10 13v1"/><path d="M8 12v1"/><path d="M6 11v1"/><path d="M4 10v1"/><path d="M2 9v1"/><path d="M2 21h20"/><path d="m14 12-2-4-2 4"/><path d="m13 8-1-4-1 4"/><path d="M14 12c.5-1 1.5-2 2.5-3"/><path d="M10 12c-.5-1-1.5-2-2.5-3"/><path d="M12 22v-8"/><path d="m10 16-2 3"/><path d="m14 16 2 3"/></svg>,
-        bgPrimary: "bg-emerald-950",
-        bgSecondary: "bg-emerald-900",
-        bgCard: "bg-emerald-900",
-        textPrimary: "text-emerald-100",
-        textSecondary: "text-emerald-300",
-        textAccent: "text-lime-400",
-        textTitleGradient: "from-emerald-200 via-lime-300 to-green-400",
-        border: "border-emerald-700",
-        borderHover: "hover:border-lime-400/50",
-        buttonBg: "bg-lime-500",
-        buttonText: "text-emerald-950",
-        buttonHover: "hover:bg-lime-400",
-        placeholderBg: "bg-emerald-800",
-        placeholderText: "text-emerald-400",
-        chatBg: "bg-emerald-900",
-        chatHeaderBg: "bg-emerald-800",
-        chatInputBorder: "border-emerald-700",
-        chatInputBg: "bg-emerald-700",
-        chatInputPlaceholder: "placeholder-emerald-400",
-        chatUserBg: "bg-lime-500",
-        chatUserText: "text-emerald-950",
-        chatModelBg: "bg-emerald-800",
-        chatModelText: "text-emerald-100",
-        chatLoaderBg: "bg-emerald-400",
+        bgPrimary: "bg-green-50",
+        bgSecondary: "bg-green-100",
+        bgCard: "bg-neutral-50",
+        textPrimary: "text-green-900",
+        textSecondary: "text-green-600",
+        textAccent: "text-emerald-600",
+        textTitleGradient: "from-emerald-700 via-green-700 to-teal-800",
+        border: "border-green-300",
+        borderHover: "hover:border-emerald-500/50",
+        buttonBg: "bg-gradient-to-r from-emerald-500 to-green-600",
+        buttonText: "text-white",
+        buttonHover: "hover:from-emerald-400 hover:to-green-500",
+        placeholderBg: "bg-green-100",
+        placeholderText: "text-green-500",
+        chatBg: "bg-white",
+        chatHeaderBg: "bg-green-100",
+        chatInputBorder: "border-green-200",
+        chatInputBg: "bg-green-100",
+        chatInputPlaceholder: "placeholder-green-500",
+        chatUserBg: "bg-gradient-to-r from-emerald-500 to-green-600",
+        chatUserText: "text-white",
+        chatModelBg: "bg-green-100",
+        chatModelText: "text-green-900",
+        chatLoaderBg: "bg-green-600",
     },
     rose: {
         id: 'rose',
         name: 'Rose',
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flower"><path d="M12 7.5a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1-4.5-4.5H12a4.5 4.5 0 1 1 4.5 4.5H12z"/><path d="M12 12a4.5 4.5 0 1 1 4.5 4.5H12a4.5 4.5 0 1 1-4.5-4.5H12z"/><path d="M7.5 12H12a4.5 4.5 0 0 0 4.5-4.5v-3a4.5 4.5 0 1 1 0 9v3a4.5 4.5 0 1 1 0-9h-4.5a4.5 4.5 0 0 0-4.5 4.5V12z"/></svg>,
-        bgPrimary: "bg-rose-50",
-        bgSecondary: "bg-rose-200",
-        bgCard: "bg-white",
-        textPrimary: "text-rose-900",
-        textSecondary: "text-rose-600",
-        textAccent: "text-fuchsia-600",
-        textTitleGradient: "from-rose-700 via-rose-900 to-fuchsia-900",
-        border: "border-rose-300",
-        borderHover: "hover:border-fuchsia-600/50",
-        buttonBg: "bg-fuchsia-600",
+        bgPrimary: "bg-pink-50",
+        bgSecondary: "bg-pink-100",
+        bgCard: "bg-neutral-50",
+        textPrimary: "text-pink-900",
+        textSecondary: "text-pink-600",
+        textAccent: "text-rose-600",
+        textTitleGradient: "from-rose-700 via-pink-700 to-fuchsia-800",
+        border: "border-pink-300",
+        borderHover: "hover:border-rose-500/50",
+        buttonBg: "bg-gradient-to-r from-rose-500 to-pink-600",
         buttonText: "text-white",
-        buttonHover: "hover:bg-fuchsia-500",
-        placeholderBg: "bg-rose-100",
-        placeholderText: "text-rose-500",
+        buttonHover: "hover:from-rose-400 hover:to-pink-500",
+        placeholderBg: "bg-pink-100",
+        placeholderText: "text-pink-500",
         chatBg: "bg-white",
-        chatHeaderBg: "bg-rose-100",
-        chatInputBorder: "border-rose-200",
-        chatInputBg: "bg-rose-100",
-        chatInputPlaceholder: "placeholder-rose-500",
-        chatUserBg: "bg-fuchsia-600",
+        chatHeaderBg: "bg-pink-100",
+        chatInputBorder: "border-pink-200",
+        chatInputBg: "bg-pink-100",
+        chatInputPlaceholder: "placeholder-pink-500",
+        chatUserBg: "bg-gradient-to-r from-rose-500 to-pink-600",
         chatUserText: "text-white",
-        chatModelBg: "bg-rose-100",
-        chatModelText: "text-rose-900",
-        chatLoaderBg: "bg-rose-600",
+        chatModelBg: "bg-pink-100",
+        chatModelText: "text-pink-900",
+        chatLoaderBg: "bg-pink-600",
     },
     slate: {
         id: 'slate',
@@ -178,7 +186,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/></svg>,
         bgPrimary: "bg-gray-950",
         bgSecondary: "bg-gray-900",
-        bgCard: "bg-gray-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-gray-100",
         textSecondary: "text-gray-400",
         textAccent: "text-sky-400",
@@ -207,7 +215,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sunrise"><path d="M12 2v2"/><path d="m5 10 1-1"/><path d="m19 10 1-1"/><path d="M12 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-orange-50",
         bgSecondary: "bg-yellow-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-orange-900",
         textSecondary: "text-orange-600",
         textAccent: "text-red-500",
@@ -236,7 +244,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-lavender"><path d="M14.5 16.5c-2.4-1-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5C3.3 6.7 4 6 5 6c1.1 0 2.4.8 3.5 2.5 1.2 1.9 2 4.2 2.5 5.5.5 1.5 1 3.6 2 4.5 1 .8 2.2 1.3 3.5 1C17.3 17.3 18 16.6 18 15.6c0-1.1-.8-2.4-2.5-3.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5.3-1.3 1-2 2-2 1.1 0 2.4.8 3.5 2.5 1.9 1.2 4.2 2 5.5 2.5 1.5.5 3.6 1 4.5 2 .8 1 1.3 2.2 1 3.5-.3 1.3-1 2-2 2-1.1 0-2.4-.8-3.5-2.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4-.8-3.5-2.5"/><path d="M12 12c-2.4-1-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5.3-1.3 1-2 2-2 1.1 0 2.4.8 3.5 2.5 1.9 1.2 4.2 2 5.5 2.5 1.5.5 3.6 1 4.5 2 .8 1 1.3 2.2 1 3.5-.3 1.3-1 2-2 2-1.1 0-2.4-.8-3.5-2.5"/><path d="M12 12c2.4-1 4.2-2 5.5-2.5 1.5-.5 3.6-1 4.5-2 .8-1 1.3 2.2 1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4.8-3.5 2.5-1.9-1.2-4.2-2-5.5-2.5-1.5-.5-3.6-1-4.5-2-.8-1-1.3-2.2-1-3.5-.3-1.3-1-2-2-2-1.1 0-2.4-.8-3.5-2.5"/></svg>,
         bgPrimary: "bg-indigo-950",
         bgSecondary: "bg-indigo-900",
-        bgCard: "bg-indigo-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-indigo-100",
         textSecondary: "text-indigo-300",
         textAccent: "text-violet-400",
@@ -265,7 +273,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-sunrise"><path d="M12 2v2"/><path d="m5 10 1-1"/><path d="m19 10 1-1"/><path d="M12 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-stone-100",
         bgSecondary: "bg-stone-200",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-stone-900",
         textSecondary: "text-stone-600",
         textAccent: "text-orange-700",
@@ -294,7 +302,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-grape"><path d="M22 6c0 4-4 8-10 8S2 10 2 6"/><path d="M12 14c-6 0-10 4-10 8s4 8 10 8"/><path d="M22 14c-6 0-10 4-10 8s4 8 10 8"/></svg>,
         bgPrimary: "bg-purple-950",
         bgSecondary: "bg-purple-900",
-        bgCard: "bg-purple-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-purple-100",
         textSecondary: "text-purple-300",
         textAccent: "text-pink-400",
@@ -323,7 +331,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-sun"><path d="M12 2v2"/><path d="m4.9 10 1-1"/><path d="m19.1 10-1-1"/><path d="M14 16a6 6 0 0 0 0 12"/><path d="m3 16 1-1"/><path d="m21 16-1-1"/><path d="m8 20 2-2"/><path d="m16 20-2-2"/></svg>,
         bgPrimary: "bg-sky-50",
         bgSecondary: "bg-sky-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-sky-900",
         textSecondary: "text-sky-600",
         textAccent: "text-blue-500",
@@ -352,7 +360,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-flame"><path d="M18 10c-1.2-1.2-3-2-5-2-1.2 0-2.8.8-4 2-1.2 1.2-2 3-2 5-2.2 2.2-2.5 4.5-2.5 5.5s.8 1.5 1.5 1.5c.7 0 1.5-.8 1.5-1.5s.3-3.3 2.5-5.5c1.2-1.2 3-2 5-2 1.2 0 2.8.8 4 2 1.2 1.2 2 3 2 5 2.2 2.2 2.5 4.5 2.5 5.5s-.8 1.5-1.5 1.5c-.7 0-1.5-.8-1.5-1.5s-.3-3.3-2.5-5.5z"/></svg>,
         bgPrimary: "bg-red-950",
         bgSecondary: "bg-red-900",
-        bgCard: "bg-red-900",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-red-100",
         textSecondary: "text-red-300",
         textAccent: "text-orange-400",
@@ -381,7 +389,7 @@ const themes = {
         icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-leaf"><path d="M2 13c3.5-3.5 12-5 18 0 0 0-4 4-8 8s-8-4-10-6z"/></svg>,
         bgPrimary: "bg-teal-50",
         bgSecondary: "bg-teal-100",
-        bgCard: "bg-white",
+        bgCard: "bg-neutral-50",
         textPrimary: "text-teal-900",
         textSecondary: "text-teal-600",
         textAccent: "text-emerald-600",
@@ -479,6 +487,153 @@ const BackgroundAnimation = ({ theme }) => {
     return (
         <>
             <style>{`
+                /* Mountain Shadows Luxury Typography & Colors */
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+                
+                :root {
+                    --font-display: 'Playfair Display', serif;
+                    --font-body: 'Inter', sans-serif;
+                    --color-amber-primary: #f59e0b;
+                    --color-amber-gold: #d97706;
+                    --color-neutral-900: #171717;
+                    --color-neutral-50: #fafafa;
+                }
+                
+                * {
+                    max-width: 100%;
+                }
+                
+                body {
+                    font-family: var(--font-body);
+                    font-weight: 400;
+                    letter-spacing: 0.01em;
+                    overflow-x: hidden;
+                }
+                
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: var(--font-display);
+                    font-weight: 700;
+                    letter-spacing: -0.02em;
+                    max-width: 100%;
+                    word-wrap: break-word;
+                }
+                
+                section {
+                    width: 100%;
+                    overflow-x: hidden;
+                }
+                
+                img {
+                    max-width: 100%;
+                    height: auto;
+                }
+                
+                .container-custom {
+                    max-width: 95%;
+                    margin-left: auto;
+                    margin-right: auto;
+                    padding-left: 1rem;
+                    padding-right: 1rem;
+                }
+                
+                @media (min-width: 640px) {
+                    .container-custom {
+                        max-width: 98%;
+                        padding-left: 1.5rem;
+                        padding-right: 1.5rem;
+                    }
+                }
+                
+                @media (min-width: 1024px) {
+                    .container-custom {
+                        max-width: 1400px;
+                    }
+                }
+                
+                /* Luxury Mountain Shadows Premium Styling */
+                .luxury-card {
+                    border-radius: 1rem;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                
+                .luxury-card:hover {
+                    box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2), 0 10px 10px -5px rgba(245, 158, 11, 0.1);
+                    transform: translateY(-4px) scale(1.01);
+                }
+                
+                .premium-gradient {
+                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+                }
+                
+                .premium-text-gradient {
+                    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                
+                .luxury-overlay {
+                    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.8) 100%);
+                }
+                
+                .section-badge {
+                    display: inline-block;
+                    padding: 0.5rem 1.5rem;
+                    background: rgba(245, 158, 11, 0.1);
+                    color: #d97706;
+                    font-weight: 600;
+                    letter-spacing: 0.1em;
+                    border-radius: 9999px;
+                    border: 1px solid rgba(245, 158, 11, 0.2);
+                    backdrop-filter: blur(10px);
+                }
+                
+                .luxury-shadow {
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(245, 158, 11, 0.05);
+                }
+                
+                .card-image {
+                    max-height: 200px;
+                    object-fit: cover;
+                    filter: brightness(1) saturate(1.1);
+                    transition: all 0.5s ease;
+                }
+                
+                .luxury-card:hover .card-image {
+                    filter: brightness(1.05) saturate(1.2);
+                }
+                
+                .card-title {
+                    font-size: 1.125rem;
+                    margin-bottom: 0.5rem;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                }
+                
+                .card-description {
+                    font-size: 0.875rem;
+                    line-height: 1.5;
+                    color: #6b7280;
+                }
+                
+                @keyframes slow-pan { 
+                    0% { transform: translate(0, 0) scale(1); }
+                    50% { transform: translate(-3%, 3%) scale(1.05); }
+                    100% { transform: translate(0, 0) scale(1); }
+                }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes gentle-glow {
+                    0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
+                    50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
+                }
+                @keyframes gentle-pulse {
+                    0%, 100% { box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3); }
+                    50% { box-shadow: 0 15px 60px rgba(245, 158, 11, 0.6); }
+                }
                 @keyframes bubble-up { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(20px, -25vh) rotate(45deg); } 50% { transform: translate(-20px, -50vh) rotate(90deg); } 75% { transform: translate(20px, -75vh) rotate(135deg); } 100% { transform: translate(0, -110vh) rotate(180deg); } }
                 @keyframes bubble-down { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-20px, 25vh) rotate(-45deg); } 50% { transform: translate(20px, 50vh) rotate(-90deg); } 75% { transform: translate(-20px, 75vh) rotate(-135deg); } 100% { transform: translate(0, 110vh) rotate(-180deg); } }
                 @keyframes bubble-left { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-25vw, 20px) rotate(45deg); } 50% { transform: translate(-50vw, -20px) rotate(90deg); } 75% { transform: translate(-75vw, 20px) rotate(135deg); } 100% { transform: translate(-110vw, 0) rotate(180deg); } }
@@ -518,7 +673,11 @@ export default function App() {
     const [galleryImages, setGalleryImages] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [bannerData, setBannerData] = useState([]);
+    const [signatureExperiences, setSignatureExperiences] = useState([]);
+    const [planWeddings, setPlanWeddings] = useState([]);
+    const [nearbyAttractions, setNearbyAttractions] = useState([]);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [currentWeddingIndex, setCurrentWeddingIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
@@ -528,7 +687,10 @@ export default function App() {
     ]);
     const [userMessage, setUserMessage] = useState("");
     const [isChatLoading, setIsChatLoading] = useState(false);
-    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+    const [showAllRooms, setShowAllRooms] = useState(false);
+
+    // Package image slider state
+    const [packageImageIndex, setPackageImageIndex] = useState({});
 
     // Banner Message State
     const [bannerMessage, setBannerMessage] = useState({ type: null, text: "" });
@@ -545,6 +707,7 @@ export default function App() {
     // Booking Modals State
     const [isRoomBookingFormOpen, setIsRoomBookingFormOpen] = useState(false);
     const [isPackageBookingFormOpen, setIsPackageBookingFormOpen] = useState(false);
+    const [isPackageSelectionOpen, setIsPackageSelectionOpen] = useState(false);
     const [isServiceBookingFormOpen, setIsServiceBookingFormOpen] = useState(false);
     const [isFoodOrderFormOpen, setIsFoodOrderFormOpen] = useState(false);
     const [isGeneralBookingOpen, setIsGeneralBookingOpen] = useState(false);
@@ -585,11 +748,8 @@ export default function App() {
     const [bookingMessage, setBookingMessage] = useState({ type: null, text: "" });
     const [isBookingLoading, setIsBookingLoading] = useState(false);
 
-    const [currentTheme, setCurrentTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('selectedTheme');
-        return savedTheme && themes[savedTheme] ? savedTheme : 'dark';
-    });
-
+    // Always use light theme - matching Mountain Shadows style
+    const currentTheme = 'light';
     const theme = themes[currentTheme];
 
     const bannerRef = useRef(null);
@@ -598,10 +758,22 @@ export default function App() {
     
     const ITEM_PLACEHOLDER = "https://placehold.co/400x300/2d3748/cbd5e0?text=Image+Not+Available";
 
+    // Helper function to get correct image URL
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return ITEM_PLACEHOLDER;
+        if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+        const baseUrl = process.env.NODE_ENV === 'production' 
+            ? 'https://www.teqmates.com' 
+            : 'http://localhost:8000';
+        // Ensure imagePath starts with / for proper URL construction
+        const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+        return `${baseUrl}${path}`;
+    };
+
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const endpoints = {
                 rooms: '/rooms/test',  // Use working test endpoint for real room data
                 bookings: '/bookings?limit=10000', // Fetch all bookings for availability check
@@ -610,7 +782,11 @@ export default function App() {
                 resortInfo: '/resort-info/',
                 gallery: '/gallery/',
                 reviews: '/reviews/',
-                banners: '/header-banner/'
+                banners: '/header-banner/',
+                services: '/services/', // Fetch services (note: plural)
+                signatureExperiences: '/signature-experiences/',
+                planWeddings: '/plan-weddings/',
+                nearbyAttractions: '/nearby-attractions/'
             };
 
             try {
@@ -628,19 +804,24 @@ export default function App() {
 
                 const [
                     roomsData, bookingsData, foodItemsData, packagesData,
-                    resortInfoData, galleryData, reviewsData, bannerData
+                    resortInfoData, galleryData, reviewsData, bannerData, servicesData,
+                    signatureExperiencesData, planWeddingsData, nearbyAttractionsData
                 ] = data;
 
                 setAllRooms(roomsData);
-                setRooms(roomsData);
+                // Don't set rooms here - only show after dates are selected
+                // setRooms will be set in useEffect when dates are chosen
                 setBookings(bookingsData.bookings || []); // Store bookings for availability filtering
-                setServices([]); // Set empty array since services endpoint is not available
+                setServices(servicesData || []); // Fetch services from backend
                 setFoodItems(foodItemsData);
                 setPackages(packagesData);
                 setResortInfo(resortInfoData.length > 0 ? resortInfoData[0] : null);
                 setGalleryImages(galleryData);
                 setReviews(reviewsData);
-                setBannerData(bannerData);
+                setBannerData(bannerData.filter(b => b.is_active));
+                setSignatureExperiences(signatureExperiencesData || []);
+                setPlanWeddings(planWeddingsData || []);
+                setNearbyAttractions(nearbyAttractionsData || []);
 
             } catch (err) {
                 console.error("Failed to fetch resort data:", err);
@@ -653,18 +834,57 @@ export default function App() {
         fetchResortData();
     }, []); // Empty dependency array ensures this runs only once on mount
 
+    // Auto-rotate banner images - only if multiple banners
+    useEffect(() => {
+        if (bannerData.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentBannerIndex((prev) => (prev + 1) % bannerData.length);
+            }, 9000); // Slower transition: change image every 9 seconds
+            return () => clearInterval(interval);
+        } else if (bannerData.length === 1) {
+            setCurrentBannerIndex(0); // Ensure first banner is shown
+        }
+    }, [bannerData.length]);
+
+    // Auto-change wedding images
+    useEffect(() => {
+        const activeWeddings = planWeddings.filter(w => w.is_active);
+        if (activeWeddings.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentWeddingIndex((prev) => (prev + 1) % activeWeddings.length);
+            }, 9000); // Change image every 9 seconds
+            return () => clearInterval(interval);
+        } else if (activeWeddings.length === 1) {
+            setCurrentWeddingIndex(0); // Ensure first wedding is shown
+        }
+    }, [planWeddings]);
+
     const toggleChat = () => setIsChatOpen(!isChatOpen);
-    const changeTheme = (themeId) => setCurrentTheme(themeId);
 
     // Handlers for opening booking modals
     const handleOpenRoomBookingForm = (roomId) => {
-        setBookingData(prev => ({ ...prev, room_ids: [roomId] }));
+        setBookingData(prev => ({ ...prev, room_ids: prev.room_ids.includes(roomId) ? prev.room_ids : [...prev.room_ids, roomId] }));
         setIsRoomBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
 
     const handleOpenPackageBookingForm = (packageId) => {
-        setPackageBookingData({ ...packageBookingData, package_id: packageId });
+        // Always prioritize dates from bookingData (selected on previous page) over packageBookingData
+        setPackageBookingData(prev => {
+            const checkIn = (bookingData.check_in && bookingData.check_in.trim() !== '') 
+                ? bookingData.check_in 
+                : (prev.check_in && prev.check_in.trim() !== '' ? prev.check_in : '');
+            const checkOut = (bookingData.check_out && bookingData.check_out.trim() !== '') 
+                ? bookingData.check_out 
+                : (prev.check_out && prev.check_out.trim() !== '' ? prev.check_out : '');
+            
+            return {
+                ...prev, 
+                package_id: packageId,
+                check_in: checkIn,
+                check_out: checkOut
+            };
+        });
         setIsPackageBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
@@ -725,43 +945,51 @@ export default function App() {
         }));
     };
 
-    // Filter rooms based on date availability for room booking
+    // Check room availability based on selected dates (but always show all rooms)
+    const [roomAvailability, setRoomAvailability] = useState({});
+    
     useEffect(() => {
-        if (bookingData.checkIn && bookingData.checkOut && allRooms.length > 0) {
-            const availableRooms = allRooms.filter(room => {
-                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
+        if (bookingData.check_in && bookingData.check_out && allRooms.length > 0) {
+            // Calculate availability for each room
+            const availability = {};
+            allRooms.forEach(room => {
                 const hasConflict = bookings.some(booking => {
                     const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
                     if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
                     
                     const bookingCheckIn = new Date(booking.check_in);
                     const bookingCheckOut = new Date(booking.check_out);
-                    const requestedCheckIn = new Date(bookingData.checkIn);
-                    const requestedCheckOut = new Date(bookingData.checkOut);
+                    const requestedCheckIn = new Date(bookingData.check_in);
+                    const requestedCheckOut = new Date(bookingData.check_out);
                     
-                    // Check if room is part of this booking
                     const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
                     if (!isRoomInBooking) return false;
                     
-                    // Check for date overlap
                     return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
                 });
                 
-                return !hasConflict;
+                availability[room.id] = !hasConflict;
             });
-            
-            setRooms(availableRooms);
-        } else if (!bookingData.checkIn || !bookingData.checkOut) {
-            // If no dates selected, show all available rooms
-            setRooms(allRooms.filter((r) => r.status === "Available"));
+            setRoomAvailability(availability);
+        } else {
+            // If no dates selected, clear availability data (all rooms shown without availability check)
+            setRoomAvailability({});
         }
-    }, [bookingData.checkIn, bookingData.checkOut, allRooms, bookings]);
-
-    // Filter rooms based on date availability for package booking
+    }, [bookingData.check_in, bookingData.check_out, allRooms, bookings]);
+    
+    // Always set rooms to allRooms - availability filtering happens in UI
     useEffect(() => {
-        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0) {
-            const availableRooms = allRooms.filter(room => {
-                // Check if room has any conflicting bookings (ignore cancelled, checked-out)
+        setRooms(allRooms);
+    }, [allRooms]);
+
+    // Package booking availability - check availability based on packageBookingData dates
+    const [packageRoomAvailability, setPackageRoomAvailability] = useState({});
+    
+    useEffect(() => {
+        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0 && isPackageBookingFormOpen) {
+            // Calculate availability for each room for package booking
+            const availability = {};
+            allRooms.forEach(room => {
                 const hasConflict = bookings.some(booking => {
                     const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
                     if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
@@ -771,23 +999,19 @@ export default function App() {
                     const requestedCheckIn = new Date(packageBookingData.check_in);
                     const requestedCheckOut = new Date(packageBookingData.check_out);
                     
-                    // Check if room is part of this booking
                     const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
                     if (!isRoomInBooking) return false;
                     
-                    // Check for date overlap
                     return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
                 });
                 
-                return !hasConflict;
+                availability[room.id] = !hasConflict;
             });
-            
-            setRooms(availableRooms);
-        } else if (!packageBookingData.check_in || !packageBookingData.check_out) {
-            // If no dates selected, show all available rooms
-            setRooms(allRooms.filter((r) => r.status === "Available"));
+            setPackageRoomAvailability(availability);
+        } else {
+            setPackageRoomAvailability({});
         }
-    }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings]);
+    }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings, isPackageBookingFormOpen]);
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {
@@ -834,7 +1058,7 @@ export default function App() {
         // -------------------------
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/bookings/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -909,11 +1133,48 @@ export default function App() {
         // -------------------------
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
+            
+            // Validate required fields
+            if (!packageBookingData.package_id) {
+                showBannerMessage("error", "Package ID is missing. Please select a package.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            if (!packageBookingData.check_in || !packageBookingData.check_out) {
+                showBannerMessage("error", "Please select check-in and check-out dates.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            if (!packageBookingData.guest_name) {
+                showBannerMessage("error", "Please enter your full name.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
+            // Email and mobile are optional in the schema, but we'll recommend at least one
+            if (!packageBookingData.guest_email && !packageBookingData.guest_mobile) {
+                showBannerMessage("error", "Please provide at least an email address or mobile number.");
+                setIsBookingLoading(false);
+                return;
+            }
+            
             const payload = {
-                ...packageBookingData,
+                package_id: parseInt(packageBookingData.package_id),
                 room_ids: packageBookingData.room_ids.map(id => parseInt(id)),
+                guest_name: packageBookingData.guest_name.trim(),
+                guest_email: packageBookingData.guest_email?.trim() || null,
+                guest_mobile: packageBookingData.guest_mobile.trim(),
+                check_in: packageBookingData.check_in,
+                check_out: packageBookingData.check_out,
+                adults: parseInt(packageBookingData.adults) || 1,
+                children: parseInt(packageBookingData.children) || 0,
             };
+            
+            console.log("Package Booking Payload:", payload); // Debug log
+            
             const response = await fetch(`${API_BASE_URL}/packages/book/guest`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -928,17 +1189,39 @@ export default function App() {
                     setIsPackageBookingFormOpen(false);
                 }, 2000);
             } else {
+                let errorMessage = "An unexpected error occurred.";
+                try {
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.includes("application/json")) {
                 const errorData = await response.json();
+                        console.error("Package Booking Error Response:", errorData);
+                        
                 // Check if it's a validation error from the backend
-                if (errorData.detail && errorData.detail.includes("Check-out date must be at least 1 day")) {
-                    showBannerMessage("error", "Minimum 1 day booking is mandatory. Check-out date must be at least 1 day after check-in date.");
+                        if (errorData.detail) {
+                            if (typeof errorData.detail === 'string') {
+                                errorMessage = errorData.detail;
+                            } else if (Array.isArray(errorData.detail)) {
+                                // Handle Pydantic validation errors
+                                const errors = errorData.detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
+                                errorMessage = `Validation error: ${errors}`;
                 } else {
-                    showBannerMessage("error", `Package booking failed: ${errorData.detail || "An unexpected error occurred."}`);
+                                errorMessage = JSON.stringify(errorData.detail);
+                            }
+                        }
+                    } else {
+                        const textError = await response.text();
+                        console.error("Error response text:", textError);
+                        errorMessage = textError || `Server error (${response.status}): ${response.statusText}`;
+                    }
+                } catch (parseError) {
+                    console.error("Failed to parse error response:", parseError);
+                    errorMessage = `Server error (${response.status}): ${response.statusText}`;
                 }
+                showBannerMessage("error", `Package booking failed: ${errorMessage}`);
             }
         } catch (err) {
             console.error("Package Booking API Error:", err);
-            showBannerMessage("error", "An error occurred while booking the package. Please try again.");
+            showBannerMessage("error", `An error occurred while booking the package: ${err.message || "Please check your connection and try again."}`);
         } finally {
             setIsBookingLoading(false);
         }
@@ -950,7 +1233,7 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
 
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/services/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1000,7 +1283,7 @@ export default function App() {
         };
         
         try {
-            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com" : "http://127.0.0.1:8000";
+            const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const response = await fetch(`${API_BASE_URL}/food-orders/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1078,17 +1361,11 @@ export default function App() {
     }, [chatHistory]);
 
     useEffect(() => {
-        localStorage.setItem('selectedTheme', currentTheme);
-    }, [currentTheme]);
+        // Apply theme to document body for better visibility
+        document.documentElement.className = '';
+        document.body.className = `${theme.bgPrimary} ${theme.textPrimary} transition-colors duration-500`;
+    }, [theme]);
 
-    useEffect(() => {
-        if (bannerData.length > 1) {
-            const interval = setInterval(() => {
-                setCurrentBannerIndex(prev => (prev + 1) % bannerData.length);
-            }, 5000);
-            return () => clearInterval(interval);
-        }
-    }, [bannerData]);
 
     useEffect(() => {
         const handleScroll = () => setShowBackToTop(window.scrollY > 300);
@@ -1156,37 +1433,16 @@ export default function App() {
                     </div>
                 )}
                 
-                <header className={`fixed left-0 right-0 z-50 ${theme.bgSecondary} bg-opacity-80 backdrop-blur-sm ${bannerMessage.text ? 'top-16' : 'top-0'}`}>
-                    <div className="container mx-auto px-2 sm:px-4 md:px-12 py-2 sm:py-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-1 sm:space-x-2">
-                            <BedDouble className={`w-6 h-6 sm:w-8 sm:h-8 ${theme.textAccent}`} />
-                            <span className="text-lg sm:text-xl font-bold tracking-tight">Elysian Retreat</span>
+                <header className={`fixed left-0 right-0 z-50 ${theme.bgCard}/30 backdrop-blur-sm shadow-sm ${bannerMessage.text ? 'top-16' : 'top-0'} transition-all duration-300`}>
+                    <div className="container mx-auto px-4 sm:px-6 md:px-12 py-4 flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <BedDouble className={`w-8 h-8 ${theme.textAccent}`} />
+                            <span className={`text-2xl font-bold ${theme.textPrimary} tracking-tight`}>Elysian Retreat</span>
                         </div>
-                        <nav className="flex items-center space-x-2 sm:space-x-4">
-                            <div className="relative">
-                                <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                    className={`p-1 sm:p-2 rounded-full transition-colors duration-300 ${theme.textSecondary} hover:${theme.textAccent}`}
-                                    title="Change Theme">
-                                    {themes[currentTheme].icon}
-                                </button>
-                                {isThemeDropdownOpen && (
-                                    <div className={`absolute right-0 mt-2 w-40 sm:w-48 ${theme.bgCard} rounded-lg shadow-xl border ${theme.border} z-50`}>
-                                        <div className="p-2 grid grid-cols-3 sm:grid-cols-4 gap-1">
-                                            {Object.values(themes).map((t) => (
-                                                <button key={t.id} onClick={() => { changeTheme(t.id); setIsThemeDropdownOpen(false); }}
-                                                    className={`p-2 rounded-md transition-colors duration-300 ${t.id === currentTheme ? `${t.buttonBg} ${t.buttonText}` : `${theme.textSecondary} hover:${t.textAccent} hover:${theme.bgSecondary}`}`}
-                                                    title={t.name}>
-                                                    {t.icon}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
+                        <nav className="flex items-center space-x-4">
                             <button 
                                 onClick={() => setIsGeneralBookingOpen(true)} 
-                                className={`px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base ${theme.buttonBg} ${theme.buttonText} font-bold rounded-full shadow-lg ${theme.buttonHover} transition-colors`}
+                                className={`px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 rounded-full shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105`}
                             >
                                 Book Now
                             </button>
@@ -1194,57 +1450,79 @@ export default function App() {
                     </div>
                 </header>
 
-                <main className="w-full pt-12 sm:pt-16 space-y-8 sm:space-y-12 relative z-10 overflow-hidden">
-                  {/* Banner Section */}
+                <main className="w-full max-w-full pt-0 space-y-0 relative z-10 overflow-hidden">
+                  {/* Luxury Hero Banner Section */}
 <div
   ref={bannerRef}
-  className="relative w-full h-[80vh] overflow-hidden shadow-2xl mt-5 rounded-2xl"
+  className="relative w-full h-screen overflow-hidden"
 >
     {bannerData.length > 0 ? (
         <>
-            {/* Banner Images with Fade Transition */}
+            {/* Banner Images with Fade Transition and Slow Movement */}
             {bannerData.map((banner, index) => (
                 <img
                     key={banner.id}
-                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${banner.image_url}` : `http://127.0.0.1:8000${banner.image_url}`}
+                    src={getImageUrl(banner.image_url)}
+                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; console.error('Banner image failed to load:', banner.image_url); }}
                     alt={banner.title}
-                    className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentBannerIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
+                    style={{
+                        animationDelay: `${index * 2}s`,
+                        animationDirection: index % 2 === 0 ? 'alternate' : 'alternate-reverse'
+                    }}
                 />
             ))}
 
-            {/* Gradient Overlay and Text Content */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-center justify-center text-center px-6">
-                <div className="relative w-full max-w-3xl h-48">
+            {/* Luxury Gradient Overlay with Premium Content */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30 flex items-center justify-center text-center px-6">
+                <div className="relative w-full max-w-5xl">
                     {bannerData.map((banner, index) => (
-                        <div key={banner.id} className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-700 ease-in-out ${index === currentBannerIndex ? 'opacity-100' : 'opacity-0'}`}>
-                            <h1 className="text-4xl md:text-6xl font-extrabold tracking-wide drop-shadow-xl text-white">
-                                {banner.title}
+                        <div key={banner.id} className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-1000 ease-in-out ${index === currentBannerIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                            <div className="mb-4 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                    ✦ Luxury Experience ✦
+                                </span>
+                            </div>
+                            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-tight drop-shadow-2xl text-white mb-6 animate-[fadeInUp_1.2s_ease-out]">
+                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent inline-block animate-[gentle-glow_3s_ease-in-out_infinite]">
+                                    {banner.title}
+                                </span>
                             </h1>
-                            <p className="mt-4 text-lg md:text-xl text-neutral-200">
+                            <p className="mt-4 text-xl md:text-2xl text-neutral-100 max-w-4xl mx-auto leading-relaxed drop-shadow-lg px-4 animate-[fadeInUp_1.4s_ease-out]">
                                 {banner.subtitle}
                             </p>
-                            <a href="#rooms-section" className={`mt-6 inline-block px-8 py-3 text-white font-semibold ${theme.buttonBg} rounded-full shadow-xl ${theme.buttonHover} transition-all duration-300 transform hover:scale-105 hover:shadow-2xl`}>
-                                Explore Rooms
-                            </a>
+                            <div className="mt-10 flex flex-wrap justify-center gap-4 animate-[fadeInUp_1.6s_ease-out]">
+                                <a href="#rooms-section" className="group px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-2xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-110 hover:shadow-amber-500/50 animate-[gentle-pulse_2s_ease-in-out_infinite]">
+                                    <span className="flex items-center gap-2">
+                                        Book Your Stay
+                                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    </span>
+                                </a>
+                                <a href="#packages" className="px-10 py-4 bg-white/10 backdrop-blur-sm text-white font-bold text-lg rounded-full border-2 border-white/30 hover:bg-white/20 transition-all duration-300">
+                                    View Packages
+                                </a>
+                            </div>
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Carousel Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
-        {bannerData.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentBannerIndex(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              index === currentBannerIndex
-                ? "bg-white scale-125"
-                : "bg-white/50 hover:bg-white"
-            }`}
-          />
-        ))}
-      </div>
+            {/* Luxury Navigation Dots - Only show if multiple banners */}
+            {bannerData.length > 1 && (
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
+                {bannerData.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => setCurrentBannerIndex(index)}
+                        className={`transition-all duration-300 ${
+                            index === currentBannerIndex
+                                ? "w-12 h-1 bg-amber-400 rounded-full"
+                                : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                        }`}
+                    />
+                ))}
+            </div>
+            )}
         </>
     ) : (
         <div className={`w-full h-full flex items-center justify-center ${theme.placeholderBg} ${theme.placeholderText}`}>
@@ -1253,121 +1531,707 @@ export default function App() {
     )}
 </div>
 
-
-                    {/* Packages Section */}
-                    <section>
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <Package className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Luxury Packages
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                            <div className="flex gap-6 animate-[auto-scroll_80s_linear_infinite] hover:[animation-play-state:paused]">
-                                {packages.length > 0 ? [...packages, ...packages].map((pkg, index) => (
-                                    <div key={`${pkg.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${pkg.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${pkg.images?.[0]?.image_url}`} alt={pkg.title} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{pkg.title}</h3>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{pkg.price}</p>
-                                            <p className={`text-sm ${textSecondary}`}>{pkg.description}</p>
-                                            <button onClick={() => handleOpenPackageBookingForm(pkg.id)} className={buttonStyle}>Book Package <ChevronRight className="ml-1 w-4 h-4" /></button>
-                                        </div>
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No packages available.</p>}
+                    {/* Exclusive Deals Section - Mountain Shadows Style */}
+                    <section id="packages" className={`bg-gradient-to-b ${theme.bgSecondary} ${theme.bgCard} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
+                                    ✦ Exclusive Deals ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    EXCLUSIVE DEALS FOR MEMORABLE EXPERIENCES
+                                </h2>
                             </div>
+
+                            {/* Packages - Mountain Shadows Style */}
+                            {packages.length > 0 ? (
+                                <div className="space-y-12">
+                                    {/* Featured Large Package */}
+                                    {packages[0] && (() => {
+                                        const featuredPkg = packages[0];
+                                        const imgIndex = packageImageIndex[featuredPkg.id] || 0;
+                                        const currentImage = featuredPkg.images && featuredPkg.images[imgIndex];
+                                        return (
+                                            <div 
+                                                key={featuredPkg.id}
+                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
+                                            >
+                                                <div className="flex flex-col md:flex-row items-stretch">
+                                                    {/* Large Image Section - Left */}
+                                                    <div className="w-full md:w-1/2 h-80 md:h-[500px] overflow-hidden relative">
+                                                        <img 
+                                                            src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                            alt={featuredPkg.title} 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                        />
+                                                        {/* Image Slider Dots */}
+                                                        {featuredPkg.images && featuredPkg.images.length > 1 && (
+                                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                                {featuredPkg.images.map((_, imgIdx) => (
+                                                                    <button
+                                                                        key={imgIdx}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setPackageImageIndex(prev => ({ ...prev, [featuredPkg.id]: imgIdx }));
+                                                                        }}
+                                                                        className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Content Section - Right */}
+                                                    <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
+                                                        <h3 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
+                                                            {featuredPkg.title}
+                                                        </h3>
+                                                        <p className={`text-xl md:text-2xl ${theme.textSecondary} mb-6 font-medium`}>
+                                                            (Luxury Package {featuredPkg.duration || '2 Nights & 3 Days'})
+                                                        </p>
+                                                        <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-amber-600 mb-6"></div>
+                                                        <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed mb-6`}>
+                                                            {featuredPkg.description}
+                                                        </p>
+                                                        <div className="flex items-center justify-between flex-wrap gap-4">
+                                                            <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
+                                                                ₹{featuredPkg.price}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
+                                                                className={`px-8 py-3 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2`}
+                                                            >
+                                                                Book Now
+                                                                <ChevronRight className="w-5 h-5" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+
+                                    {/* Smaller Packages Grid - Only show if more than 1 package */}
+                                    {packages.length > 1 && (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            {packages.slice(1, 4).map((pkg) => {
+                                        const imgIndex = packageImageIndex[pkg.id] || 0;
+                                        const currentImage = pkg.images && pkg.images[imgIndex];
+                                        return (
+                                            <div 
+                                                key={pkg.id} 
+                                                onClick={() => handleOpenPackageBookingForm(pkg.id)}
+                                                className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer`}
+                                            >
+                                                        {/* Image Container */}
+                                                        <div className="relative h-64 overflow-hidden">
+                                                    <img 
+                                                                src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                        alt={pkg.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                            {/* Quick Book button overlay */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md hover:bg-amber-600"
+                                                            >
+                                                                Book Now
+                                                            </button>
+                                                    {/* Image Slider Dots */}
+                                                    {pkg.images && pkg.images.length > 1 && (
+                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                            {pkg.images.map((_, imgIdx) => (
+                                                                <button
+                                                                    key={imgIdx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                    }}
+                                                                    className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                        </div>
+
+                                                        {/* Content - Simplified like Mountain Shadows */}
+                                                        <div className={`p-6 ${theme.bgCard}`}>
+                                                            <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
+                                                            {pkg.title}
+                                                        </h3>
+                                                            <p className={`text-base ${theme.textSecondary} font-medium`}>
+                                                                (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
+                                                            </p>
+                                                            {/* CTA Row */}
+                                                            <div className="mt-4 flex items-center justify-between">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                    className={`px-5 py-2 rounded-full border-2 ${theme.border} ${theme.textAccent} font-semibold hover:${theme.bgSecondary} transition-all duration-300`}
+                                                                >
+                                                                    Book Now
+                                                                </button>
+                                                                <span className={`text-sm ${theme.textSecondary}`}>
+                                                                    Tap card to book
+                                                                </span>
+                                                            </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No packages available at the moment.</p>
+                            )}
                         </div>
                     </section>
                     
-                    {/* Rooms Section */}
-                    <section id="rooms-section">
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <BedDouble className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Our Rooms
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                           <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_70s_linear_infinite] hover:[animation-play-state:paused]">
-                                {rooms.length > 0 ? [...rooms, ...rooms].map((room, index) => (
-                                    <div key={`${room.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} alt={room.type} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{room.type}</h3>
-                                            <p className={`text-sm mb-1 ${textSecondary}`}>Room Number: {room.number}</p>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{room.price}</p>
-                                            <p className={`font-semibold text-sm ${room.status === "Available" ? "text-green-400" : "text-red-400"}`}>{room.status}</p>
-                                            <button onClick={() => handleOpenRoomBookingForm(room.id)} className={`${buttonStyle} disabled:opacity-50 disabled:cursor-not-allowed`} disabled={room.status !== "Available"}>
-                                                Book Now <ChevronRight className="ml-1 w-4 h-4" />
+                    {/* Luxury Villa Showcase Section */}
+                    <section id="rooms-section" className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ LUXURY ACCOMMODATION ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    Sustainable Luxury Cottages with Unforgettable Views
+                                </h2>
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
+                                    Experience the perfect blend of luxury and sustainability in our eco-friendly cottages with panoramic lake and forest views
+                                </p>
+                            </div>
+
+                            {/* Info Banner - Show when dates not selected */}
+                            {(!bookingData.check_in || !bookingData.check_out) && (
+                                <div className="mb-8">
+                                    <div className={`inline-block w-full p-4 ${theme.bgSecondary} rounded-xl border ${theme.border} shadow-sm`}>
+                                        <div className="flex items-center gap-3 justify-center flex-wrap">
+                                            <BedDouble className={`w-5 h-5 ${theme.textAccent}`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>
+                                                Select check-in and check-out dates above to check room availability for your stay
+                                            </p>
+                                            <button 
+                                                onClick={() => setIsGeneralBookingOpen(true)}
+                                                className={`px-4 py-2 text-xs font-semibold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow hover:shadow-md transition-all duration-300 transform hover:scale-105`}
+                                            >
+                                                Select Dates
                                             </button>
                                         </div>
                                     </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No rooms available.</p>}
-                            </div>
-                        </div>
-                    </section>
+                                </div>
+                            )}
 
-                    {/* Services Section */}
-                    <section>
-                         <h2 className={`group ${sectionTitleStyle}`}>
-                             <ConciergeBell className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Exclusive Services
-                         </h2>
-                        <div className="w-full overflow-hidden">
-                            <div className="flex gap-6 animate-[auto-scroll_60s_linear_infinite] hover:[animation-play-state:paused]">
-                                 {services.length > 0 ? [...services, ...services].map((service, index) => (
-                                     <div key={`${service.id}-${index}`} className={`group ${cardStyle} p-6 flex flex-col justify-between`}>
-                                         <div>
-                                             <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{service.name}</h3>
-                                             <p className={`text-sm mb-4 ${textSecondary}`}>{service.description}</p>
-                                         </div>
-                                         <p className={priceStyle}>Charges: ₹{service.charges}</p>
-                                          {/* <button onClick={() => handleOpenServiceBookingForm(service.id)} className={buttonStyle}>Book Service <ChevronRight className="ml-1 w-4 h-4" /></button> */}
-                                     </div>
-                                 )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No services available.</p>}
-                             </div>
-                         </div>
-                    </section>
+                            {/* Availability Info - Show when dates are selected */}
+                            {bookingData.check_in && bookingData.check_out && Object.keys(roomAvailability).length > 0 && (
+                                <div className="mb-6">
+                                    <div className={`inline-block w-full p-3 ${theme.bgCard} rounded-lg border ${theme.border} shadow-sm`}>
+                                        <p className={`text-sm ${theme.textPrimary} text-center`}>
+                                            Showing availability for <span className="font-semibold">{bookingData.check_in}</span> to <span className="font-semibold">{bookingData.check_out}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
-                    {/* Food Items Section */}
-                    <section>
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <Coffee className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Gourmet Cuisine
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                           <div className="flex gap-6 animate-[auto-scroll-reverse_80s_linear_infinite] hover:[animation-play-state:paused]">
-                                {foodItems.length > 0 ? [...foodItems, ...foodItems].map((food, index) => (
-                                    <div key={`${food.id}-${index}`} className={`group ${cardStyle}`}>
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${food.images?.[0]?.image_url}`} alt={food.name} className="w-full h-56 md:h-64 object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                        <div className="p-6">
-                                            <h3 className={`font-semibold text-xl mb-2 ${textPrimary}`}>{food.name}</h3>
-                                            <p className={`mb-1 ${priceStyle}`}>₹{food.price}</p>
-                                            <p className={`font-semibold text-sm ${food.available ? "text-green-400" : "text-red-400"}`}>{food.available ? "Available" : "Unavailable"}</p>
+                            {/* Villa Grid - Always show ALL rooms */}
+                            {rooms.length > 0 ? (
+                                <>
+                                    <div className="mb-4 text-center">
+                                        <p className={`text-sm ${theme.textSecondary}`}>
+                                            Showing all <span className="font-semibold ${theme.textPrimary}">{rooms.length}</span> rooms
+                                        </p>
+                                    </div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                        {rooms.map((room, index) => (
+                                        <div 
+                                            key={room.id} 
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
+                                        >
+                                            {/* Image Container with Overlay */}
+                                            <div className="relative h-48 overflow-hidden">
+                                                <img 
+                                                    src={getImageUrl(room.image_url)} 
+                                                    alt={room.type} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                                                
+                                                {/* Luxury Badge */}
+                                                <div className="absolute top-4 left-4">
+                                                    <span className="px-4 py-2 bg-amber-500 text-white text-xs font-bold uppercase tracking-wider rounded-full shadow-lg">
+                                                        Premium Villa
+                                                    </span>
+                                                </div>
+
+                                                {/* Availability Badge - Only show when dates are selected */}
+                                                {bookingData.check_in && bookingData.check_out && (
+                                                <div className="absolute top-4 right-4">
+                                                        {roomAvailability[room.id] ? (
+                                                            <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
+                                                                Available
+                                                    </span>
+                                                        ) : (
+                                                            <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-red-500 text-white">
+                                                                Booked
+                                                            </span>
+                                                        )}
+                                                </div>
+                                                )}
+
+                                                {/* Hover Effect Overlay */}
+                                                <div className="absolute inset-0 bg-amber-500/0 group-hover:bg-amber-500/10 transition-all duration-500" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-4 space-y-4">
+                                                <h3 className={`text-2xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors`}>
+                                                    {room.type}
+                                                </h3>
+                                                <div className={`flex items-center gap-2 text-sm ${theme.textCardSecondary || theme.textSecondary}`}>
+                                                    <BedDouble className={`w-5 h-5 ${theme.textCardAccent || theme.textAccent}`} />
+                                                    <span>Room #{room.number}</span>
+                                                </div>
+                                                
+                                                {/* Features */}
+                                                <div className={`flex items-center gap-4 text-sm ${theme.textCardSecondary || theme.textSecondary}`}>
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                                        Lake View
+                                                    </span>
+                                                    <span className="flex items-center gap-1">
+                                                        <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                                                        Balcony
+                                                    </span>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className={`flex items-baseline justify-between pt-2 border-t ${theme.cardBorder || theme.border}`}>
+                                                    <div>
+                                                        <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary}`}>Starting from</p>
+                                                        <p className={`text-3xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
+                                                            ₹{room.price}
+                                                            <span className={`text-sm ${theme.textCardSecondary || theme.textSecondary} font-normal`}>/night</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* CTA Button */}
+                                                <button 
+                                                    onClick={() => handleOpenRoomBookingForm(room.id)} 
+                                                    disabled={bookingData.check_in && bookingData.check_out && !roomAvailability[room.id]}
+                                                    className={`w-full mt-4 px-6 py-3 font-bold rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 ${
+                                                        bookingData.check_in && bookingData.check_out && !roomAvailability[room.id]
+                                                            ? 'bg-gray-400 text-gray-700 cursor-not-allowed opacity-50'
+                                                            : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/50'
+                                                    }`}
+                                                >
+                                                    {bookingData.check_in && bookingData.check_out && !roomAvailability[room.id] ? 'Not Available' : 'Book Now'}
+                                                    <ChevronRight className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No food items available.</p>}
-                            </div>
+                                    ))}
+                                </div>
+                                </>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <BedDouble className={`w-16 h-16 ${theme.textSecondary} mx-auto mb-4`} />
+                                    <p className={`text-lg font-semibold ${theme.textPrimary} mb-2`}>No rooms available</p>
+                                    <p className={`${theme.textSecondary}`}>No rooms found in the system.</p>
+                                </div>
+                            )}
+
                         </div>
                     </section>
 
-                    {/* Gallery Section */}
-                    <section className="mt-12">
-                        <h2 className={`group ${sectionTitleStyle}`}>
-                            <ImageIcon className={`inline-block mr-3 mb-1 ${iconStyle}`} /> Gallery
-                        </h2>
-                        <div className="w-full overflow-hidden">
-                            <div className="flex gap-6 animate-[auto-scroll_75s_linear_infinite] hover:[animation-play-state:paused]">
-                                {galleryImages.length > 0 ? [...galleryImages, ...galleryImages].map((image, index) => (
-                                    <div key={`${image.id}-${index}`} className="flex-none w-64 h-48 md:w-80 md:h-64 rounded-2xl overflow-hidden shadow-2xl transition duration-500 hover:scale-105">
-                                        <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://127.0.0.1:8000${image.image_url}`} alt={image.caption || 'Gallery image'} className="w-full h-full object-cover" onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} />
-                                    </div>
-                                )) : <p className={`flex-none w-full text-center ${textSecondary}`}>No images available.</p>}
+                    {/* Premium Experiences Section - Mountain Shadows Style */}
+                    <section className={`${theme.bgCard} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Signature Experiences ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    SIGNATURE EXPERIENCES AT THE BEST LUXURY RESORT
+                                </h2>
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
+                                    Guests can enjoy a range of curated in-house activities designed to explore the region's rich flora and fauna
+                                </p>
                             </div>
+
+                            {/* Signature Experiences Grid */}
+                            {signatureExperiences.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                    {signatureExperiences.filter(exp => exp.is_active).map((experience) => (
+                                        <div 
+                                            key={experience.id}
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
+                                        >
+                                            {/* Image Container */}
+                                            <div className="relative h-64 overflow-hidden">
+                                                <img 
+                                                    src={getImageUrl(experience.image_url)} 
+                                                    alt={experience.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-6 space-y-3">
+                                                <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
+                                                    {experience.title}
+                                                </h3>
+                                                <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
+                                                    {experience.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No signature experiences available at the moment.</p>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Premium Services Showcase Section */}
+                    <section className={`${theme.bgCard} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Premium Services ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    WORLD-CLASS AMENITIES & SERVICES
+                                </h2>
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
+                                    Experience unparalleled luxury with our comprehensive range of world-class amenities and personalized services
+                                </p>
+                            </div>
+
+                            {/* Services Grid - 2 Column Layout with Images */}
+                            {services.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {services.slice(0, 4).map((service) => (
+                                        <div 
+                                            key={service.id}
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-500 transform hover:-translate-y-2 border ${theme.border}`}
+                                        >
+                                            {/* Image Container */}
+                                            <div className="relative h-48 overflow-hidden">
+                                                {service.images && service.images.length > 0 ? (
+                                                    <img 
+                                                        src={getImageUrl(service.images[0].image_url)} 
+                                                        alt={service.name} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20 flex items-center justify-center">
+                                                        <ConciergeBell className={`w-12 h-12 ${theme.textAccent}`} />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+                                                
+                                                {/* Multiple Images Indicator */}
+                                                {service.images && service.images.length > 1 && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded-full">
+                                                            +{service.images.length - 1}
+                                                        </span>
+                                                </div>
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-4 space-y-3">
+                                                <h3 className={`text-lg font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
+                                                        {service.name}
+                                                    </h3>
+                                                <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
+                                                        {service.description}
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No services available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {services.length > 4 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-bold text-lg rounded-full shadow-xl hover:from-amber-400 hover:to-amber-500 transition-all duration-300 transform hover:scale-105 hover:shadow-amber-500/50">
+                                        View All Services
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Premium Cuisine Section - Mountain Shadows Style */}
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Savor the Art ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    SAVOR THE ART OF CUISINE
+                                </h2>
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
+                                    Experience the art of cuisine at our luxury resort. Enjoy a diverse menu featuring international favorites and authentic local flavors, crafted to delight every palate.
+                                </p>
+                            </div>
+
+                            {/* Food Items Grid */}
+                            {foodItems.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                                    {foodItems.map((food) => (
+                                        <div 
+                                            key={food.id}
+                                            className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden luxury-shadow transition-all duration-300 transition-all duration-500 transform hover:-translate-y-2 border ${theme.cardBorder || theme.border}`}
+                                        >
+                                            {/* Image */}
+                                            <div className="relative h-40 overflow-hidden">
+                                                <img 
+                                                    src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${food.images?.[0]?.image_url}` : `http://localhost:8000/${food.images?.[0]?.image_url}`} 
+                                                    alt={food.name} 
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                                                
+                                                {/* Availability Badge */}
+                                                <div className="absolute top-4 right-4">
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-bold shadow-lg ${food.available ? "bg-green-500 text-white" : "bg-red-500 text-white"}`}>
+                                                        {food.available ? "Available" : "Unavailable"}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-5">
+                                                <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors mb-2 line-clamp-2`}>
+                                                    {food.name}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No food items available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {foodItems.length > 8 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
+                                        View Full Menu
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Premium Gallery Section - Mountain Shadows Style */}
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                            {/* Section Header */}
+                            <div className="text-center mb-16">
+                                <span className="inline-block px-6 py-2 bg-amber-500/10 text-amber-600 text-sm font-semibold tracking-widest uppercase rounded-full mb-4">
+                                    ✦ Captured Moments ✦
+                                </span>
+                                <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    EXPLORE THE TIMELESS BEAUTY
+                                </h2>
+                                <p className={`text-lg ${theme.textSecondary} max-w-3xl mx-auto leading-relaxed`}>
+                                    Witness the charm of our resort's stunning views and unforgettable experiences
+                                </p>
+                            </div>
+
+                            {/* Gallery Grid */}
+                            {galleryImages.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                    {galleryImages.slice(0, 9).map((image, index) => (
+                                        <div 
+                                            key={image.id} 
+                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
+                                            style={{ height: index % 3 === 1 ? '400px' : '300px' }}
+                                        >
+                                            <img 
+                                                src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
+                                                alt={image.caption || 'Gallery image'} 
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            
+                                            {/* Overlay on Hover */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center p-6">
+                                                {image.caption && (
+                                                    <p className="text-white text-lg font-semibold drop-shadow-lg">
+                                                        {image.caption}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className={`text-center py-12 ${theme.textSecondary}`}>No gallery images available at the moment.</p>
+                            )}
+
+                            {/* View More Button */}
+                            {galleryImages.length > 9 && (
+                                <div className="text-center mt-12">
+                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
+                                        View All Photos
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </section>
                     
+                    {/* Plan Your Wedding Section - Dynamic with Slider */}
+                    {planWeddings.length > 0 && planWeddings.some(w => w.is_active) && (
+                        <section className="relative w-full h-[600px] md:h-[700px] overflow-hidden">
+                            {planWeddings.filter(w => w.is_active).map((wedding, index) => (
+                                <div key={wedding.id}>
+                                    {/* Background Images with Animation and Auto-Change */}
+                                    <div className="absolute inset-0">
+                                        <img 
+                                            src={getImageUrl(wedding.image_url)} 
+                                            alt={wedding.title} 
+                                            className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentWeddingIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
+                                            style={{
+                                                animationDelay: `${index * 2}s`,
+                                                animationDirection: index % 2 === 0 ? 'alternate' : 'alternate-reverse'
+                                            }}
+                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
+                                        />
+                                        {/* Gradient Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/30"></div>
+                                    </div>
+
+                                    {/* Content Overlay */}
+                                    <div className={`relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-in-out ${index === currentWeddingIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                                        <div className="max-w-5xl mx-auto text-center text-white">
+                                            {/* Badge */}
+                                            <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
+                                                <span className="text-amber-400 text-sm font-semibold tracking-widest uppercase">
+                                                    ✦ Perfect Venue ✦
+                                                </span>
+                                            </div>
+
+                                            {/* Main Title */}
+                                            <h2 className="text-3xl md:text-5xl lg:text-7xl font-extrabold mb-6 animate-[fadeInUp_1.2s_ease-out] drop-shadow-2xl leading-tight">
+                                                {wedding.title.split(' ').slice(0, 3).join(' ')}<br/>
+                                                <span className="bg-gradient-to-r from-white via-amber-100 to-white bg-clip-text text-transparent">
+                                                    {wedding.title.split(' ').slice(3).join(' ') || 'WEDDING DESTINATION'}
+                                                </span>
+                                            </h2>
+
+                                            {/* Description */}
+                                            <p className="text-base md:text-xl lg:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed mb-8 animate-[fadeInUp_1.4s_ease-out] drop-shadow-lg">
+                                                {wedding.description}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            
+                            {/* Navigation Dots */}
+                            {planWeddings.filter(w => w.is_active).length > 1 && (
+                                <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                                    {planWeddings.filter(w => w.is_active).map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentWeddingIndex(index)}
+                                            className={`transition-all duration-300 ${
+                                                index === currentWeddingIndex
+                                                    ? "w-12 h-1 bg-amber-400 rounded-full"
+                                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                                            }`}
+                                            aria-label={`Go to slide ${index + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
+
+                    {/* Nearby Attractions Section - Mountain Shadows Style */}
+                    {nearbyAttractions.length > 0 && nearbyAttractions.some(a => a.is_active) && (
+                        <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                                <div className="text-center mb-16">
+                                    <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
+                                    ✦ Explore ✦
+                                </span>
+                                    <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
+                                    NEARBY ATTRACTIONS
+                                </h2>
+                            </div>
+
+                                {/* Split Layout - Image Left, Text Right or vice versa */}
+                                <div className="space-y-12">
+                                    {nearbyAttractions.filter(attr => attr.is_active).map((attraction, index) => (
+                                        <div 
+                                            key={attraction.id} 
+                                            className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
+                                        >
+                                            <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-stretch`}>
+                                                {/* Image Section */}
+                                                <div className="w-full md:w-1/2 h-80 md:h-96 overflow-hidden">
+                                                    <img 
+                                                        src={getImageUrl(attraction.image_url)} 
+                                                        alt={attraction.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            </div>
+                                                
+                                                {/* Content Section */}
+                                                <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
+                                                    <h3 className={`text-3xl md:text-4xl font-extrabold ${theme.textPrimary} mb-4 leading-tight`}>
+                                                        {attraction.title}
+                                                    </h3>
+                                                    <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-amber-600 mb-6"></div>
+                                                    <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed`}>
+                                                        {attraction.description}
+                                                    </p>
+                                                </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                    )}
+
+
                     {/* Reviews Section */}
                     <section>
                         <h2 className={`group ${sectionTitleStyle}`}>
                             <Quote className={`inline-block mr-3 mb-1 ${iconStyle}`} /> What Our Guests Say
                         </h2>
                         <div className="w-full overflow-hidden" >
-                           <div className="flex gap-6 animate-[auto-scroll-bobbing-reverse_90s_linear_infinite] hover:[animation-play-state:paused]" >
+                           <div className="flex gap-4 animate-[auto-scroll-bobbing-reverse_90s_linear_infinite] hover:[animation-play-state:paused]" >
                                 {reviews.length > 0 ? [...reviews, ...reviews].map((review, index) => (
-                                    <div key={`${review.id}-${index}`} className={`group flex-none w-80 md:w-96 ${theme.bgCard} rounded-3xl p-8 shadow-2xl border ${theme.border}`} >
+                                    <div key={`${review.id}-${index}`} className={`group flex-none w-80 md:w-96 ${theme.bgCard} rounded-2xl p-4 shadow-2xl border ${theme.border}`} >
                                         <div className="flex justify-center mb-4" >
                                             {[...Array(review.rating)].map((_, i) => <Star key={i} className={`w-5 h-5 fill-current ${theme.textAccent}`} />)}
                                             {[...Array(5 - review.rating)].map((_, i) => <Star key={i + review.rating} className={`${theme.textSecondary} w-5 h-5`} />)}
@@ -1429,16 +2293,45 @@ export default function App() {
                     </div>
                 )}
                 
-                {/* General Booking Modal */}
+                {/* General Booking Modal - Date Selection First */}
                 {isGeneralBookingOpen && (
                     <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                         <div className={`w-full max-w-md ${theme.bgCard} rounded-3xl shadow-2xl flex flex-col`}>
                             <div className={`p-6 flex items-center justify-between border-b ${theme.border}`}>
-                                <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Start Your Booking</h3>
+                                <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Select Your Dates</h3>
                                 <button onClick={() => setIsGeneralBookingOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
                             <div className="p-6 space-y-4">
-                                <p className={`${theme.textSecondary} text-center`}>How would you like to book your stay?</p>
+                                <p className={`${theme.textSecondary} text-center mb-4`}>Select your check-in and check-out dates to view available rooms</p>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                        <input 
+                                            type="date" 
+                                            name="check_in" 
+                                            value={bookingData.check_in} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
+                                    </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                        <input 
+                                            type="date" 
+                                            name="check_out" 
+                                            value={bookingData.check_out} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={bookingData.check_in || new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
+                                    </div>
+                                </div>
+                                {bookingData.check_in && bookingData.check_out && (
+                                    <div className="pt-4 space-y-3 border-t border-gray-200 dark:border-neutral-700">
+                                        <p className={`text-sm ${theme.textSecondary} text-center`}>Continue with booking:</p>
                                 <button 
                                     onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
                                     className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
@@ -1447,12 +2340,23 @@ export default function App() {
                                     <span>Book a Room</span>
                                 </button>
                                 <button 
-                                    onClick={() => { setIsGeneralBookingOpen(false); setIsPackageBookingFormOpen(true); }}
+                                            onClick={() => { 
+                                                setIsGeneralBookingOpen(false);
+                                                // Copy dates from bookingData to packageBookingData
+                                                setPackageBookingData(prev => ({ 
+                                                    ...prev,
+                                                    check_in: bookingData.check_in || prev.check_in || '',
+                                                    check_out: bookingData.check_out || prev.check_out || ''
+                                                }));
+                                                setIsPackageSelectionOpen(true); 
+                                            }}
                                     className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
                                 >
                                     <Package className="w-5 h-5" />
                                     <span>Book a Package</span>
                                 </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1466,30 +2370,52 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Room</h3>
                                 <button onClick={() => setIsRoomBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleRoomBookingSubmit} className="p-6 space-y-4 overflow-y-auto">
+                            <form onSubmit={handleRoomBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
+                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
+                                {bookingData.check_in && bookingData.check_out ? (
+                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
+                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
+                                        <div className="flex space-x-4">
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_in}</p>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_out}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={bookingData.check_in} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                            <input type="date" name="check_in" value={bookingData.check_in || ''} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={bookingData.check_out} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                 </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
-                                    {bookingData.checkIn && bookingData.checkOut && (
-                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {bookingData.checkIn} to {bookingData.checkOut}</p>
-                                    )}
+                                    {!bookingData.check_in || !bookingData.check_out ? (
+                                        <div className={`p-6 text-center rounded-xl ${theme.bgSecondary} border-2 border-dashed ${theme.border}`}>
+                                            <BedDouble className={`w-10 h-10 ${theme.textSecondary} mx-auto mb-3`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>Please select check-in and check-out dates above to see available rooms</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {bookingData.check_in} to {bookingData.check_out}</p>
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
-                                            rooms.filter(r => r.status === 'Available').map(room => (
+                                                {rooms.length > 0 ? (
+                                                    rooms.map(room => (
                                                 <div key={room.id} onClick={() => handleRoomSelection(room.id)}
                                                     className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${bookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        src={getImageUrl(room.image_url)} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1504,14 +2430,14 @@ export default function App() {
                                             ))
                                         ) : (
                                             <div className="col-span-full text-center py-8 text-gray-500">
-                                                <p className="text-sm">
-                                                    {bookingData.checkIn && bookingData.checkOut 
-                                                        ? "No rooms available for the selected dates. Please try different dates." 
-                                                        : "Please select check-in and check-out dates first"}
-                                                </p>
+                                                        <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                        <p className="text-sm font-semibold mb-1">No rooms available</p>
+                                                        <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
                                             </div>
                                         )}
                                     </div>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Full Name</label>
@@ -1556,34 +2482,64 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><Package className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Package</h3>
                                 <button onClick={() => setIsPackageBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handlePackageBookingSubmit} className="p-6 space-y-4 overflow-y-auto">
+                            <form onSubmit={handlePackageBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
                                     <input type="number" name="package_id" value={packageBookingData.package_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
                                 </div>
+                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
+                                {packageBookingData.check_in && packageBookingData.check_out && packageBookingData.check_in !== '' && packageBookingData.check_out !== '' ? (
+                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
+                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
+                                        <div className="flex space-x-4">
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_in}</p>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
+                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_out}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                        <input type="date" name="check_in" value={packageBookingData.check_in} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                            <input type="date" name="check_in" value={packageBookingData.check_in || ''} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                        <input type="date" name="check_out" value={packageBookingData.check_out} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                     </div>
                                 </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
-                                    {packageBookingData.check_in && packageBookingData.check_out && (
-                                        <p className="text-xs text-gray-500 mb-2">Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
-                                    )}
+                                    {!packageBookingData.check_in || !packageBookingData.check_out ? (
+                                        <div className={`p-6 text-center rounded-xl ${theme.bgSecondary} border-2 border-dashed ${theme.border}`}>
+                                            <BedDouble className={`w-10 h-10 ${theme.textSecondary} mx-auto mb-3`} />
+                                            <p className={`text-sm ${theme.textSecondary}`}>Please select check-in and check-out dates above to see available rooms</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
                                     <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
-                                        {rooms.filter(r => r.status === 'Available').length > 0 ? (
-                                            rooms.filter(r => r.status === 'Available').map(room => (
-                                                <div key={room.id} onClick={() => handlePackageRoomSelection(room.id)}
-                                                    className={`rounded-lg border-2 cursor-pointer transition-all duration-200 overflow-hidden ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`}
+                                                {rooms.length > 0 ? (
+                                                    rooms.map(room => {
+                                                        const isAvailable = Object.keys(packageRoomAvailability).length === 0 || packageRoomAvailability[room.id] !== false;
+                                                        return (
+                                                <div 
+                                                    key={room.id} 
+                                                    onClick={() => isAvailable && handlePackageRoomSelection(room.id)}
+                                                    className={`rounded-lg border-2 transition-all duration-200 overflow-hidden ${
+                                                        !isAvailable 
+                                                            ? 'opacity-50 cursor-not-allowed bg-gray-300 border-gray-400' 
+                                                            : `cursor-pointer ${packageBookingData.room_ids.includes(room.id) ? `${theme.buttonBg} ${theme.buttonText} border-transparent` : `${theme.bgCard} ${theme.textPrimary} ${theme.border} hover:border-amber-500`}`
+                                                    }`}
                                                 >
                                                     <img 
-                                                        src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${room.image_url}` : `http://127.0.0.1:8000${room.image_url}`} 
+                                                        src={getImageUrl(room.image_url)} 
                                                         alt={room.type} 
                                                         className="w-full h-20 object-cover" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
@@ -1593,19 +2549,23 @@ export default function App() {
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
                                                         <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        {!isAvailable && (
+                                                            <p className="text-xs text-red-600 font-bold mt-1">Unavailable</p>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            ))
+                                                        );
+                                                    })
                                         ) : (
                                             <div className="col-span-full text-center py-8 text-gray-500">
-                                                <p className="text-sm">
-                                                    {packageBookingData.check_in && packageBookingData.check_out 
-                                                        ? "No rooms available for the selected dates. Please try different dates." 
-                                                        : "Please select check-in and check-out dates first"}
-                                                </p>
+                                                        <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                        <p className="text-sm font-semibold mb-1">No rooms available</p>
+                                                        <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
                                             </div>
                                         )}
                                     </div>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Full Name</label>
@@ -1613,7 +2573,7 @@ export default function App() {
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Email Address</label>
-                                    <input type="email" name="guest_email" value={packageBookingData.guest_email} onChange={handlePackageBookingChange} placeholder="user@example.com" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    <input type="email" name="guest_email" value={packageBookingData.guest_email || ''} onChange={handlePackageBookingChange} placeholder="user@example.com (optional)" className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
                                 </div>
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Phone Number</label>
@@ -1641,6 +2601,89 @@ export default function App() {
                         </div>
                     </div>
                 )}
+
+                {/* Package Selection Modal */}
+                {isPackageSelectionOpen && (
+                    <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                        <div className={`w-full max-w-4xl ${theme.bgCard} rounded-3xl shadow-2xl flex flex-col max-h-[90vh] my-8`}>
+                            <div className={`p-6 flex items-center justify-between border-b ${theme.border}`}>
+                                <h3 className="text-lg font-bold flex items-center"><Package className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Select a Package</h3>
+                                <button onClick={() => setIsPackageSelectionOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
+                            </div>
+                            <div className="p-6 overflow-y-auto">
+                                {packages.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        {packages.map((pkg) => {
+                                            const imgIndex = packageImageIndex[pkg.id] || 0;
+                                            const currentImage = pkg.images && pkg.images[imgIndex];
+                                            return (
+                                                <div 
+                                                    key={pkg.id}
+                                                    onClick={() => {
+                                                        handleOpenPackageBookingForm(pkg.id);
+                                                        setIsPackageSelectionOpen(false);
+                                                    }}
+                                                    className={`${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer transform hover:-translate-y-1`}
+                                                >
+                                                    {/* Image Container */}
+                                                    <div className="relative h-48 overflow-hidden">
+                                                        <img 
+                                                            src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
+                                                            alt={pkg.title} 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                        />
+                                                        {/* Image Slider Dots */}
+                                                        {pkg.images && pkg.images.length > 1 && (
+                                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                                {pkg.images.map((_, imgIdx) => (
+                                                                    <button
+                                                                        key={imgIdx}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                        }}
+                                                                        className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                                    </div>
+
+                                                    {/* Content */}
+                                                    <div className="p-5">
+                                                        <h3 className={`text-xl font-bold ${theme.textCardPrimary || theme.textPrimary} mb-2 line-clamp-2`}>
+                                                            {pkg.title}
+                                                        </h3>
+                                                        <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary} mb-3 line-clamp-2`}>
+                                                            {pkg.description}
+                                                        </p>
+                                                        <div className={`flex items-center justify-between pt-3 border-t ${theme.cardBorder || theme.border}`}>
+                                                            <span className={`text-2xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
+                                                                ₹{pkg.price}
+                                                            </span>
+                                                            <button 
+                                                                className={`px-6 py-2 text-sm font-bold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow-lg ${theme.buttonHover} transition-all duration-300 transform hover:scale-105`}
+                                                            >
+                                                                Select
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-12">
+                                        <Package className={`w-16 h-16 ${theme.textSecondary} mx-auto mb-4`} />
+                                        <p className={`${theme.textSecondary}`}>No packages available at the moment.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
                 
                 {/* Service Booking Modal */}
                 {isServiceBookingFormOpen && (
@@ -1650,7 +2693,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><ConciergeBell className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Service</h3>
                                 <button onClick={() => setIsServiceBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleServiceBookingSubmit} className="p-6 space-y-4">
+                            <form onSubmit={handleServiceBookingSubmit} className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Service ID</label>
                                     <input type="number" name="service_id" value={serviceBookingData.service_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
@@ -1692,7 +2735,7 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><Coffee className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Place a Food Order</h3>
                                 <button onClick={() => setIsFoodOrderFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
-                            <form onSubmit={handleFoodOrderSubmit} className="p-6 space-y-4">
+                            <form onSubmit={handleFoodOrderSubmit} className="p-4 space-y-4">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Room ID</label>
                                     <input type="number" name="room_id" value={foodOrderData.room_id || ''} onChange={(e) => setFoodOrderData(prev => ({ ...prev, room_id: parseInt(e.target.value) || '' }))} placeholder="Enter your room ID" required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
@@ -1702,10 +2745,9 @@ export default function App() {
                                     {foodItems.map(item => (
                                         <div key={item.id} className="flex items-center justify-between">
                                             <div className="flex items-center space-x-4">
-                                                <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://127.0.0.1:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
+                                                <img src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com/${item.images?.[0]?.image_url}` : `http://localhost:8000/${item.images?.[0]?.image_url}`} alt={item.name} className="w-12 h-12 object-cover rounded-full" />
                                                 <div>
                                                     <p className={`font-semibold ${theme.textPrimary}`}>{item.name}</p>
-                                                    <p className={`text-sm ${theme.textSecondary}`}>₹{item.price}</p>
                                                 </div>
                                             </div>
                                             <input

@@ -67,12 +67,31 @@ const ImageModal = ({ imageUrl, onClose }) => {
     </div>
   );
 };
-const BookingDetailsModal = ({ booking, onClose, onImageClick }) => {
+const BookingDetailsModal = ({ booking, onClose, onImageClick, roomIdToRoom }) => {
   if (!booking) return null;
 
   const roomInfo = booking.rooms && booking.rooms.length > 0
-    ? booking.rooms.map(room => `${room.number} (${room.type})`).join(", ")
-    : "N/A";
+    ? booking.rooms.map(room => {
+        // Handle package bookings (nested room structure) vs regular bookings
+        if (booking.is_package) {
+          // Package bookings: room has nested room object or only room_id
+          if (room?.room?.number) return `${room.room.number} (${room.room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
+        } else {
+          // Regular bookings: room has number and type directly
+          if (room?.number) return `${room.number} (${room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
+        }
+      }).filter(Boolean).join(", ") || '-'
+    : "-";
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -213,6 +232,13 @@ const CheckInModal = ({ booking, onSave, onClose, feedback, isSubmitting }) => {
   };
 
   const handleSave = () => {
+    // Check if booking is in correct state before attempting check-in
+    const normalizedStatus = booking.status?.toLowerCase().replace(/[-_]/g, '');
+    if (normalizedStatus !== 'booked') {
+      alert(`Cannot check in. Booking status is: ${booking.status}`);
+      return;
+    }
+    
     if (!idCardImage || !guestPhoto) {
       alert("Please upload both ID card and guest photo.");
       return;
@@ -348,6 +374,13 @@ const Bookings = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [totalBookings, setTotalBookings] = useState(0);
   const [hasMoreBookings, setHasMoreBookings] = useState(true);
+
+  // Map of roomId -> room for robust display when API omits nested room payloads
+  const roomIdToRoom = useMemo(() => {
+    const map = {};
+    (allRooms || []).forEach(r => { if (r && r.id) map[r.id] = r; });
+    return map;
+  }, [allRooms]);
 
   const authHeader = useCallback(() => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -1367,7 +1400,18 @@ const Bookings = () => {
                       )}
                     </td>
                     <td className="p-4">
-                      {b.rooms && b.rooms.length > 0 ? b.rooms.map(room => `${room.number} (${room.type})`).join(", ") : "N/A"}
+                      {b.rooms && b.rooms.length > 0 ? (
+                        b.rooms.map(room => {
+                          // Handle package bookings (nested room structure) vs regular bookings
+                          if (b.is_package) {
+                            // Package bookings: room has nested room object
+                            return room.room ? `${room.room.number} (${room.room.type})` : '-';
+                          } else {
+                            // Regular bookings: room has number and type directly
+                            return `${room.number} (${room.type})`;
+                          }
+                        }).filter(Boolean).join(", ") || '-'
+                      ) : "-"}
                     </td>
                     <td className="p-4 text-gray-800">{b.check_in}</td>
                     <td className="p-4 text-gray-800">{b.check_out}</td>
@@ -1385,21 +1429,21 @@ const Bookings = () => {
                       <button
                         onClick={() => setBookingToCheckIn(b)}
                         className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status !== "booked"}
+                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                       >
                         Check-in
                       </button>
                       <button
                         onClick={() => setBookingToExtend(b)}
                         className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={!["booked", "checked-in"].includes(b.status)}
+                        disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
                       >
                         Extend
                       </button>
                       <button
                         onClick={() => cancelBooking(b.id, b.is_package)}
                         className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status !== "booked"}
+                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                       >
                         Cancel
                       </button>
@@ -1428,6 +1472,7 @@ const Bookings = () => {
             booking={modalBooking}
             onClose={() => setModalBooking(null)}
             onImageClick={(imageUrl) => setSelectedImage(imageUrl)}
+            roomIdToRoom={roomIdToRoom}
           />
         )}
         {bookingToExtend && (

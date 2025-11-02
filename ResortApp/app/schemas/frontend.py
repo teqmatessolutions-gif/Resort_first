@@ -77,3 +77,57 @@ class ResortInfoCreate(ResortInfoBase):
 
 class ResortInfo(ResortInfoBase):
     id: int
+
+
+# Signature Experiences
+class SignatureExperienceBase(BaseSchema):
+    title: str
+    description: str
+    image_url: str
+
+class SignatureExperienceCreate(SignatureExperienceBase):
+    pass
+
+class SignatureExperienceUpdate(BaseSchema):
+    title: str | None = None
+    description: str | None = None
+    image_url: str | None = None
+
+class SignatureExperience(SignatureExperienceBase):
+    id: int
+
+
+# Plan Your Wedding
+class PlanWeddingBase(BaseSchema):
+    title: str
+    description: str
+    image_url: str
+
+class PlanWeddingCreate(PlanWeddingBase):
+    pass
+
+class PlanWeddingUpdate(BaseSchema):
+    title: str | None = None
+    description: str | None = None
+    image_url: str | None = None
+
+class PlanWedding(PlanWeddingBase):
+    id: int
+
+
+# Nearby Attractions
+class NearbyAttractionBase(BaseSchema):
+    title: str
+    description: str
+    image_url: str
+
+class NearbyAttractionCreate(NearbyAttractionBase):
+    pass
+
+class NearbyAttractionUpdate(BaseSchema):
+    title: str | None = None
+    description: str | None = None
+    image_url: str | None = None
+
+class NearbyAttraction(NearbyAttractionBase):
+    id: int

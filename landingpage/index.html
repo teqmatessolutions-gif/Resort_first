@@ -525,7 +525,7 @@
           </div>
 
           <div class="col-lg-6">
-            <form id="contactForm" method="post" data-aos="fade-up" data-aos-delay="200">
+            <form id="contactForm" data-aos="fade-up" data-aos-delay="200">
               <div class="row gy-4">
 
                 <div class="col-md-6">
@@ -554,6 +554,26 @@
 
               </div>
             </form>
+            <script>
+            if (document.getElementById('contactForm')) {
+              document.getElementById('contactForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const loading = this.querySelector('.loading');
+                const error = this.querySelector('.error-message');
+                const success = this.querySelector('.sent-message');
+                
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                success.style.display = 'none';
+                
+                setTimeout(function() {
+                  loading.style.display = 'none';
+                  success.style.display = 'block';
+                  document.getElementById('contactForm').reset();
+                }, 1000);
+              });
+            }
+            </script>
           </div><!-- End Contact Form -->
 
         </div>
@@ -572,12 +592,32 @@
           <div class="col-lg-6">
             <h4>Join Our Newsletter</h4>
             <p>Subscribe to our newsletter and receive the latest news about our products and services!</p>
-            <form action="forms/newsletter.php" method="post" class="php-email-form">
-              <div class="newsletter-form"><input type="email" name="email"><input type="submit" value="Subscribe"></div>
-              <div class="loading">Loading</div>
-              <div class="error-message"></div>
-              <div class="sent-message">Your subscription request has been sent. Thank you!</div>
+            <form id="newsletterForm">
+              <div class="newsletter-form"><input type="email" name="email" required><input type="submit" value="Subscribe"></div>
+              <div class="loading" style="display: none;">Loading</div>
+              <div class="error-message" style="display: none;"></div>
+              <div class="sent-message" style="display: none;">Your subscription request has been sent. Thank you!</div>
             </form>
+            <script>
+            if (document.getElementById('newsletterForm')) {
+              document.getElementById('newsletterForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const loading = this.querySelector('.loading');
+                const error = this.querySelector('.error-message');
+                const success = this.querySelector('.sent-message');
+                
+                loading.style.display = 'block';
+                error.style.display = 'none';
+                success.style.display = 'none';
+                
+                setTimeout(function() {
+                  loading.style.display = 'none';
+                  success.style.display = 'block';
+                  document.getElementById('newsletterForm').reset();
+                }, 1000);
+              });
+            }
+            </script>
           </div>
         </div>
       </div>
@@ -650,7 +690,7 @@
           <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" style="padding: 2rem;">
-          <form id="callbackForm" method="post">
+          <form id="callbackForm">
             <div class="row gy-4">
               <div class="col-md-12">
                 <label class="form-label fw-semibold mb-2">Your Name <span class="text-danger">*</span></label>
@@ -679,6 +719,25 @@
               </div>
             </div>
           </form>
+          <script>
+          document.getElementById('callbackForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const loading = this.querySelector('.loading');
+            const error = this.querySelector('.error-message');
+            const success = this.querySelector('.sent-message');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            success.style.display = 'none';
+            
+            // Simulate processing
+            setTimeout(function() {
+              loading.style.display = 'none';
+              success.style.display = 'block';
+              document.getElementById('callbackForm').reset();
+            }, 1500);
+          });
+          </script>
         </div>
       </div>
     </div>

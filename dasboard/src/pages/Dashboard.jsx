@@ -31,33 +31,78 @@ const Dashboard = () => {
     (async () => {
       try {
         setLoading(true);
-        const [
-          bookingsRes,
-          roomsRes,
-          expensesRes,
-          foodOrdersRes,
-          assignedServicesRes,
-          billingsRes,
-          packagesRes,
-        ] = await Promise.all([
-          API.get("/bookings"),
-          API.get("/rooms"),
-          API.get("/expenses"),
-          API.get("/food-orders"),
-          API.get("/services/assigned"),
-          API.get("/bill/checkouts"),
-          API.get("/packages"),
+        setErr(null); // Clear any previous errors
+        
+        // Fetch all endpoints with individual error handling to prevent complete failure
+        const results = await Promise.allSettled([
+          API.get("/bookings").catch(err => ({ error: err, data: { bookings: [] } })),
+          API.get("/rooms").catch(err => ({ error: err, data: [] })),
+          API.get("/expenses").catch(err => ({ error: err, data: [] })),
+          API.get("/food-orders").catch(err => ({ error: err, data: [] })),
+          API.get("/services/assigned").catch(err => ({ error: err, data: [] })),
+          API.get("/bill/checkouts").catch(err => ({ error: err, data: [] })),
+          API.get("/packages").catch(err => ({ error: err, data: [] })),
         ]);
 
         if (!mounted) return;
-        setBookings(Array.isArray(bookingsRes.data.bookings) ? bookingsRes.data.bookings : []);
-        setRooms(Array.isArray(roomsRes.data) ? roomsRes.data : []);
-        setExpenses(Array.isArray(expensesRes.data) ? expensesRes.data : []);
-        setFoodOrders(Array.isArray(foodOrdersRes.data) ? foodOrdersRes.data : []);
-        setAssignedServices(Array.isArray(assignedServicesRes.data) ? assignedServicesRes.data : []);
-        setBillings(Array.isArray(billingsRes.data) ? billingsRes.data : []);
-        setPackages(Array.isArray(packagesRes.data) ? packagesRes.data : []);
+        
+        // Process results individually - allow partial failures
+        if (results[0].status === 'fulfilled' && !results[0].value.error) {
+          setBookings(Array.isArray(results[0].value.data?.bookings) ? results[0].value.data.bookings : []);
+        } else {
+          console.error("Failed to load bookings:", results[0].value?.error || results[0].reason);
+          setBookings([]);
+        }
+        
+        if (results[1].status === 'fulfilled' && !results[1].value.error) {
+          setRooms(Array.isArray(results[1].value.data) ? results[1].value.data : []);
+        } else {
+          console.error("Failed to load rooms:", results[1].value?.error || results[1].reason);
+          setRooms([]);
+        }
+        
+        if (results[2].status === 'fulfilled' && !results[2].value.error) {
+          setExpenses(Array.isArray(results[2].value.data) ? results[2].value.data : []);
+        } else {
+          console.error("Failed to load expenses:", results[2].value?.error || results[2].reason);
+          setExpenses([]);
+        }
+        
+        if (results[3].status === 'fulfilled' && !results[3].value.error) {
+          setFoodOrders(Array.isArray(results[3].value.data) ? results[3].value.data : []);
+        } else {
+          console.error("Failed to load food orders:", results[3].value?.error || results[3].reason);
+          setFoodOrders([]);
+        }
+        
+        if (results[4].status === 'fulfilled' && !results[4].value.error) {
+          setAssignedServices(Array.isArray(results[4].value.data) ? results[4].value.data : []);
+        } else {
+          console.error("Failed to load services:", results[4].value?.error || results[4].reason);
+          setAssignedServices([]);
+        }
+        
+        if (results[5].status === 'fulfilled' && !results[5].value.error) {
+          setBillings(Array.isArray(results[5].value.data) ? results[5].value.data : []);
+        } else {
+          console.error("Failed to load billings:", results[5].value?.error || results[5].reason);
+          setBillings([]);
+        }
+        
+        if (results[6].status === 'fulfilled' && !results[6].value.error) {
+          setPackages(Array.isArray(results[6].value.data) ? results[6].value.data : []);
+        } else {
+          console.error("Failed to load packages:", results[6].value?.error || results[6].reason);
+          setPackages([]);
+        }
+        
+        // Set error message only if all requests failed
+        const allFailed = results.every(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
+        if (allFailed) {
+          setErr("Failed to load dashboard data. Please check your connection and try again.");
+        }
       } catch (e) {
+        console.error("Dashboard fetch error:", e);
         setErr(e?.response?.data?.detail || "Failed to load dashboard data");
       } finally {
         setLoading(false);

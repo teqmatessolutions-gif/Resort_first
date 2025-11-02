@@ -106,7 +106,8 @@ def get_food_orders(
     def get_guest_for_room(room_id, db_session):
         if not room_id:
             return None
-        # Find the most recent active booking associated with this room
+        # Find the most recent active booking associated with this room (check both regular and package bookings)
+        # Check regular bookings first
         active_booking = (
             db_session.query(models.Booking)
             .join(models.booking.BookingRoom)
@@ -115,7 +116,24 @@ def get_food_orders(
             .order_by(models.Booking.id.desc())
             .first()
         )
-        return active_booking.guest_name if active_booking else None
+        
+        if active_booking:
+            return active_booking.guest_name
+        
+        # Check package bookings if no regular booking found
+        active_package_booking = (
+            db_session.query(models.PackageBooking)
+            .join(models.PackageBookingRoom)
+            .filter(models.PackageBookingRoom.room_id == room_id)
+            .filter(models.PackageBooking.status.in_(["checked-in", "booked"]))
+            .order_by(models.PackageBooking.id.desc())
+            .first()
+        )
+        
+        if active_package_booking:
+            return active_package_booking.guest_name
+        
+        return None
 
     return [
         {

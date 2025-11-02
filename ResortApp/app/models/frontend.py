@@ -7,7 +7,7 @@ class HeaderBanner(Base):
     __tablename__ = "header_banner"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255))
-    subtitle = Column(String(255))
+    subtitle = Column(Text)  # Changed from String(255) to Text to allow longer descriptions
     image_url = Column(String(255))
     is_active = Column(Boolean, default=True)
 
@@ -54,4 +54,34 @@ class ResortInfo(Base):
     instagram = Column(String(255))
     twitter = Column(String(255))
     linkedin = Column(String(255))
+    is_active = Column(Boolean, default=True)
+
+
+# Signature Experiences
+class SignatureExperience(Base):
+    __tablename__ = "signature_experiences"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
+    is_active = Column(Boolean, default=True)
+
+
+# Plan Your Wedding
+class PlanWedding(Base):
+    __tablename__ = "plan_weddings"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
+    is_active = Column(Boolean, default=True)
+
+
+# Nearby Attractions
+class NearbyAttraction(Base):
+    __tablename__ = "nearby_attractions"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255))
+    description = Column(Text)
+    image_url = Column(String(255))
     is_active = Column(Boolean, default=True)

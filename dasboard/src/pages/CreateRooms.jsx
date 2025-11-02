@@ -6,6 +6,16 @@ import { LineChart, Line, ResponsiveContainer, Tooltip as RechartsTooltip } from
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
 
+// Get the correct base URL based on environment
+const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image';
+  if (imageUrl.startsWith('http')) return imageUrl; // Already a full URL
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? 'https://www.teqmates.com' 
+    : 'http://localhost:8000';
+  return `${baseUrl}${imageUrl}`;
+};
+
 // KPI Card for quick stats
 const KpiCard = ({ title, value, icon, color }) => (
   <div className={`p-6 rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
@@ -146,7 +156,7 @@ const ImageModal = ({ imageUrl, onClose }) => {
           &times;
         </button>
         <img
-          src={`https://www.teqmates.com${imageUrl}`}
+          src={getImageUrl(imageUrl)}
           alt="Room"
           className="w-full h-auto rounded-2xl shadow-lg"
         />
@@ -363,7 +373,7 @@ const Rooms = () => {
       children: room.children,
       image: null,
     });
-    setPreviewImage(room.image_url ? `https://www.teqmates.com${room.image_url}` : null);
+    setPreviewImage(getImageUrl(room.image_url));
     setBannerMessage({ type: null, text: "" });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -572,7 +582,7 @@ const Rooms = () => {
             <motion.div key={room.id} className="bg-gray-50 rounded-2xl shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col" whileHover={{ y: -5 }}>
               <div className="relative">
                 <img
-                  src={room.image_url ? `https://www.teqmates.com${room.image_url}` : 'https://placehold.co/400x300/e2e8f0/a0aec0?text=No+Image'}
+                  src={getImageUrl(room.image_url)}
                   alt={`Room ${room.number}`}
                   className="h-48 w-full object-cover cursor-pointer"
                   onClick={() => setSelectedImage(room.image_url)}
