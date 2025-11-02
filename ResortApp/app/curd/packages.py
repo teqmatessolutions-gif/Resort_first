@@ -138,11 +138,25 @@ def book_package(db: Session, booking: PackageBookingCreate):
             print(f"Warning: Could not create/link guest user: {str(e)}")
     
     # Check for an existing package booking to reuse guest details for consistency
-    existing_booking = db.query(PackageBooking).filter(
-        (PackageBooking.guest_email == booking.guest_email) & (PackageBooking.guest_mobile == booking.guest_mobile)
-    ).order_by(PackageBooking.id.desc()).first()
+    # Build filter conditions using normalized email/mobile
+    from sqlalchemy import and_, or_
+    existing_filters = []
+    
+    # Add email filter if normalized email exists
+    if guest_email:
+        existing_filters.append(PackageBooking.guest_email == guest_email)
+    else:
+        existing_filters.append((PackageBooking.guest_email.is_(None)) | (PackageBooking.guest_email == ''))
+    
+    # Add mobile filter if normalized mobile exists
+    if guest_mobile:
+        existing_filters.append(PackageBooking.guest_mobile == guest_mobile)
+    else:
+        existing_filters.append((PackageBooking.guest_mobile.is_(None)) | (PackageBooking.guest_mobile == ''))
+    
+    existing_booking = db.query(PackageBooking).filter(and_(*existing_filters)).order_by(PackageBooking.id.desc()).first()
 
-    guest_name_to_use = booking.guest_name
+    guest_name_to_use = booking.guest_name or "Guest User"
     if existing_booking:
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
@@ -152,8 +166,8 @@ def book_package(db: Session, booking: PackageBookingCreate):
         check_in=booking.check_in,
         check_out=booking.check_out,
         guest_name=guest_name_to_use,
-        guest_email=booking.guest_email,
-        guest_mobile=booking.guest_mobile,
+        guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
+        guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
         adults=booking.adults,
         children=booking.children,
         status="booked",
