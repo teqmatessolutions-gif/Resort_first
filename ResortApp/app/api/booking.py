@@ -407,26 +407,24 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
                 print(f"Warning: Could not create/link guest user: {str(e)}")
         
         # Check for duplicate booking with same details and dates
-        # Build filter conditions using normalized email/mobile
-        duplicate_filters = [
-            (Booking.check_in == booking.check_in),
-            (Booking.check_out == booking.check_out),
-            (Booking.status.in_(['booked', 'checked-in']))
-        ]
-        
-        # Add email filter if normalized email exists
-        if guest_email:
-            duplicate_filters.append(Booking.guest_email == guest_email)
-        else:
-            duplicate_filters.append((Booking.guest_email.is_(None)) | (Booking.guest_email == ''))
-        
-        # Add mobile filter if normalized mobile exists
-        if guest_mobile:
-            duplicate_filters.append(Booking.guest_mobile == guest_mobile)
-        else:
-            duplicate_filters.append((Booking.guest_mobile.is_(None)) | (Booking.guest_mobile == ''))
-        
-        duplicate_booking = db.query(Booking).filter(and_(*duplicate_filters)).first()
+        # Only check for duplicates if we have at least email or mobile
+        duplicate_booking = None
+        if guest_email or guest_mobile:
+            duplicate_query = db.query(Booking).filter(
+                Booking.check_in == booking.check_in,
+                Booking.check_out == booking.check_out,
+                Booking.status.in_(['booked', 'checked-in'])
+            )
+            
+            # Add email filter if normalized email exists
+            if guest_email:
+                duplicate_query = duplicate_query.filter(Booking.guest_email == guest_email)
+            
+            # Add mobile filter if normalized mobile exists
+            if guest_mobile:
+                duplicate_query = duplicate_query.filter(Booking.guest_mobile == guest_mobile)
+            
+            duplicate_booking = duplicate_query.first()
         
         if duplicate_booking:
             raise HTTPException(
@@ -435,22 +433,20 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
             )
 
         # Check for an existing booking to reuse guest details for consistency
-        # Build filter conditions using normalized email/mobile
-        existing_filters = []
-        
-        # Add email filter if normalized email exists
-        if guest_email:
-            existing_filters.append(Booking.guest_email == guest_email)
-        else:
-            existing_filters.append((Booking.guest_email.is_(None)) | (Booking.guest_email == ''))
-        
-        # Add mobile filter if normalized mobile exists
-        if guest_mobile:
-            existing_filters.append(Booking.guest_mobile == guest_mobile)
-        else:
-            existing_filters.append((Booking.guest_mobile.is_(None)) | (Booking.guest_mobile == ''))
-        
-        existing_booking = db.query(Booking).filter(and_(*existing_filters)).order_by(Booking.id.desc()).first()
+        # Only check if we have at least email or mobile
+        existing_booking = None
+        if guest_email or guest_mobile:
+            existing_query = db.query(Booking)
+            
+            # Add email filter if normalized email exists
+            if guest_email:
+                existing_query = existing_query.filter(Booking.guest_email == guest_email)
+            
+            # Add mobile filter if normalized mobile exists
+            if guest_mobile:
+                existing_query = existing_query.filter(Booking.guest_mobile == guest_mobile)
+            
+            existing_booking = existing_query.order_by(Booking.id.desc()).first()
 
         guest_name_to_use = booking.guest_name or "Guest User"
         if existing_booking:
