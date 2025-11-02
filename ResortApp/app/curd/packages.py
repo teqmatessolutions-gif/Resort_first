@@ -138,23 +138,20 @@ def book_package(db: Session, booking: PackageBookingCreate):
             print(f"Warning: Could not create/link guest user: {str(e)}")
     
     # Check for an existing package booking to reuse guest details for consistency
-    # Build filter conditions using normalized email/mobile
-    from sqlalchemy import and_, or_
-    existing_filters = []
-    
-    # Add email filter if normalized email exists
-    if guest_email:
-        existing_filters.append(PackageBooking.guest_email == guest_email)
-    else:
-        existing_filters.append((PackageBooking.guest_email.is_(None)) | (PackageBooking.guest_email == ''))
-    
-    # Add mobile filter if normalized mobile exists
-    if guest_mobile:
-        existing_filters.append(PackageBooking.guest_mobile == guest_mobile)
-    else:
-        existing_filters.append((PackageBooking.guest_mobile.is_(None)) | (PackageBooking.guest_mobile == ''))
-    
-    existing_booking = db.query(PackageBooking).filter(and_(*existing_filters)).order_by(PackageBooking.id.desc()).first()
+    # Only check if we have at least email or mobile
+    existing_booking = None
+    if guest_email or guest_mobile:
+        existing_query = db.query(PackageBooking)
+        
+        # Add email filter if normalized email exists
+        if guest_email:
+            existing_query = existing_query.filter(PackageBooking.guest_email == guest_email)
+        
+        # Add mobile filter if normalized mobile exists
+        if guest_mobile:
+            existing_query = existing_query.filter(PackageBooking.guest_mobile == guest_mobile)
+        
+        existing_booking = existing_query.order_by(PackageBooking.id.desc()).first()
 
     guest_name_to_use = booking.guest_name or "Guest User"
     if existing_booking:
