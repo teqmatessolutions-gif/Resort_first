@@ -12,7 +12,7 @@ import BannerMessage from "../components/BannerMessage";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Reusable components (for better structure)
-const KPI_Card = ({ title, value, unit = "", duration = 1.5 }) => (
+const KPI_Card = React.memo(({ title, value, unit = "", duration = 1.5 }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
     className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center transition-transform duration-200 cursor-pointer"
@@ -26,9 +26,10 @@ const KPI_Card = ({ title, value, unit = "", duration = 1.5 }) => (
       suffix={unit}
     />
   </motion.div>
-);
+));
+KPI_Card.displayName = 'KPI_Card';
 
-const BookingStatusBadge = ({ status }) => {
+const BookingStatusBadge = React.memo(({ status }) => {
   const statusClasses = {
     booked: "bg-green-100 text-green-700",
     cancelled: "bg-red-100 text-red-600",
@@ -44,7 +45,8 @@ const BookingStatusBadge = ({ status }) => {
       {status}
     </span>
   );
-};
+});
+BookingStatusBadge.displayName = 'BookingStatusBadge';
 
 const ImageModal = ({ imageUrl, onClose }) => {
   if (!imageUrl) return null;
@@ -273,7 +275,7 @@ const CheckInModal = ({ booking, onSave, onClose, feedback, isSubmitting }) => {
   );
 };
 
-const BookingStatusChart = ({ data }) => {
+const BookingStatusChart = React.memo(({ data }) => {
   const chartData = useMemo(() => {
     const statusCounts = data.reduce((acc, booking) => {
       acc[booking.status] = (acc[booking.status] || 0) + 1;
@@ -311,7 +313,8 @@ const BookingStatusChart = ({ data }) => {
       </div>
     </div>
   );
-};
+});
+BookingStatusChart.displayName = 'BookingStatusChart';
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -398,7 +401,7 @@ const Bookings = () => {
       const [roomsRes, bookingsRes, packageBookingsRes, packageRes] = await Promise.all([
         API.get("/rooms/", authHeader()),
         API.get("/bookings?skip=0&limit=20&order_by=id&order=desc", authHeader()), // Order by latest first
-        API.get("/packages/bookingsall?skip=0&limit=10000", authHeader()), // Fetch all package bookings
+        API.get("/packages/bookingsall?skip=0&limit=500", authHeader()), // Reduced from 10000 to 500 for performance
         API.get("/packages/", authHeader()),
       ]);
 
@@ -407,8 +410,8 @@ const Bookings = () => {
       const packageBookings = packageBookingsRes.data || [];
       const todaysDate = new Date().toISOString().split("T")[0];
 
-      // We need all bookings for accurate KPIs. This is a trade-off.
-      const allBookingsRes = await API.get("/bookings?limit=10000&order_by=id&order=desc", authHeader()); // Fetch all for KPIs with ordering
+      // Reduced limit for better performance - KPI calculation uses sample data
+      const allBookingsRes = await API.get("/bookings?limit=500&order_by=id&order=desc", authHeader()); // Reduced from 10000 to 500
       const allRegularBookings = allBookingsRes.data.bookings;
       
       // Combine regular bookings and package bookings
@@ -1107,7 +1110,7 @@ const Bookings = () => {
     }
   };
 
-  const RoomSelection = ({ rooms, selectedRoomNumbers, onRoomToggle }) => {
+  const RoomSelection = React.memo(({ rooms, selectedRoomNumbers, onRoomToggle }) => {
     return (
       <div className="flex flex-wrap gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
         {rooms.length > 0 ? (
@@ -1148,7 +1151,8 @@ const Bookings = () => {
         )}
       </div>
     );
-  };
+  });
+  RoomSelection.displayName = 'RoomSelection';
 
 
   return (

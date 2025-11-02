@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import BannerMessage from "../components/BannerMessage";
 import axios from "axios"; // We need axios to create the api service object
@@ -50,7 +50,7 @@ api.interceptors.response.use(response => {
 
 // --- Helper Components ---
 
-const KpiCard = ({ title, value, icon, color, prefix = '', suffix = '' }) => (
+const KpiCard = React.memo(({ title, value, icon, color, prefix = '', suffix = '' }) => (
   <div className="bg-white p-4 rounded-xl shadow-md flex items-center">
     <div className={`rounded-full p-3 mr-4 ${color}`}>
       {icon}
@@ -60,9 +60,10 @@ const KpiCard = ({ title, value, icon, color, prefix = '', suffix = '' }) => (
       <p className="text-2xl font-bold text-gray-800">{prefix}{value}{suffix}</p>
     </div>
   </div>
-);
+));
+KpiCard.displayName = 'KpiCard';
 
-const CheckoutDetailModal = ({ checkout, onClose }) => {
+const CheckoutDetailModal = React.memo(({ checkout, onClose }) => {
   if (!checkout) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
@@ -87,7 +88,8 @@ const CheckoutDetailModal = ({ checkout, onClose }) => {
       </div>
     </div>
   );
-};
+});
+CheckoutDetailModal.displayName = 'CheckoutDetailModal';
 
 const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6'];
 

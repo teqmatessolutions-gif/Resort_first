@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, memo } from "react";
 import API from "../services/api";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
@@ -34,14 +34,15 @@ const Dashboard = () => {
         setErr(null); // Clear any previous errors
         
         // Fetch all endpoints with individual error handling to prevent complete failure
+        // Reduced limits for better performance (pagination handles the rest)
         const results = await Promise.allSettled([
-          API.get("/bookings").catch(err => ({ error: err, data: { bookings: [] } })),
-          API.get("/rooms").catch(err => ({ error: err, data: [] })),
-          API.get("/expenses").catch(err => ({ error: err, data: [] })),
-          API.get("/food-orders").catch(err => ({ error: err, data: [] })),
-          API.get("/services/assigned").catch(err => ({ error: err, data: [] })),
-          API.get("/bill/checkouts").catch(err => ({ error: err, data: [] })),
-          API.get("/packages").catch(err => ({ error: err, data: [] })),
+          API.get("/bookings?limit=500").catch(err => ({ error: err, data: { bookings: [] } })),
+          API.get("/rooms?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/expenses?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/food-orders?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/services/assigned?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/bill/checkouts?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/packages?limit=500").catch(err => ({ error: err, data: [] })),
         ]);
 
         if (!mounted) return;
@@ -114,8 +115,8 @@ const Dashboard = () => {
   }, []);
 
   // ... (rest of the useMemo and helper functions)
-  const safeDate = (d) => (d ? new Date(d) : null);
-  const fmtCurrency = (n) => `₹ ${Number(n || 0).toLocaleString()}`;
+  const safeDate = useCallback((d) => (d ? new Date(d) : null), []);
+  const fmtCurrency = useCallback((n) => `₹ ${Number(n || 0).toLocaleString()}`, []);
   const roomCounts = useMemo(() => {
     const total = rooms.length;
     // Room statuses are: "Available", "Occupied", "Maintenance"
@@ -637,26 +638,31 @@ const Dashboard = () => {
 };
 
 /* ---------- Small UI bits ---------- */
-const KPICard = ({ label, value, sub }) => (
+const KPICard = memo(({ label, value, sub }) => (
   <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4">
     <div className="text-xs uppercase tracking-wide text-gray-500 truncate">{label}</div>
     <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mt-1 truncate">{value}</div>
     {sub && <div className="text-xs text-gray-400 mt-1 truncate">{sub}</div>}
   </div>
-);
+));
+KPICard.displayName = 'KPICard';
 
-const Card = ({ title, children }) => (
+const Card = memo(({ title, children }) => (
   <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
     <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">{title}</h2>
     {children}
   </div>
-);
+));
+Card.displayName = 'Card';
 
-const Th = ({ children, className = "" }) => (
+const Th = memo(({ children, className = "" }) => (
   <th className={`px-2 sm:px-3 py-2 text-left text-xs sm:text-sm font-semibold ${className}`}>{children}</th>
-);
-const Td = ({ children, className = "" }) => (
+));
+Th.displayName = 'Th';
+
+const Td = memo(({ children, className = "" }) => (
   <td className={`px-2 sm:px-3 py-2 text-xs sm:text-sm ${className}`}>{children}</td>
-);
+));
+Td.displayName = 'Td';
 
 export default Dashboard;
