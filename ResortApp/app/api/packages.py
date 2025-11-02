@@ -132,6 +132,74 @@ def book_package_guest_api(
     """
     try:
         result = crud_package.book_package(db, booking)
+        
+        # Calculate booking charges and send confirmation email if email address is provided
+        if result:
+            # Normalize email for sending
+            guest_email = None
+            try:
+                if booking.guest_email:
+                    guest_email = booking.guest_email.strip() if isinstance(booking.guest_email, str) and booking.guest_email.strip() else None
+            except (AttributeError, TypeError):
+                pass
+            
+            if guest_email:
+                try:
+                    from app.utils.email import send_email, create_booking_confirmation_email
+                    from datetime import datetime, date
+                    
+                    # Get package details
+                    package = db.query(Package).filter(Package.id == booking.package_id).first()
+                    
+                    # Calculate stay duration
+                    check_in_date = result.check_in if isinstance(result.check_in, date) else datetime.strptime(str(result.check_in), '%Y-%m-%d').date()
+                    check_out_date = result.check_out if isinstance(result.check_out, date) else datetime.strptime(str(result.check_out), '%Y-%m-%d').date()
+                    stay_nights = max(1, (check_out_date - check_in_date).days)
+                    
+                    # Calculate package charges (package price per night per room)
+                    package_price = package.price if package else 0
+                    package_charges = package_price * stay_nights * len(booking.room_ids) if booking.room_ids else package_price * stay_nights
+                    
+                    # Get room details with prices
+                    rooms_data = []
+                    for pbr in result.rooms:
+                        if pbr.room:
+                            rooms_data.append({
+                                'number': pbr.room.number,
+                                'type': pbr.room.type or 'Standard',
+                                'price': pbr.room.price or 0
+                            })
+                    
+                    # Format booking ID (PK-000001)
+                    formatted_booking_id = f"PK-{str(result.id).zfill(6)}"
+                    
+                    email_html = create_booking_confirmation_email(
+                        guest_name=result.guest_name,
+                        booking_id=result.id,
+                        booking_type='package',
+                        check_in=str(result.check_in),
+                        check_out=str(result.check_out),
+                        rooms=rooms_data,
+                        total_amount=package_charges,
+                        package_name=package.title if package else None,
+                        guests={'adults': booking.adults, 'children': booking.children},
+                        guest_mobile=booking.guest_mobile,
+                        package_charges=package_charges,
+                        stay_nights=stay_nights
+                    )
+                    
+                    send_email(
+                        to_email=guest_email,
+                        subject=f"Package Booking Confirmation {formatted_booking_id} - Elysian Retreat",
+                        html_content=email_html,
+                        to_name=result.guest_name
+                    )
+                except Exception as e:
+                    # Log error but don't fail the booking
+                    print(f"Failed to send confirmation email: {str(e)}")
+        
+        return result
+        
     except HTTPException:
         # Re-raise HTTP exceptions (like validation errors) as-is
         raise
@@ -147,64 +215,6 @@ def book_package_guest_api(
             status_code=500,
             detail=f"Failed to create package booking: {str(e)}"
         )
-    
-    # Calculate booking charges and send confirmation email if email address is provided
-    if booking.guest_email and result:
-        try:
-            from app.utils.email import send_email, create_booking_confirmation_email
-            from datetime import datetime, date
-            
-            # Get package details
-            package = db.query(Package).filter(Package.id == booking.package_id).first()
-            
-            # Calculate stay duration
-            check_in_date = result.check_in if isinstance(result.check_in, date) else datetime.strptime(str(result.check_in), '%Y-%m-%d').date()
-            check_out_date = result.check_out if isinstance(result.check_out, date) else datetime.strptime(str(result.check_out), '%Y-%m-%d').date()
-            stay_nights = max(1, (check_out_date - check_in_date).days)
-            
-            # Calculate package charges (package price per night per room)
-            package_price = package.price if package else 0
-            package_charges = package_price * stay_nights * len(booking.room_ids) if booking.room_ids else package_price * stay_nights
-            
-            # Get room details with prices
-            rooms_data = []
-            for pbr in result.rooms:
-                if pbr.room:
-                    rooms_data.append({
-                        'number': pbr.room.number,
-                        'type': pbr.room.type or 'Standard',
-                        'price': pbr.room.price or 0
-                    })
-            
-            # Format booking ID (PK-000001)
-            formatted_booking_id = f"PK-{str(result.id).zfill(6)}"
-            
-            email_html = create_booking_confirmation_email(
-                guest_name=result.guest_name,
-                booking_id=result.id,
-                booking_type='package',
-                check_in=str(result.check_in),
-                check_out=str(result.check_out),
-                rooms=rooms_data,
-                total_amount=package_charges,
-                package_name=package.title if package else None,
-                guests={'adults': booking.adults, 'children': booking.children},
-                guest_mobile=booking.guest_mobile,
-                package_charges=package_charges,
-                stay_nights=stay_nights
-            )
-            
-            send_email(
-                to_email=booking.guest_email,
-                subject=f"Package Booking Confirmation {formatted_booking_id} - Elysian Retreat",
-                html_content=email_html,
-                to_name=result.guest_name
-            )
-        except Exception as e:
-            # Log error but don't fail the booking
-            print(f"Failed to send confirmation email: {str(e)}")
-    
-    return result
 
 @router.get("/bookingsall", response_model=List[PackageBookingOut])
 def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
