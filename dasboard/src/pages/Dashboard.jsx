@@ -118,10 +118,27 @@ const Dashboard = () => {
   const fmtCurrency = (n) => `₹ ${Number(n || 0).toLocaleString()}`;
   const roomCounts = useMemo(() => {
     const total = rooms.length;
-    const occupied = rooms.filter(r => (r.status || r.current_status || "").toLowerCase().includes("booked")).length;
-    const available = rooms.filter(r => (r.status || "").toLowerCase().includes("avail")).length || Math.max(total - occupied, 0);
-    const maintenance = total - occupied - available;
-    return { total, occupied, available, maintenance: Math.max(maintenance, 0) };
+    // Room statuses are: "Available", "Occupied", "Maintenance"
+    const occupied = rooms.filter(r => {
+      const status = (r.status || r.current_status || "").toLowerCase();
+      return status.includes("occupied") || status.includes("booked");
+    }).length;
+    const available = rooms.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status.includes("avail");
+    }).length;
+    const maintenance = rooms.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status.includes("maintenance") || status.includes("maintain");
+    }).length;
+    // Ensure counts add up correctly
+    const calculatedMaintenance = Math.max(0, total - occupied - available);
+    return { 
+      total, 
+      occupied, 
+      available, 
+      maintenance: maintenance > 0 ? maintenance : calculatedMaintenance 
+    };
   }, [rooms]);
   const revenue = useMemo(() => {
     const total = billings.reduce((s, b) => s + Number(b.grand_total || 0), 0);
@@ -130,7 +147,9 @@ const Dashboard = () => {
     const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     let today = 0, month = 0;
     billings.forEach(b => {
-      const d = safeDate(b.created_at);
+      // Use checkout_date if available, otherwise fallback to created_at
+      const dateToUse = b.checkout_date || b.created_at;
+      const d = safeDate(dateToUse);
       if (!d) return;
       const ds = d.toISOString().slice(0, 10);
       if (ds === todayStr) today += Number(b.grand_total || 0);
@@ -154,8 +173,17 @@ const Dashboard = () => {
   }, [expenses]);
   const bookingCounts = useMemo(() => {
     const total = bookings.length;
-    const cancelled = bookings.filter(b => (b.status || "").toLowerCase().includes("cancel")).length;
-    const active = total - cancelled;
+    const cancelled = bookings.filter(b => {
+      const status = (b.status || "").toLowerCase();
+      return status.includes("cancel");
+    }).length;
+    // Active bookings: exclude cancelled and checked-out
+    const active = bookings.filter(b => {
+      const status = (b.status || "").toLowerCase();
+      return !status.includes("cancel") && 
+             !status.includes("checked-out") && 
+             !status.includes("checked_out");
+    }).length;
     return { total, active, cancelled };
   }, [bookings]);
   const revenueSeries = useMemo(() => {

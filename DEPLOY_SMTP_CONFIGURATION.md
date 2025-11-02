@@ -95,7 +95,7 @@ sudo ./configure_smtp_server.sh
 
 3. **Use this password in SMTP_PASSWORD:**
    ```bash
-   SMTP_PASSWORD=xxxx xxxx xxxx xxxx
+   SMTP_PASSWORD=fdmk rdak vptx dnzn
    # You can include spaces or remove them
    ```
 

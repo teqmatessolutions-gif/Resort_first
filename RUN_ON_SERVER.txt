@@ -1,0 +1,48 @@
+==========================================
+SMTP CONFIGURATION - RUN ON SERVER
+==========================================
+
+Copy and paste these commands on your server:
+
+# Option 1: Use the Interactive Script (Recommended)
+cd /var/www/resort/Resort_first
+git pull origin main
+cd ResortApp
+chmod +x ../configure_smtp_server.sh
+sudo ../configure_smtp_server.sh
+
+# Option 2: Quick Configuration (Gmail Only)
+cd /var/www/resort/Resort_first
+git pull origin main
+chmod +x quick_configure_smtp.sh
+sudo ./quick_configure_smtp.sh
+
+# Option 3: Manual Configuration
+cd /var/www/resort/Resort_first/ResortApp
+sudo nano .env.production
+# Add these lines at the end:
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_USER=your-email@gmail.com
+# SMTP_PASSWORD=your-app-password
+# SMTP_FROM_EMAIL=noreply@elysianretreat.com
+# SMTP_FROM_NAME=Elysian Retreat
+# SMTP_USE_TLS=true
+# Then save and restart:
+sudo systemctl restart resort.service
+
+==========================================
+VERIFICATION
+==========================================
+
+# Check SMTP is configured:
+cat /var/www/resort/Resort_first/ResortApp/.env.production | grep SMTP
+
+# Check service status:
+sudo systemctl status resort.service
+
+# Test email by creating a booking, then check logs:
+sudo journalctl -u resort.service -n 50 | grep -i email
+
+==========================================
+
