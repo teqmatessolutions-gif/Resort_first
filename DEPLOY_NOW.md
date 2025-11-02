@@ -1,80 +1,95 @@
-# Deploy Changes to Server
-
-## Password provided: `4bE!beciK#deo-_w`
+# 🚀 Deploy 500 Error Fixes to Production - IMMEDIATE
 
 ## Quick Deployment Steps
 
-### Option 1: Manual SCP Commands
+### Option 1: Using Deployment Script (Recommended)
 
-Run these commands in your terminal, and **enter the password when prompted**:
+**On the server (via SSH):**
 
-```powershell
-# Deploy Landing Page Files
-scp landingpage/index.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
-
-scp landingpage/service-details.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
-
-scp landingpage/assets/css/main.css root@139.84.211.200:/var/www/resort/Resort_first/landingpage/assets/css/
-
-# Deploy Dashboard API fix
-scp dasboard/src/services/api.js root@139.84.211.200:/var/www/resort/Resort_first/dasboard/src/services/
+```bash
+cd /var/www/resort/Resort_first
+chmod +x deploy_fix_500.sh
+./deploy_fix_500.sh
 ```
 
-### Option 2: SSH and Pull from Git
+### Option 2: Manual Deployment
 
-Connect to server and pull changes:
-
-```powershell
+**Step 1: Connect to Server**
+```bash
 ssh root@139.84.211.200
 ```
 
-Enter password: `4bE!beciK#deo-_w`
-
-Then on the server, run:
+**Step 2: Navigate to Project Directory**
 ```bash
 cd /var/www/resort/Resort_first
-git pull origin main
-cd dasboard && npm run build
-sudo systemctl restart resort.service
-sudo systemctl restart nginx
 ```
 
-### Option 3: Use WinSCP (Easiest - GUI)
-
-1. Download WinSCP: https://winscp.net/
-2. New Session:
-   - **Host:** 139.84.211.200
-   - **Username:** root
-   - **Password:** 4bE!beciK#deo-_w
-   - **Protocol:** SFTP
-3. Click Login
-4. Navigate to `/var/www/resort/Resort_first/landingpage/`
-5. Upload files:
-   - `landingpage/index.html`
-   - `landingpage/service-details.html`  
-   - `landingpage/assets/css/main.css`
-6. Navigate to `/var/www/resort/Resort_first/dasboard/src/services/`
-7. Upload: `dasboard/src/services/api.js`
-
-## After Upload - Build Dashboard on Server
-
-SSH to server and run:
+**Step 3: Pull Latest Changes**
 ```bash
-cd /var/www/resort/Resort_first/dasboard
-npm run build
-cd ..
-sudo systemctl restart resort.service
-sudo systemctl restart nginx
+git pull origin main
 ```
 
-## Files Changed:
-1. ✅ Landing page - Hidden "Our Process" button
-2. ✅ Landing page - Enhanced callback modal with Gmail
-3. ✅ Landing page - Fixed spelling
-4. ✅ Dashboard - Fixed API baseURL
+**If you encounter conflicts:**
+```bash
+git reset --hard HEAD
+git pull origin main
+```
 
-## Test After Deployment:
-Visit https://www.teqmates.com and verify changes are live!
+**Step 4: Restart Backend Service**
+```bash
+sudo systemctl restart resort.service
+```
 
+**Step 5: Verify Service is Running**
+```bash
+sudo systemctl status resort.service
+```
 
+**Step 6: Check Logs**
+```bash
+sudo journalctl -u resort.service -n 50 --no-pager
+```
 
+## What's Being Deployed
+
+✅ Simplified SQLAlchemy filter queries (removed `and_()` usage)  
+✅ Comprehensive error handling with try-except blocks  
+✅ Race condition handling in user creation  
+✅ Database rollback on errors  
+✅ Detailed error logging with traceback  
+✅ Improved email/mobile normalization  
+✅ Fixed return value issues  
+
+## Verification
+
+After deployment, test by:
+
+1. **Try creating a booking** via https://www.teqmates.com/resort/
+2. **Check if 500 error is resolved**
+3. **Monitor logs** for any errors:
+   ```bash
+   sudo journalctl -u resort.service -f
+   ```
+
+## Troubleshooting
+
+### If service won't start:
+```bash
+# Check for Python syntax errors
+cd /var/www/resort/Resort_first/ResortApp
+python3 -m py_compile app/api/booking.py
+python3 -m py_compile app/curd/packages.py
+
+# Check backend logs
+sudo journalctl -u resort.service -n 100 --no-pager | grep -i error
+```
+
+### If 500 error persists:
+```bash
+# Get detailed error from logs
+sudo journalctl -u resort.service -n 200 --no-pager | grep -A 20 "Error in"
+```
+
+---
+
+**Ready to deploy!** Run the commands above on your server.

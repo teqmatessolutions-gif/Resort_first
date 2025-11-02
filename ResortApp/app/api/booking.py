@@ -221,6 +221,7 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
         return new_user.id
     except Exception as e:
         # If user creation fails due to unique constraint or other DB error, try to find existing user
+        db.rollback()  # Rollback the failed transaction
         if email:
             existing_user = db.query(User).filter(User.email == email).first()
             if existing_user:
@@ -230,7 +231,7 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
             if existing_user:
                 return existing_user.id
         # Re-raise if we can't find existing user
-        raise
+        raise ValueError(f"Failed to create or find guest user: {str(e)}")
 
 # -------------------------------
 # POST a new booking
