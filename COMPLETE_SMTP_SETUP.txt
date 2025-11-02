@@ -1,0 +1,72 @@
+==========================================
+COMPLETE SMTP CONFIGURATION ON SERVER
+==========================================
+
+OPTION 1: Run Non-Interactive Script (Recommended)
+----------------------------------------------------
+Copy and paste these commands on your server:
+
+cd /var/www/resort/Resort_first
+git pull origin main
+chmod +x configure_smtp_non_interactive.sh
+sudo ./configure_smtp_non_interactive.sh
+
+This will automatically configure SMTP with:
+- Host: smtp.gmail.com
+- Port: 587
+- User: teqmatessolutions@gmail.com
+- Password: yzoo wxec oulc gxey
+- From Email: noreply@elysianretreat.com
+- Use TLS: true
+
+OPTION 2: If Already in Interactive Script
+----------------------------------------------------
+If you're currently running the interactive script, enter these values:
+
+SMTP Host [smtp.gmail.com]: [Press Enter]
+SMTP Port [587]: [Press Enter]
+SMTP Username/Email: teqmatessolutions@gmail.com
+SMTP Password: yzoo wxec oulc gxey
+From Email [noreply@elysianretreat.com]: [Press Enter]
+From Name [Elysian Retreat]: [Press Enter]
+Use TLS? [true]: [Press Enter]
+
+OPTION 3: Manual Edit (If Script Fails)
+----------------------------------------------------
+cd /var/www/resort/Resort_first/ResortApp
+sudo nano .env.production
+
+Add these lines at the end of the file:
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=teqmatessolutions@gmail.com
+SMTP_PASSWORD=yzoo wxec oulc gxey
+SMTP_FROM_EMAIL=noreply@elysianretreat.com
+SMTP_FROM_NAME=Elysian Retreat
+SMTP_USE_TLS=true
+
+Save (Ctrl+X, Y, Enter), then:
+sudo chmod 600 .env.production
+sudo chown www-data:www-data .env.production
+sudo systemctl restart resort.service
+
+VERIFICATION
+----------------------------------------------------
+After configuration, verify:
+
+# Check SMTP is configured:
+cat /var/www/resort/Resort_first/ResortApp/.env.production | grep SMTP
+
+# Check service status:
+sudo systemctl status resort.service
+
+# Test email by creating a booking, then check logs:
+sudo journalctl -u resort.service -n 50 | grep -i email
+
+Expected output in logs:
+- [Email] Successfully sent email to...
+- ✅ Email sent successfully
+
+==========================================
+
