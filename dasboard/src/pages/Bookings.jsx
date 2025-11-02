@@ -1544,12 +1544,11 @@ const Bookings = () => {
             </tbody>
             </table>
           </div>
-            {filteredBookings.length > 0 && hasMoreBookings && (
-              <div ref={loadMoreRef} className="text-center p-4">
-                {isSubmitting && <span className="text-indigo-600">Loading more bookings...</span>}
-              </div>
-            )}
-          </table>
+          {filteredBookings.length > 0 && hasMoreBookings && (
+            <div ref={loadMoreRef} className="text-center p-4">
+              {isSubmitting && <span className="text-indigo-600">Loading more bookings...</span>}
+            </div>
+          )}
         </div>
       </div>
       <AnimatePresence>
