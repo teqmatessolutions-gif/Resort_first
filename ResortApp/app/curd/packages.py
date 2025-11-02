@@ -44,7 +44,78 @@ def get_package_bookings(db: Session):
         .options(joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room))
     ).all()
 
+def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
+    """
+    Find or create a guest user based on email and mobile number.
+    Returns the user_id to link bookings to the same user.
+    """
+    from app.models.user import User, Role
+    import bcrypt
+    
+    # First, try to find user by email (most reliable identifier)
+    user = None
+    if email:
+        user = db.query(User).filter(User.email == email).first()
+    
+    # If not found by email, try by mobile/phone
+    if not user and mobile:
+        user = db.query(User).filter(User.phone == mobile).first()
+    
+    # If user exists, return the user_id
+    if user:
+        # Update name if provided and different
+        if name and user.name != name:
+            user.name = name
+            db.commit()
+        return user.id
+    
+    # If user doesn't exist, create a new guest user
+    # First, ensure 'guest' role exists
+    guest_role = db.query(Role).filter(Role.name == "guest").first()
+    if not guest_role:
+        # Create guest role if it doesn't exist
+        guest_role = Role(name="guest", permissions="[]")
+        db.add(guest_role)
+        db.commit()
+        db.refresh(guest_role)
+    
+    # Generate a placeholder password for guest users (they won't log in)
+    password_bytes = "guest_user_no_password".encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+    
+    # Create email if not provided (use mobile-based email)
+    user_email = email if email else f"guest_{mobile}@temp.com"
+    
+    # Create new guest user
+    new_user = User(
+        name=name,
+        email=user_email,
+        phone=mobile if mobile else None,
+        hashed_password=hashed_password,
+        role_id=guest_role.id,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user.id
+
 def book_package(db: Session, booking: PackageBookingCreate):
+    # Find or create guest user based on email and mobile
+    guest_user_id = None
+    if booking.guest_email or booking.guest_mobile:
+        try:
+            guest_user_id = get_or_create_guest_user(
+                db=db,
+                email=booking.guest_email,
+                mobile=booking.guest_mobile,
+                name=booking.guest_name
+            )
+        except Exception as e:
+            # Log error but don't fail the booking if user creation fails
+            print(f"Warning: Could not create/link guest user: {str(e)}")
+    
     # Check for an existing package booking to reuse guest details for consistency
     existing_booking = db.query(PackageBooking).filter(
         (PackageBooking.guest_email == booking.guest_email) & (PackageBooking.guest_mobile == booking.guest_mobile)
@@ -64,7 +135,8 @@ def book_package(db: Session, booking: PackageBookingCreate):
         guest_mobile=booking.guest_mobile,
         adults=booking.adults,
         children=booking.children,
-        status="booked"
+        status="booked",
+        user_id=guest_user_id,  # Link booking to guest user
     )
     db.add(db_booking)
     db.commit()

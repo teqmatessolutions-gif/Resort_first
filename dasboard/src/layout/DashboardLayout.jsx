@@ -334,11 +334,22 @@ export default function DashboardLayout({ children }) {
             }}
           >
             {menuItems.map((item, idx) => {
-              const isActive = location.pathname.startsWith(item.to);
+              const isActive = location.pathname === item.to || (item.to !== '/dashboard' && location.pathname.startsWith(item.to));
+              
+              // Prevent navigation if clicking on the already active route
+              const handleClick = (e) => {
+                if (isActive) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return false;
+                }
+              };
+
               return (
                 <Link
                   key={idx}
                   to={item.to}
+                  onClick={handleClick}
                   className={`
                     group block flex items-center gap-4 p-3 rounded-xl
                     transition-all duration-200 cursor-pointer
@@ -348,6 +359,7 @@ export default function DashboardLayout({ children }) {
                     backgroundColor: isActive ? 'var(--accent-bg)' : 'transparent',
                     color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
                     boxShadow: isActive ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none',
+                    pointerEvents: isActive ? 'auto' : 'auto',
                   }}
                 >
                   <motion.span whileHover={{ scale: 1.1, rotate: -5 }} className="transition-transform duration-200">
@@ -390,13 +402,13 @@ export default function DashboardLayout({ children }) {
 
         {/* Main content area */}
         <main className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-6 lg:p-8 z-10 lg:ml-0 ml-0" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
             >
               {children}
             </motion.div>

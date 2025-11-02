@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 // Lucide React is used for elegant icons
 import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, ChevronDown, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
 // Currency formatting utility
@@ -778,7 +778,7 @@ export default function App() {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const endpoints = {
                 rooms: '/rooms/test',  // Use working test endpoint for real room data
-                bookings: '/bookings?limit=10000', // Fetch all bookings for availability check
+                bookings: '/bookings?limit=500&skip=0', // Reduced limit for better performance - only recent bookings needed
                 foodItems: '/food-items/',
                 packages: '/packages/',
                 resortInfo: '/resort-info/',
@@ -848,18 +848,19 @@ export default function App() {
         }
     }, [bannerData.length]);
 
-    // Auto-change wedding images
+    // Auto-change wedding images (optimized with pause on hover)
+    const [isWeddingHovered, setIsWeddingHovered] = useState(false);
+    const activeWeddings = useMemo(() => planWeddings.filter(w => w.is_active), [planWeddings]);
     useEffect(() => {
-        const activeWeddings = planWeddings.filter(w => w.is_active);
-        if (activeWeddings.length > 1) {
+        if (activeWeddings.length > 1 && !isWeddingHovered) {
             const interval = setInterval(() => {
                 setCurrentWeddingIndex((prev) => (prev + 1) % activeWeddings.length);
-            }, 9000); // Change image every 9 seconds
+            }, 10000); // Change image every 10 seconds
             return () => clearInterval(interval);
         } else if (activeWeddings.length === 1) {
             setCurrentWeddingIndex(0); // Ensure first wedding is shown
         }
-    }, [planWeddings]);
+    }, [activeWeddings.length, isWeddingHovered]);
 
     const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -1369,9 +1370,19 @@ export default function App() {
     }, [theme]);
 
 
+    // Debounced scroll handler for better performance
     useEffect(() => {
-        const handleScroll = () => setShowBackToTop(window.scrollY > 300);
-        window.addEventListener('scroll', handleScroll);
+        let ticking = false;
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setShowBackToTop(window.scrollY > 300);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 

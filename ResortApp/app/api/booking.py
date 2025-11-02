@@ -136,10 +136,84 @@ def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends
 
 
 # -------------------------------
+# Helper function to get or create guest user
+# -------------------------------
+def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
+    """
+    Find or create a guest user based on email and mobile number.
+    Returns the user_id to link bookings to the same user.
+    """
+    from app.models.user import User, Role
+    import bcrypt
+    
+    # First, try to find user by email (most reliable identifier)
+    user = None
+    if email:
+        user = db.query(User).filter(User.email == email).first()
+    
+    # If not found by email, try by mobile/phone
+    if not user and mobile:
+        user = db.query(User).filter(User.phone == mobile).first()
+    
+    # If user exists, return the user_id
+    if user:
+        # Update name if provided and different
+        if name and user.name != name:
+            user.name = name
+            db.commit()
+        return user.id
+    
+    # If user doesn't exist, create a new guest user
+    # First, ensure 'guest' role exists
+    guest_role = db.query(Role).filter(Role.name == "guest").first()
+    if not guest_role:
+        # Create guest role if it doesn't exist
+        guest_role = Role(name="guest", permissions="[]")
+        db.add(guest_role)
+        db.commit()
+        db.refresh(guest_role)
+    
+    # Generate a placeholder password for guest users (they won't log in)
+    password_bytes = "guest_user_no_password".encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+    
+    # Create email if not provided (use mobile-based email)
+    user_email = email if email else f"guest_{mobile}@temp.com"
+    
+    # Create new guest user
+    new_user = User(
+        name=name,
+        email=user_email,
+        phone=mobile if mobile else None,
+        hashed_password=hashed_password,
+        role_id=guest_role.id,
+        is_active=True
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user.id
+
+# -------------------------------
 # POST a new booking
 # -------------------------------
 @router.post("", response_model=BookingOut) # Changed from "/" to ""
 def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Find or create guest user based on email and mobile
+    guest_user_id = None
+    if booking.guest_email or booking.guest_mobile:
+        try:
+            guest_user_id = get_or_create_guest_user(
+                db=db,
+                email=booking.guest_email,
+                mobile=booking.guest_mobile,
+                name=booking.guest_name
+            )
+        except Exception as e:
+            # Log error but don't fail the booking if user creation fails
+            print(f"Warning: Could not create/link guest user: {str(e)}")
+    
     # Check for an existing booking to reuse guest details for consistency
     existing_booking = db.query(Booking).filter(
         (Booking.guest_email == booking.guest_email) & (Booking.guest_mobile == booking.guest_mobile)
@@ -175,6 +249,7 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         check_out=booking.check_out,
         adults=booking.adults,
         children=booking.children,
+        user_id=guest_user_id,  # Link booking to guest user
     )
     db.add(db_booking)
     db.commit()
@@ -276,6 +351,20 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     """
     Public endpoint for guests to create a booking without authentication.
     """
+    # Find or create guest user based on email and mobile
+    guest_user_id = None
+    if booking.guest_email or booking.guest_mobile:
+        try:
+            guest_user_id = get_or_create_guest_user(
+                db=db,
+                email=booking.guest_email,
+                mobile=booking.guest_mobile,
+                name=booking.guest_name
+            )
+        except Exception as e:
+            # Log error but don't fail the booking if user creation fails
+            print(f"Warning: Could not create/link guest user: {str(e)}")
+    
     # Check for duplicate booking with same details and dates
     duplicate_booking = db.query(Booking).filter(
         (Booking.guest_email == booking.guest_email) & 
@@ -326,6 +415,7 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
         check_out=booking.check_out,
         adults=booking.adults,
         children=booking.children,
+        user_id=guest_user_id,  # Link booking to guest user
     )
     db.add(db_booking)
     db.commit()
