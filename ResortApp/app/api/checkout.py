@@ -46,9 +46,28 @@ def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends
     
     result = []
     
+    # Helper function to safely get room number
+    def get_room_number(link):
+        """Safely extract room number from booking room link"""
+        try:
+            if not link:
+                return None
+            if not link.room:
+                return None
+            room_num = link.room.number
+            if room_num is None or (isinstance(room_num, str) and room_num.strip() == ""):
+                return None
+            return str(room_num).strip()
+        except (AttributeError, Exception):
+            return None
+    
     # Process regular bookings
     for booking in active_bookings:
-        room_numbers = sorted([link.room.number for link in booking.booking_rooms if link.room])
+        # Extract room numbers with proper null checks using helper function
+        room_numbers = sorted([
+            room_num for link in booking.booking_rooms 
+            if (room_num := get_room_number(link)) is not None
+        ])
         if room_numbers:
             # Add individual room options (one per room)
             for room_num in room_numbers:
@@ -77,7 +96,11 @@ def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends
     
     # Process package bookings
     for pkg_booking in active_package_bookings:
-        room_numbers = sorted([link.room.number for link in pkg_booking.rooms if link.room])
+        # Extract room numbers with proper null checks using helper function
+        room_numbers = sorted([
+            room_num for link in pkg_booking.rooms 
+            if (room_num := get_room_number(link)) is not None
+        ])
         if room_numbers:
             # Add individual room options (one per room)
             for room_num in room_numbers:
