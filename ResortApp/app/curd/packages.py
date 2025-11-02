@@ -79,51 +79,78 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
         return user.id
     
     # If user doesn't exist, create a new guest user
-    # First, ensure 'guest' role exists
-    guest_role = db.query(Role).filter(Role.name == "guest").first()
-    if not guest_role:
-        # Create guest role if it doesn't exist
-        guest_role = Role(name="guest", permissions="[]")
-        db.add(guest_role)
-        db.commit()
-        db.refresh(guest_role)
-    
-    # Generate a placeholder password for guest users (they won't log in)
-    password_bytes = "guest_user_no_password".encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
-    
-    # Create email if not provided (use mobile-based email or generate unique one)
-    if not email:
-        if mobile:
-            user_email = f"guest_{mobile}@temp.com"
+    try:
+        # First, ensure 'guest' role exists
+        guest_role = db.query(Role).filter(Role.name == "guest").first()
+        if not guest_role:
+            # Create guest role if it doesn't exist
+            guest_role = Role(name="guest", permissions="[]")
+            db.add(guest_role)
+            db.commit()
+            db.refresh(guest_role)
+        
+        # Generate a placeholder password for guest users (they won't log in)
+        password_bytes = "guest_user_no_password".encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+        
+        # Create email if not provided (use mobile-based email or generate unique one)
+        if not email:
+            if mobile:
+                user_email = f"guest_{mobile}@temp.com"
+            else:
+                # Generate a unique email based on timestamp
+                import time
+                user_email = f"guest_{int(time.time())}@temp.com"
         else:
-            # Generate a unique email based on timestamp
-            import time
-            user_email = f"guest_{int(time.time())}@temp.com"
-    else:
-        user_email = email
-    
-    # Create new guest user
-    new_user = User(
-        name=name,
-        email=user_email,
-        phone=mobile if mobile else None,
-        hashed_password=hashed_password,
-        role_id=guest_role.id,
-        is_active=True
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user.id
+            user_email = email
+        
+        # Check if email already exists (race condition check)
+        existing_user = db.query(User).filter(User.email == user_email).first()
+        if existing_user:
+            # User was created between our check and creation attempt
+            return existing_user.id
+        
+        # Create new guest user
+        new_user = User(
+            name=name,
+            email=user_email,
+            phone=mobile if mobile else None,
+            hashed_password=hashed_password,
+            role_id=guest_role.id,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user.id
+    except Exception as e:
+        # If user creation fails due to unique constraint or other DB error, try to find existing user
+        db.rollback()  # Rollback the failed transaction
+        if email:
+            existing_user = db.query(User).filter(User.email == email).first()
+            if existing_user:
+                return existing_user.id
+        if mobile:
+            existing_user = db.query(User).filter(User.phone == mobile).first()
+            if existing_user:
+                return existing_user.id
+        # Re-raise if we can't find existing user
+        raise ValueError(f"Failed to create or find guest user: {str(e)}")
 
 def book_package(db: Session, booking: PackageBookingCreate):
     # Find or create guest user based on email and mobile
     guest_user_id = None
-    # Normalize email and mobile - convert empty strings to None
-    guest_email = booking.guest_email.strip() if booking.guest_email and isinstance(booking.guest_email, str) else None
-    guest_mobile = booking.guest_mobile.strip() if booking.guest_mobile and isinstance(booking.guest_mobile, str) else None
+    # Normalize email and mobile - convert empty strings to None, handle None safely
+    try:
+        guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+    except (AttributeError, TypeError):
+        guest_email = None
+    
+    try:
+        guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+    except (AttributeError, TypeError):
+        guest_mobile = None
     
     if guest_email or guest_mobile:
         try:
