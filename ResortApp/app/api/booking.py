@@ -146,6 +146,15 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
     from app.models.user import User, Role
     import bcrypt
     
+    # Normalize empty strings to None for easier handling
+    email = email.strip() if email and isinstance(email, str) else None
+    mobile = mobile.strip() if mobile and isinstance(mobile, str) else None
+    name = name.strip() if name and isinstance(name, str) else "Guest User"
+    
+    # Need at least one identifier (email or mobile)
+    if not email and not mobile:
+        raise ValueError("Either email or mobile number must be provided")
+    
     # First, try to find user by email (most reliable identifier)
     user = None
     if email:
@@ -178,8 +187,16 @@ def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
     
-    # Create email if not provided (use mobile-based email)
-    user_email = email if email else f"guest_{mobile}@temp.com"
+    # Create email if not provided (use mobile-based email or generate unique one)
+    if not email:
+        if mobile:
+            user_email = f"guest_{mobile}@temp.com"
+        else:
+            # Generate a unique email based on timestamp
+            import time
+            user_email = f"guest_{int(time.time())}@temp.com"
+    else:
+        user_email = email
     
     # Create new guest user
     new_user = User(
