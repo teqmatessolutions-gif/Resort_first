@@ -260,8 +260,15 @@ def check_in_package_booking(
     )
     if not booking:
         raise HTTPException(status_code=404, detail="Package booking not found")
-    if booking.status != "booked":
-        raise HTTPException(status_code=400, detail=f"Booking is not in 'booked' state. Current status: {booking.status}")
+
+    # Normalize status to be robust against case/whitespace/underscore differences
+    normalized_status = (booking.status or "").strip().lower().replace("_", "-")
+    if normalized_status != "booked":
+        # Provide clearer message with booking id and normalized status
+        raise HTTPException(
+            status_code=400,
+            detail=f"Package booking {booking_id} cannot be checked in. Expected status 'booked', found '{booking.status}'."
+        )
 
     # Save ID card image
     id_card_filename = f"id_pkg_{booking_id}_{uuid.uuid4().hex}.jpg"
