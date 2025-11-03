@@ -628,6 +628,10 @@ const BackgroundAnimation = ({ theme }) => {
                     from { opacity: 0; transform: translateY(30px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
+
+                /* Lazy reveal utility */
+                .reveal { opacity: 0; transform: translateY(18px); will-change: opacity, transform; }
+                .reveal.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s ease; }
                 @keyframes gentle-glow {
                     0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
                     50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
@@ -893,6 +897,22 @@ export default function App() {
         setIsRoomBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
+
+    // Lazy reveal on scroll for elements with .reveal
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '100px' });
+
+        const nodes = document.querySelectorAll('.reveal');
+        nodes.forEach((n) => observer.observe(n));
+        return () => observer.disconnect();
+    }, [galleryImages, packages]);
 
     const handleOpenPackageBookingForm = (packageId) => {
         // Always prioritize dates from bookingData (selected on previous page) over packageBookingData
@@ -1596,10 +1616,11 @@ export default function App() {
                                                 <div className="flex flex-col md:flex-row items-stretch">
                                                     {/* Large Image Section - Left */}
                                                     <div className="w-full md:w-1/2 h-80 md:h-[500px] overflow-hidden relative">
-                                                        <img 
+                                                    <img 
                                                             src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                             alt={featuredPkg.title} 
-                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110 reveal" 
+                                                            loading="lazy"
                                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                         />
                                                         {/* Price badge - large card */}
@@ -1676,7 +1697,8 @@ export default function App() {
                                                     <img 
                                                                 src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                         alt={pkg.title} 
-                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 reveal" 
+                                                        loading="lazy"
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                     />
                                                     {/* Price badge - always visible */}
@@ -2040,7 +2062,7 @@ export default function App() {
                     </section>
 
                     {/* Premium Cuisine Section - Mountain Shadows Style */}
-                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 pb-28 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -2123,17 +2145,18 @@ export default function App() {
 
                             {/* Gallery Grid */}
                             {galleryImages.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-auto gap-4" style={{overflow: 'visible'}}>
                                     {galleryImages.map((image, index) => (
                                         <div 
                                             key={image.id} 
-                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-                                            style={{ height: getGalleryCardHeight(index) }}
+                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 reveal"
+                                            style={{ height: getGalleryCardHeight(index), transitionDelay: `${(index % 5) * 60}ms` }}
                                         >
                                             <img 
                                                 src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
                                                 alt={image.caption || 'Gallery image'} 
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                loading="lazy"
                                                 onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                             />
                                             
