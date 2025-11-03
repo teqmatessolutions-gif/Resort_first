@@ -1121,6 +1121,16 @@ const Bookings = () => {
   const cancelBooking = async (id, is_package) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
+      // First fetch fresh details; if already cancelled, reflect immediately
+      try {
+        const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+        if (fresh?.data?.status && fresh.data.status.toLowerCase().includes('cancel')) {
+          setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
+          showBannerMessage("success", "Booking is already cancelled.");
+          return;
+        }
+      } catch (_) {}
+
       const url = is_package ? `/packages/booking/${id}/cancel` : `/bookings/${id}/cancel`;
       const response = await API.put(url, {}, authHeader());
       showBannerMessage("success", "Booking cancelled successfully.");
@@ -1131,6 +1141,20 @@ const Bookings = () => {
         )
       );
     } catch (err) {
+      // If endpoint is unavailable but the booking is actually cancelled, reflect it
+      if (err?.response?.status === 404) {
+        try {
+          const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+          if (fresh?.data) {
+            setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
+            const normalized = fresh.data.status?.toLowerCase() || '';
+            if (normalized.includes('cancel')) {
+              showBannerMessage("success", "Booking status synced to Cancelled.");
+              return;
+            }
+          }
+        } catch (_) {}
+      }
       console.error("Failed to cancel booking:", err);
       showBannerMessage("error", "Failed to cancel booking.");
     }
