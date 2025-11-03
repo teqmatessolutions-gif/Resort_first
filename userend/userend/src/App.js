@@ -630,8 +630,8 @@ const BackgroundAnimation = ({ theme }) => {
                 }
 
                 /* Lazy reveal utility */
-                .reveal { opacity: 0; transform: translateY(18px); will-change: opacity, transform; }
-                .reveal.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s ease; }
+                .reveal { opacity: 0; transform: translateY(18px) scale(.98); filter: blur(6px); will-change: opacity, transform, filter; }
+                .reveal.in { opacity: 1; transform: none; filter: blur(0); transition: opacity .6s ease, transform .6s ease, filter .6s ease; }
                 @keyframes gentle-glow {
                     0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
                     50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
@@ -1611,7 +1611,8 @@ export default function App() {
                                         return (
                                             <div 
                                                 key={featuredPkg.id}
-                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
+                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl reveal`}
+                                                style={{ transitionDelay: '80ms' }}
                                             >
                                                 <div className="flex flex-col md:flex-row items-stretch">
                                                     {/* Large Image Section - Left */}
@@ -1690,7 +1691,8 @@ export default function App() {
                                             <div 
                                                 key={pkg.id} 
                                                 onClick={() => handleOpenPackageBookingForm(pkg.id)}
-                                                className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer`}
+                                                className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer reveal`}
+                                                style={{ transitionDelay: `${(imgIndex % 5) * 70}ms` }}
                                             >
                                                         {/* Image Container */}
                                                     <div className="relative h-64 overflow-hidden">
@@ -2147,10 +2149,10 @@ export default function App() {
                             {galleryImages.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-auto gap-4" style={{overflow: 'visible'}}>
                                     {galleryImages.map((image, index) => (
-                                        <div 
+                                            <div 
                                             key={image.id} 
                                             className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 reveal"
-                                            style={{ height: getGalleryCardHeight(index), transitionDelay: `${(index % 5) * 60}ms` }}
+                                            style={{ height: getGalleryCardHeight(index), transitionDelay: `${(index % 5) * 70}ms` }}
                                         >
                                             <img 
                                                 src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
