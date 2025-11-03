@@ -263,8 +263,14 @@ def check_in_package_booking(
 
     # Normalize status to be robust against case/whitespace/underscore differences
     normalized_status = (booking.status or "").strip().lower().replace("_", "-")
-    if normalized_status != "booked":
-        # Provide clearer message with booking id and normalized status
+    # Allow check-in when:
+    #  - status is 'booked' (normal case), OR
+    #  - status is 'checked-out' but no check-in images were ever saved (recover-from-state issue)
+    # This prevents lock-out when UI shows BOOKED but DB flipped due to earlier process.
+    recoverable_checked_out = (
+        normalized_status == "checked-out" and not booking.id_card_image_url and not booking.guest_photo_url
+    )
+    if normalized_status != "booked" and not recoverable_checked_out:
         raise HTTPException(
             status_code=400,
             detail=f"Package booking {booking_id} cannot be checked in. Expected status 'booked', found '{booking.status}'."
