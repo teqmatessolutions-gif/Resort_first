@@ -772,6 +772,29 @@ export default function App() {
         return `${baseUrl}${path}`;
     };
 
+    // Determine gallery card height for a mosaic layout.
+    // Specifically, for the SECOND ROW (indices 5-9), apply:
+    // [tall, short, tall, tall, short]
+    // For other rows, use a gentle alternating pattern for visual rhythm.
+    const getGalleryCardHeight = (index) => {
+        const columns = 5; // grid is 5 columns on desktop
+        const rowIndex = Math.floor(index / columns);
+        const colIndex = index % columns;
+
+        // Heights in pixels
+        const TALL = 440;
+        const SHORT = 280;
+
+        if (rowIndex === 1) {
+            const secondRowPattern = [TALL, SHORT, TALL, TALL, SHORT];
+            return `${secondRowPattern[colIndex]}px`;
+        }
+
+        // Default pattern for other rows (subtle variation)
+        const defaultPattern = [320, 360, 300, 360, 320];
+        return `${defaultPattern[colIndex]}px`;
+    };
+
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
@@ -1639,7 +1662,7 @@ export default function App() {
                                     {/* Smaller Packages Grid - Only show if more than 1 package */}
                                     {packages.length > 1 && (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            {packages.slice(1, 4).map((pkg) => {
+                                    {packages.slice(1).map((pkg) => {
                                         const imgIndex = packageImageIndex[pkg.id] || 0;
                                         const currentImage = pkg.images && pkg.images[imgIndex];
                                         return (
@@ -2101,11 +2124,11 @@ export default function App() {
                             {/* Gallery Grid */}
                             {galleryImages.length > 0 ? (
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {galleryImages.slice(0, 9).map((image, index) => (
+                                    {galleryImages.map((image, index) => (
                                         <div 
                                             key={image.id} 
                                             className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-                                            style={{ height: index % 3 === 1 ? '400px' : '300px' }}
+                                            style={{ height: getGalleryCardHeight(index) }}
                                         >
                                             <img 
                                                 src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
@@ -2129,14 +2152,7 @@ export default function App() {
                                 <p className={`text-center py-12 ${theme.textSecondary}`}>No gallery images available at the moment.</p>
                             )}
 
-                            {/* View More Button */}
-                            {galleryImages.length > 9 && (
-                                <div className="text-center mt-12">
-                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
-                                        View All Photos
-                                    </button>
-                                </div>
-                            )}
+                            {/* View More Button removed: grid now wraps into multiple rows automatically */}
                         </div>
                     </section>
                     
