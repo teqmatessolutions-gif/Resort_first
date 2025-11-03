@@ -1573,7 +1573,15 @@ const Bookings = () => {
                           View
                         </button>
                         <button
-                          onClick={() => setBookingToCheckIn(b)}
+                          onClick={async () => {
+                            try {
+                              const response = await API.get(`/bookings/details/${b.id}?is_package=${b.is_package}`, authHeader());
+                              setBookingToCheckIn({ ...b, ...response.data });
+                            } catch (e) {
+                              // Fallback to existing data if details fetch fails
+                              setBookingToCheckIn(b);
+                            }
+                          }}
                           className="bg-yellow-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                           disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
                         >
