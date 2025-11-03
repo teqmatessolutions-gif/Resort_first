@@ -1,0 +1,83 @@
+══════════════════════════════════════════════════════════════
+  DEPLOY LANDING PAGE FIXES TO SERVER
+══════════════════════════════════════════════════════════════
+
+The "Our Process" button is still showing because we haven't deployed 
+the landing page changes yet.
+
+══════════════════════════════════════════════════════════════
+OPTION 1: Pull from Git (If Repository is Synced)
+══════════════════════════════════════════════════════════════
+
+On the server, run:
+
+cd /var/www/resort/Resort_first
+git pull origin main
+
+If this works, the changes will be pulled and deployed automatically.
+
+══════════════════════════════════════════════════════════════
+OPTION 2: Copy Files Manually (Recommended)
+══════════════════════════════════════════════════════════════
+
+Since git pull might not have the latest changes, let's copy files 
+directly from your local computer to the server.
+
+In your CMD window (on your PC, not on server), you should still be 
+connected via SSH. Or you need to reconnect.
+
+Then use SCP to copy files from your local machine:
+
+# From your local PC in CMD
+scp landingpage/index.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/service-details.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/assets/css/main.css root@139.84.211.200:/var/www/resort/Resort_first/landingpage/assets/css/
+
+After copying, restart nginx:
+ssh root@139.84.211.200 "sudo systemctl restart nginx"
+
+══════════════════════════════════════════════════════════════
+OPTION 3: Upload via WinSCP/FileZilla (Easiest)
+══════════════════════════════════════════════════════════════
+
+1. Download WinSCP: https://winscp.net/
+2. Connect to: 139.84.211.200 (username: root, use your password)
+3. Navigate to: /var/www/resort/Resort_first/landingpage/
+4. Upload these files:
+   - index.html
+   - service-details.html
+   - assets/css/main.css
+
+5. Navigate to: /var/www/resort/Resort_first/dasboard/src/services/
+6. Upload: api.js
+
+7. Rebuild and restart:
+   cd /var/www/resort/Resort_first/dasboard && npm run build
+   cd .. && sudo systemctl restart resort.service && sudo systemctl restart nginx
+
+══════════════════════════════════════════════════════════════
+QUICK FIX: Edit File Directly on Server
+══════════════════════════════════════════════════════════════
+
+You can edit the file directly on the server:
+
+On server, run:
+nano /var/www/resort/Resort_first/landingpage/assets/css/main.css
+
+Find line around 919-925 that says:
+.hero .btn-watch-video {
+  display: none;
+
+Add this line after the opening brace:
+  display: none; /* Hide the process video button */
+
+Save: Ctrl+X, then Y, then Enter
+
+Then restart nginx:
+sudo systemctl restart nginx
+
+══════════════════════════════════════════════════════════════
+
+

@@ -1,0 +1,71 @@
+═══════════════════════════════════════════════════════════════
+  DEPLOY TO SERVER - COPY AND PASTE THESE COMMANDS
+═══════════════════════════════════════════════════════════════
+
+You're logged in as: root@techmates
+
+Run these commands one by one in your CMD window:
+
+═══════════════════════════════════════════════════════════════
+COMMAND 1: Navigate to project directory
+═══════════════════════════════════════════════════════════════
+
+cd /var/www/resort/Resort_first
+
+
+═══════════════════════════════════════════════════════════════
+COMMAND 2: Check current status
+═══════════════════════════════════════════════════════════════
+
+git status
+
+
+═══════════════════════════════════════════════════════════════
+COMMAND 3: Pull latest changes from GitHub
+═══════════════════════════════════════════════════════════════
+
+git pull origin main
+
+
+═══════════════════════════════════════════════════════════════
+COMMAND 4: Rebuild dashboard with new API fix
+═══════════════════════════════════════════════════════════════
+
+cd dasboard && npm run build
+
+
+═══════════════════════════════════════════════════════════════
+COMMAND 5: Restart services
+═══════════════════════════════════════════════════════════════
+
+cd /var/www/resort/Resort_first && sudo systemctl restart resort.service && sudo systemctl restart nginx
+
+
+═══════════════════════════════════════════════════════════════
+COMMAND 6: Verify services are running
+═══════════════════════════════════════════════════════════════
+
+sudo systemctl status resort.service
+
+
+═══════════════════════════════════════════════════════════════
+✅ DEPLOYMENT COMPLETE!
+═══════════════════════════════════════════════════════════════
+
+Visit: https://www.teqmates.com
+
+Changes deployed:
+✅ Landing page - Hidden "Our Process" button
+✅ Landing page - Enhanced Request Call Back modal
+✅ Landing page - Fixed callback forms (Gmail)
+✅ Landing page - Fixed spelling
+✅ Dashboard - Fixed API connection
+
+═══════════════════════════════════════════════════════════════
+
+IF git pull fails (permission issue), run:
+sudo git pull origin main
+
+═══════════════════════════════════════════════════════════════
+
+

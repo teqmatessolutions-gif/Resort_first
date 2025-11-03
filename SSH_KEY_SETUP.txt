@@ -1,0 +1,61 @@
+================================================================================
+SSH KEY GENERATED SUCCESSFULLY
+================================================================================
+
+YOUR PUBLIC SSH KEY:
+--------------------------------------------------------------------------------
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGV/zNdPhzwOkzLfsS13DEiT0i8oitUvCpqDy/yoZ6tx deploy-key-resort
+--------------------------------------------------------------------------------
+
+HOW TO ADD THIS KEY TO SERVER:
+================================================================================
+
+METHOD 1: Via Hosting Control Panel Console
+--------------------------------------------
+1. Log in to your hosting provider (Vultr/AWS/etc)
+2. Access Web Console/VNC for server 139.84.211.200
+3. Once in, run these commands:
+
+   mkdir -p ~/.ssh
+   echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGV/zNdPhzwOkzLfsS13DEiT0i8oitUvCpqDy/yoZ6tx deploy-key-resort" >> ~/.ssh/authorized_keys
+   chmod 700 ~/.ssh
+   chmod 600 ~/.ssh/authorized_keys
+
+METHOD 2: Via SSH with Password (If Working)
+--------------------------------------------
+ssh root@139.84.211.200
+# Enter password when prompted
+# Then paste:
+mkdir -p ~/.ssh
+nano ~/.ssh/authorized_keys
+# Paste the key above, save (Ctrl+X, Y, Enter)
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+
+METHOD 3: Manual Addition (Copy Below Command)
+--------------------------------------------
+Copy and paste this ENTIRE command into your terminal:
+
+mkdir -p ~/.ssh && echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGV/zNdPhzwOkzLfsS13DEiT0i8oitUvCpqDy/yoZ6tx deploy-key-resort" >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys
+
+================================================================================
+FILES CREATED:
+================================================================================
+Public Key:  deploy_key.pub    (NEED TO ADD THIS TO SERVER)
+Private Key: deploy_key        (KEEP SECRET! DON'T SHARE)
+
+================================================================================
+AFTER ADDING THE KEY TO SERVER:
+================================================================================
+You can connect password-free using:
+
+ssh -i deploy_key root@139.84.211.200
+
+================================================================================
+IMPORTANT: SECURITY
+================================================================================
+- NEVER share your private key (deploy_key)
+- Only add the PUBLIC key (above) to the server
+- The private key stays on your computer
+
+

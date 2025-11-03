@@ -181,7 +181,7 @@ def update_room_statuses_endpoint(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error updating room statuses: {str(e)}")
 
 @router.get("/", response_model=list[RoomOut])
-def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_rooms(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     try:
         # Test database connection first
         try:

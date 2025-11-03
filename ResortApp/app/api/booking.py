@@ -1,6 +1,7 @@
 # booking.py
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session, joinedload, load_only
+from sqlalchemy import or_
 from typing import List
 from app.utils.auth import get_db, get_current_user
 from app.models.booking import Booking, BookingRoom
@@ -26,12 +27,12 @@ class PaginatedBookingResponse(BaseModel):
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 @router.get("", response_model=PaginatedBookingResponse)
-def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 100, order_by: str = "id", order: str = "desc"):
+def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20, order_by: str = "id", order: str = "desc"):
     try:
         # Get regular bookings with room details, ordered by latest first
         query = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         )
         
         # Apply ordering
@@ -110,7 +111,7 @@ def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends
     else: # Regular booking
         booking = db.query(Booking).options(
             joinedload(Booking.booking_rooms).joinedload(BookingRoom.room),
-            joinedload(Booking.user)
+            joinedload(Booking.user).joinedload(User.role)
         ).filter(Booking.id == booking_id).first()
 
         if not booking:
@@ -136,10 +137,132 @@ def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends
 
 
 # -------------------------------
+# Helper function to get or create guest user
+# -------------------------------
+def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
+    """
+    Find or create a guest user based on email and mobile number.
+    Returns the user_id to link bookings to the same user.
+    """
+    from app.models.user import User, Role
+    import bcrypt
+    
+    # Normalize empty strings to None for easier handling
+    email = email.strip() if email and isinstance(email, str) else None
+    mobile = mobile.strip() if mobile and isinstance(mobile, str) else None
+    name = name.strip() if name and isinstance(name, str) else "Guest User"
+    
+    # Need at least one identifier (email or mobile)
+    if not email and not mobile:
+        raise ValueError("Either email or mobile number must be provided")
+    
+    # First, try to find user by email (most reliable identifier)
+    user = None
+    if email:
+        user = db.query(User).filter(User.email == email).first()
+    
+    # If not found by email, try by mobile/phone
+    if not user and mobile:
+        user = db.query(User).filter(User.phone == mobile).first()
+    
+    # If user exists, return the user_id
+    if user:
+        # Update name if provided and different
+        if name and user.name != name:
+            user.name = name
+            db.commit()
+        return user.id
+    
+    # If user doesn't exist, create a new guest user
+    try:
+        # First, ensure 'guest' role exists
+        guest_role = db.query(Role).filter(Role.name == "guest").first()
+        if not guest_role:
+            # Create guest role if it doesn't exist
+            guest_role = Role(name="guest", permissions="[]")
+            db.add(guest_role)
+            db.commit()
+            db.refresh(guest_role)
+        
+        # Generate a placeholder password for guest users (they won't log in)
+        password_bytes = "guest_user_no_password".encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+        
+        # Create email if not provided (use mobile-based email or generate unique one)
+        if not email:
+            if mobile:
+                user_email = f"guest_{mobile}@temp.com"
+            else:
+                # Generate a unique email based on timestamp
+                import time
+                user_email = f"guest_{int(time.time())}@temp.com"
+        else:
+            user_email = email
+        
+        # Check if email already exists (race condition check)
+        existing_user = db.query(User).filter(User.email == user_email).first()
+        if existing_user:
+            # User was created between our check and creation attempt
+            return existing_user.id
+        
+        # Create new guest user
+        new_user = User(
+            name=name,
+            email=user_email,
+            phone=mobile if mobile else None,
+            hashed_password=hashed_password,
+            role_id=guest_role.id,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user.id
+    except Exception as e:
+        # If user creation fails due to unique constraint or other DB error, try to find existing user
+        db.rollback()  # Rollback the failed transaction
+        if email:
+            existing_user = db.query(User).filter(User.email == email).first()
+            if existing_user:
+                return existing_user.id
+        if mobile:
+            existing_user = db.query(User).filter(User.phone == mobile).first()
+            if existing_user:
+                return existing_user.id
+        # Re-raise if we can't find existing user
+        raise ValueError(f"Failed to create or find guest user: {str(e)}")
+
+# -------------------------------
 # POST a new booking
 # -------------------------------
 @router.post("", response_model=BookingOut) # Changed from "/" to ""
 def create_booking(booking: BookingCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Find or create guest user based on email and mobile
+    guest_user_id = None
+    # Normalize email and mobile - convert empty strings to None, handle None safely
+    try:
+        guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+    except (AttributeError, TypeError):
+        guest_email = None
+    
+    try:
+        guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+    except (AttributeError, TypeError):
+        guest_mobile = None
+    
+    if guest_email or guest_mobile:
+        try:
+            guest_user_id = get_or_create_guest_user(
+                db=db,
+                email=guest_email,
+                mobile=guest_mobile,
+                name=booking.guest_name or "Guest User"
+            )
+        except Exception as e:
+            # Log error but don't fail the booking if user creation fails
+            print(f"Warning: Could not create/link guest user: {str(e)}")
+    
     # Check for an existing booking to reuse guest details for consistency
     existing_booking = db.query(Booking).filter(
         (Booking.guest_email == booking.guest_email) & (Booking.guest_mobile == booking.guest_mobile)
@@ -175,6 +298,7 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         check_out=booking.check_out,
         adults=booking.adults,
         children=booking.children,
+        user_id=guest_user_id,  # Link booking to guest user
     )
     db.add(db_booking)
     db.commit()
@@ -217,18 +341,33 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
         rooms=[br.room for br in booking_with_rooms.booking_rooms if br.room]
     )
     
-    # Send confirmation email if email address is provided
+    # Calculate booking charges and send confirmation email if email address is provided
     if booking.guest_email:
         try:
             from app.utils.email import send_email, create_booking_confirmation_email
+            from datetime import datetime, date
             
-            rooms_data = [
-                {
-                    'number': br.room.number if br.room else 'N/A',
-                    'type': br.room.type if br.room else 'N/A'
-                }
-                for br in booking_with_rooms.booking_rooms if br.room
-            ]
+            # Calculate stay duration
+            check_in_date = booking.check_in if isinstance(booking.check_in, date) else datetime.strptime(str(booking.check_in), '%Y-%m-%d').date()
+            check_out_date = booking.check_out if isinstance(booking.check_out, date) else datetime.strptime(str(booking.check_out), '%Y-%m-%d').date()
+            stay_nights = max(1, (check_out_date - check_in_date).days)
+            
+            # Calculate room charges
+            room_charges = 0
+            rooms_data = []
+            for br in booking_with_rooms.booking_rooms:
+                if br.room:
+                    room_price = br.room.price or 0
+                    room_charges_per_room = room_price * stay_nights
+                    room_charges += room_charges_per_room
+                    rooms_data.append({
+                        'number': br.room.number,
+                        'type': br.room.type or 'Standard',
+                        'price': room_price
+                    })
+            
+            # Format booking ID (BK-000001)
+            formatted_booking_id = f"BK-{str(booking_with_rooms.id).zfill(6)}"
             
             email_html = create_booking_confirmation_email(
                 guest_name=guest_name_to_use,
@@ -236,12 +375,17 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
                 booking_type='room',
                 check_in=str(booking.check_in),
                 check_out=str(booking.check_out),
-                rooms=rooms_data
+                rooms=rooms_data,
+                total_amount=room_charges,
+                guests={'adults': booking.adults, 'children': booking.children},
+                guest_mobile=booking.guest_mobile,
+                room_charges=room_charges,
+                stay_nights=stay_nights
             )
             
             send_email(
                 to_email=booking.guest_email,
-                subject=f"Booking Confirmation #{booking_with_rooms.id} - Elysian Retreat",
+                subject=f"Booking Confirmation {formatted_booking_id} - Elysian Retreat",
                 html_content=email_html,
                 to_name=guest_name_to_use
             )
@@ -256,109 +400,196 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
     """
     Public endpoint for guests to create a booking without authentication.
     """
-    # Check for duplicate booking with same details and dates
-    duplicate_booking = db.query(Booking).filter(
-        (Booking.guest_email == booking.guest_email) & 
-        (Booking.guest_mobile == booking.guest_mobile) &
-        (Booking.check_in == booking.check_in) &
-        (Booking.check_out == booking.check_out) &
-        (Booking.status.in_(['booked', 'checked-in']))
-    ).first()
-    
-    if duplicate_booking:
-        raise HTTPException(
-            status_code=400, 
-            detail="A booking with the same details and dates already exists. Please check your existing bookings."
-        )
-
-    # Check for an existing booking to reuse guest details for consistency
-    existing_booking = db.query(Booking).filter(
-        (Booking.guest_email == booking.guest_email) & (Booking.guest_mobile == booking.guest_mobile)
-    ).order_by(Booking.id.desc()).first()
-
-    guest_name_to_use = booking.guest_name
-    if existing_booking:
-        # If a guest with the same email and mobile exists, use their established name
-        guest_name_to_use = existing_booking.guest_name
-
-    # Check if rooms are available for the requested dates
-    for room_id in booking.room_ids:
-        # Check if room is already booked for overlapping dates
-        conflicting_booking = db.query(BookingRoom).join(Booking).filter(
-            BookingRoom.room_id == room_id,
-            Booking.status.in_(['booked', 'checked-in']),
-            Booking.check_in < booking.check_out,
-            Booking.check_out > booking.check_in
-        ).first()
-        
-        if conflicting_booking:
-            room = db.query(Room).filter(Room.id == room_id).first()
-            raise HTTPException(
-                status_code=400,
-                detail=f"Room {room.number if room else room_id} is not available for the selected dates."
-            )
-
-    db_booking = Booking(
-        guest_name=guest_name_to_use,
-        guest_mobile=booking.guest_mobile,
-        guest_email=booking.guest_email,
-        check_in=booking.check_in,
-        check_out=booking.check_out,
-        adults=booking.adults,
-        children=booking.children,
-    )
-    db.add(db_booking)
-    db.commit()
-    db.refresh(db_booking)
-
-    # Create BookingRoom links and update room status
-    for room_id in booking.room_ids:
-        db.query(Room).filter(Room.id == room_id).update({"status": "Booked"})
-        db.add(BookingRoom(booking_id=db_booking.id, room_id=room_id))
-    db.commit()
-    db.refresh(db_booking)
-    
-    # Reload with room details for email
-    booking_with_rooms = (
-        db.query(Booking)
-        .options(joinedload(Booking.booking_rooms).joinedload(BookingRoom.room))
-        .filter(Booking.id == db_booking.id)
-        .first()
-    )
-    
-    # Send confirmation email if email address is provided
-    if booking.guest_email:
+    try:
+        # Find or create guest user based on email and mobile
+        guest_user_id = None
+        # Normalize email and mobile - convert empty strings to None, handle None safely
         try:
-            from app.utils.email import send_email, create_booking_confirmation_email
-            
-            rooms_data = [
-                {
-                    'number': br.room.number if br.room else 'N/A',
-                    'type': br.room.type if br.room else 'N/A'
-                }
-                for br in booking_with_rooms.booking_rooms if br.room
-            ]
-            
-            email_html = create_booking_confirmation_email(
-                guest_name=guest_name_to_use,
-                booking_id=db_booking.id,
-                booking_type='room',
-                check_in=str(booking.check_in),
-                check_out=str(booking.check_out),
-                rooms=rooms_data
+            guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+        except (AttributeError, TypeError):
+            guest_email = None
+        
+        try:
+            guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+        except (AttributeError, TypeError):
+            guest_mobile = None
+        
+        if guest_email or guest_mobile:
+            try:
+                guest_user_id = get_or_create_guest_user(
+                    db=db,
+                    email=guest_email,
+                    mobile=guest_mobile,
+                    name=booking.guest_name or "Guest User"
+                )
+            except Exception as e:
+                # Log error but don't fail the booking if user creation fails
+                print(f"Warning: Could not create/link guest user: {str(e)}")
+        
+        # Check for duplicate booking with same details and dates
+        # Only check for duplicates if we have at least email or mobile
+        duplicate_booking = None
+        if guest_email or guest_mobile:
+            duplicate_query = db.query(Booking).filter(
+                Booking.check_in == booking.check_in,
+                Booking.check_out == booking.check_out,
+                Booking.status.in_(['booked', 'checked-in'])
             )
             
-            send_email(
-                to_email=booking.guest_email,
-                subject=f"Booking Confirmation #{db_booking.id} - Elysian Retreat",
-                html_content=email_html,
-                to_name=guest_name_to_use
+            # Add email filter if normalized email exists
+            if guest_email:
+                duplicate_query = duplicate_query.filter(Booking.guest_email == guest_email)
+            
+            # Add mobile filter if normalized mobile exists
+            if guest_mobile:
+                duplicate_query = duplicate_query.filter(Booking.guest_mobile == guest_mobile)
+            
+            duplicate_booking = duplicate_query.first()
+        
+        if duplicate_booking:
+            raise HTTPException(
+                status_code=400, 
+                detail="A booking with the same details and dates already exists. Please check your existing bookings."
             )
-        except Exception as e:
-            # Log error but don't fail the booking
-            print(f"Failed to send confirmation email: {str(e)}")
-    
-    return db_booking
+
+        # Check for an existing booking to reuse guest details for consistency
+        # Only check if we have at least email or mobile
+        existing_booking = None
+        if guest_email or guest_mobile:
+            existing_query = db.query(Booking)
+            
+            # Add email filter if normalized email exists
+            if guest_email:
+                existing_query = existing_query.filter(Booking.guest_email == guest_email)
+            
+            # Add mobile filter if normalized mobile exists
+            if guest_mobile:
+                existing_query = existing_query.filter(Booking.guest_mobile == guest_mobile)
+            
+            existing_booking = existing_query.order_by(Booking.id.desc()).first()
+
+        guest_name_to_use = booking.guest_name or "Guest User"
+        if existing_booking:
+            # If a guest with the same email and mobile exists, use their established name
+            guest_name_to_use = existing_booking.guest_name
+
+        # Check if rooms are available for the requested dates
+        for room_id in booking.room_ids:
+            # Check if room is already booked for overlapping dates
+            conflicting_booking = db.query(BookingRoom).join(Booking).filter(
+                BookingRoom.room_id == room_id,
+                Booking.status.in_(['booked', 'checked-in']),
+                Booking.check_in < booking.check_out,
+                Booking.check_out > booking.check_in
+            ).first()
+            
+            if conflicting_booking:
+                room = db.query(Room).filter(Room.id == room_id).first()
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Room {room.number if room else room_id} is not available for the selected dates."
+                )
+
+        db_booking = Booking(
+            guest_name=guest_name_to_use,
+            guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
+            guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
+            check_in=booking.check_in,
+            check_out=booking.check_out,
+            adults=booking.adults,
+            children=booking.children,
+            user_id=guest_user_id,  # Link booking to guest user
+        )
+        db.add(db_booking)
+        db.commit()
+        db.refresh(db_booking)
+
+        # Create BookingRoom links and update room status
+        for room_id in booking.room_ids:
+            db.query(Room).filter(Room.id == room_id).update({"status": "Booked"})
+            db.add(BookingRoom(booking_id=db_booking.id, room_id=room_id))
+        db.commit()
+        db.refresh(db_booking)
+        
+        # Reload with room details for email and response
+        booking_with_rooms = (
+            db.query(Booking)
+            .options(joinedload(Booking.booking_rooms).joinedload(BookingRoom.room))
+            .filter(Booking.id == db_booking.id)
+            .first()
+        )
+        
+        # Calculate booking charges and send confirmation email if email address is provided
+        if guest_email or booking.guest_email:
+            try:
+                from app.utils.email import send_email, create_booking_confirmation_email
+                from datetime import datetime, date
+                
+                # Calculate stay duration
+                check_in_date = booking.check_in if isinstance(booking.check_in, date) else datetime.strptime(str(booking.check_in), '%Y-%m-%d').date()
+                check_out_date = booking.check_out if isinstance(booking.check_out, date) else datetime.strptime(str(booking.check_out), '%Y-%m-%d').date()
+                stay_nights = max(1, (check_out_date - check_in_date).days)
+                
+                # Calculate room charges
+                room_charges = 0
+                rooms_data = []
+                for br in booking_with_rooms.booking_rooms:
+                    if br.room:
+                        room_price = br.room.price or 0
+                        room_charges_per_room = room_price * stay_nights
+                        room_charges += room_charges_per_room
+                        rooms_data.append({
+                            'number': br.room.number,
+                            'type': br.room.type or 'Standard',
+                            'price': room_price
+                        })
+                
+                # Format booking ID (BK-000001)
+                formatted_booking_id = f"BK-{str(db_booking.id).zfill(6)}"
+                
+                email_to_use = guest_email or booking.guest_email
+                if email_to_use:
+                    email_html = create_booking_confirmation_email(
+                        guest_name=guest_name_to_use,
+                        booking_id=db_booking.id,
+                        booking_type='room',
+                        check_in=str(booking.check_in),
+                        check_out=str(booking.check_out),
+                        rooms=rooms_data,
+                        total_amount=room_charges,
+                        guests={'adults': booking.adults, 'children': booking.children},
+                        guest_mobile=guest_mobile or booking.guest_mobile,
+                        room_charges=room_charges,
+                        stay_nights=stay_nights
+                    )
+                    
+                    send_email(
+                        to_email=email_to_use,
+                        subject=f"Booking Confirmation {formatted_booking_id} - Elysian Retreat",
+                        html_content=email_html,
+                        to_name=guest_name_to_use
+                    )
+            except Exception as e:
+                # Log error but don't fail the booking
+                print(f"Failed to send confirmation email: {str(e)}")
+        
+        return booking_with_rooms
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions (like validation errors) as-is
+        raise
+    except Exception as e:
+        # Log the full error for debugging
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in create_guest_booking: {str(e)}")
+        print(f"Traceback: {error_trace}")
+        
+        # Return a user-friendly error message
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create booking: {str(e)}"
+        )
 
 # -------------------------------
 # Check-in a booking

@@ -1,0 +1,42 @@
+===========================================
+🚀 QUICK DEPLOYMENT COMMANDS
+===========================================
+
+Connect to your server (139.84.211.200) and run:
+
+cd /var/www/resort/Resort_first
+git pull origin main
+sudo systemctl restart resort.service
+sudo systemctl status resort.service
+
+===========================================
+OR USE THE DEPLOYMENT SCRIPT:
+===========================================
+
+cd /var/www/resort/Resort_first
+chmod +x deploy_fix_500.sh
+./deploy_fix_500.sh
+
+===========================================
+VERIFY DEPLOYMENT:
+===========================================
+
+# Check service is running
+sudo systemctl is-active resort.service
+
+# Check logs for errors
+sudo journalctl -u resort.service -n 50 --no-pager
+
+# Monitor logs in real-time
+sudo journalctl -u resort.service -f
+
+===========================================
+TEST BOOKING:
+===========================================
+
+1. Go to https://www.teqmates.com/resort/
+2. Try creating a booking
+3. Check if 500 error is resolved
+
+===========================================
+

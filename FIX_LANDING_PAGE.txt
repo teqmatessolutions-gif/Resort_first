@@ -1,0 +1,57 @@
+══════════════════════════════════════════════════════════════
+  FIX "OUR PROCESS" BUTTON ON SERVER
+══════════════════════════════════════════════════════════════
+
+PROBLEM: The landing page changes haven't reached the server because
+GitHub doesn't have your latest commits (permission issue).
+
+SOLUTION: Copy files from your local PC to the server
+
+══════════════════════════════════════════════════════════════
+OPTION 1: Use SCP (Copy Files)
+══════════════════════════════════════════════════════════════
+
+Open NEW CMD window on your PC and run:
+
+cd C:\Resort\Resortwithlandingpagenew\Resortwithlandingpage\Resort_first
+
+scp landingpage/index.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/service-details.html root@139.84.211.200:/var/www/resort/Resort_first/landingpage/
+
+scp landingpage/assets/css/main.css root@139.84.211.200:/var/www/resort/Resort_first/landingpage/assets/css/
+
+Enter password: 4bE!beciK#deo-_w
+
+══════════════════════════════════════════════════════════════
+OPTION 2: Edit File on Server (FASTEST)
+══════════════════════════════════════════════════════════════
+
+In your SERVER terminal (CMD), run:
+
+sudo nano /var/www/resort/Resort_first/landingpage/assets/css/main.css
+
+Press Ctrl+W to search, type: .hero .btn-watch-video
+
+Find the opening brace { on line ~920
+
+Add this line AFTER the opening brace:
+  display: none; /* Hide the process video button */
+
+Save: Ctrl+X, Y, Enter
+
+Then restart: sudo systemctl restart nginx
+
+══════════════════════════════════════════════════════════════
+CHECK YOUR CHANGES ARE THERE
+══════════════════════════════════════════════════════════════
+
+On server, verify the file was updated:
+
+cat /var/www/resort/Resort_first/landingpage/assets/css/main.css | grep -A 5 "\.hero .btn-watch-video"
+
+You should see "display: none;" in the output
+
+══════════════════════════════════════════════════════════════
+
+

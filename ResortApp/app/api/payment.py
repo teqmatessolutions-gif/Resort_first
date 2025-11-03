@@ -20,7 +20,7 @@ def create_payment(payment: PaymentCreate, db: Session = Depends(get_db), curren
     return crud.create_payment(db, payment)
 
 @router.get("/", response_model=list[PaymentOut])
-def get_payments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
+def get_payments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 20):
     return crud.get_all_payments(db, skip=skip, limit=limit)
 
 @router.post("/voucher", response_model=VoucherOut)

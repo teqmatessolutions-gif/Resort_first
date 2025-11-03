@@ -1,6 +1,41 @@
 from sqlalchemy.orm import Session
 from app.models.foodorder import FoodOrder, FoodOrderItem
+from app.models.booking import Booking, BookingRoom
+from app.models.Package import PackageBooking, PackageBookingRoom
 from app.schemas.foodorder import FoodOrderCreate, FoodOrderUpdate
+
+def get_guest_for_room(room_id, db: Session):
+    """Get guest name for a room from either regular or package bookings"""
+    if not room_id:
+        return None
+    
+    # Check regular bookings first
+    active_booking = (
+        db.query(Booking)
+        .join(BookingRoom)
+        .filter(BookingRoom.room_id == room_id)
+        .filter(Booking.status.in_(["checked-in", "booked"]))
+        .order_by(Booking.id.desc())
+        .first()
+    )
+    
+    if active_booking:
+        return active_booking.guest_name
+    
+    # Check package bookings
+    active_package_booking = (
+        db.query(PackageBooking)
+        .join(PackageBookingRoom)
+        .filter(PackageBookingRoom.room_id == room_id)
+        .filter(PackageBooking.status.in_(["checked-in", "booked"]))
+        .order_by(PackageBooking.id.desc())
+        .first()
+    )
+    
+    if active_package_booking:
+        return active_package_booking.guest_name
+    
+    return None
 
 def create_food_order(db: Session, order_data: FoodOrderCreate):
     order = FoodOrder(
@@ -30,6 +65,11 @@ def get_food_orders(db: Session, skip: int = 0, limit: int = 100):
     for order in orders:
         for item in order.items:
             item.food_item_name = item.food_item.name if item.food_item else "Unknown"
+        # Add guest_name by looking up active bookings for the room
+        if hasattr(order, 'room_id') and order.room_id:
+            guest_name = get_guest_for_room(order.room_id, db)
+            if guest_name:
+                order.guest_name = guest_name
     return orders
 
 def delete_food_order(db: Session, order_id: int):

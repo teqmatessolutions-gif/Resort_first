@@ -7,14 +7,66 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // Get the correct base URL based on environment
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (imagePath.startsWith('http')) return imagePath; // Already a full URL
+  if (!imagePath) {
+    console.warn('getImageUrl: imagePath is empty or null');
+    return '';
+  }
+  
+  // Already a full URL
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
   const baseUrl = process.env.NODE_ENV === 'production' 
     ? 'https://www.teqmates.com' 
     : 'http://localhost:8000';
-  // Ensure imagePath starts with / for proper URL construction
-  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${baseUrl}${path}`;
+  
+  // Normalize the path
+  let path = imagePath;
+  
+  // Remove leading/trailing whitespace
+  path = path.trim();
+  
+  // If path contains backslashes (Windows path), convert to forward slashes
+  path = path.replace(/\\/g, '/');
+  
+  // Remove double slashes (except after protocol)
+  path = path.replace(/([^:])\/\/+/g, '$1/');
+  
+  // Ensure path starts with /
+  if (!path.startsWith('/')) {
+    path = `/${path}`;
+  }
+  
+  // Handle old paths that might be incorrect
+  // If path doesn't start with /static/ or /uploads/, but contains 'static' or 'uploads', fix it
+  if (!path.startsWith('/static/') && !path.startsWith('/uploads/')) {
+    if (path.includes('static/uploads/')) {
+      // Path like /static/uploads/file.jpg (correct)
+      // Already good
+    } else if (path.includes('/uploads/')) {
+      // Path like /uploads/file.jpg, convert to /static/uploads/file.jpg
+      path = path.replace(/^\/uploads\//, '/static/uploads/');
+    } else if (path.includes('uploads/')) {
+      // Path like static/uploads/file.jpg (missing leading /)
+      path = `/static/${path}`;
+    } else {
+      // Try to add /static/ prefix if it looks like an upload path
+      // Check if it ends with common image extensions
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+      if (imageExtensions.some(ext => path.toLowerCase().endsWith(ext))) {
+        // If it's not already under static or uploads, assume it should be in static/uploads
+        if (!path.includes('static') && !path.includes('uploads')) {
+          const fileName = path.split('/').pop();
+          path = `/static/uploads/${fileName}`;
+        }
+      }
+    }
+  }
+  
+  const fullUrl = `${baseUrl}${path}`;
+  console.log(`getImageUrl: "${imagePath}" -> "${fullUrl}"`);
+  return fullUrl;
 };
 
 const API_URL = process.env.NODE_ENV === 'production' ? 'https://www.teqmates.com' : 'http://localhost:8000';
@@ -174,34 +226,38 @@ export default function ResortCMS() {
 
     const handleDelete = async (endpoint, id, name) => {
         if (window.confirm(`Are you sure you want to delete this ${name}?`)) {
-            // Optimistically remove from UI immediately
-            setResortData(prev => {
-                if (endpoint.includes('header-banner')) {
-                    return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
-                } else if (endpoint.includes('gallery')) {
-                    return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
-                } else if (endpoint.includes('reviews')) {
-                    return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
-                } else if (endpoint.includes('resort-info')) {
-                    return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
-                } else if (endpoint.includes('signature-experiences')) {
-                    return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
-                } else if (endpoint.includes('plan-weddings')) {
-                    return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
-                } else if (endpoint.includes('nearby-attractions')) {
-                    return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
-                }
-                return prev;
-            });
-            
             try {
-                await api.delete(`${endpoint}/${id}`);
+                // Remove trailing slash from endpoint and construct proper URL
+                const cleanEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint;
+                await api.delete(`${cleanEndpoint}/${id}`);
                 toast.success(`${name} deleted successfully!`);
+                
+                // Remove from UI after successful deletion
+                setResortData(prev => {
+                    if (endpoint.includes('header-banner')) {
+                        return { ...prev, banners: prev.banners.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('gallery')) {
+                        return { ...prev, gallery: prev.gallery.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('reviews')) {
+                        return { ...prev, reviews: prev.reviews.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('resort-info')) {
+                        return { ...prev, resortInfo: prev.resortInfo.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('signature-experiences')) {
+                        return { ...prev, signatureExperiences: prev.signatureExperiences.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('plan-weddings')) {
+                        return { ...prev, planWeddings: prev.planWeddings.filter(item => item.id !== id) };
+                    } else if (endpoint.includes('nearby-attractions')) {
+                        return { ...prev, nearbyAttractions: prev.nearbyAttractions.filter(item => item.id !== id) };
+                    }
+                    return prev;
+                });
+                
                 // Optionally refresh to sync with server
                 fetchAll();
             } catch (err) {
                 console.error("Delete error:", err);
-                toast.error(`Failed to delete ${name}.`);
+                const errorMsg = err.response?.data?.detail || err.message || `Failed to delete ${name}`;
+                toast.error(errorMsg);
                 // Re-fetch to restore original state if delete failed
                 fetchAll();
             }
@@ -314,13 +370,13 @@ export default function ResortCMS() {
     };
 
     const sectionConfigs = {
-        banners: { title: "Header Banner", endpoint: "/header-banner", fields: [{ name: "title", placeholder: "Banner Title" }, { name: "subtitle", placeholder: "Banner Description" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
-        gallery: { title: "Gallery Image", endpoint: "/gallery", fields: [{ name: "caption", placeholder: "Image Caption" }, { name: "image", type: "file" }], isMultipart: true },
-        reviews: { title: "Review", endpoint: "/reviews", fields: [{ name: "name", placeholder: "Customer Name" }, { name: "comment", placeholder: "Review Comment" }, { name: "rating", placeholder: "Rating (1-5)", type: "number" }], isMultipart: false },
-        resortInfo: { title: "Resort Info", endpoint: "/resort-info", fields: [{ name: "name", placeholder: "Resort Name" }, { name: "address", placeholder: "Resort Address" }, { name: "facebook", placeholder: "Facebook URL" }, { name: "instagram", placeholder: "Instagram URL" }, { name: "twitter", placeholder: "Twitter URL" }, { name: "linkedin", placeholder: "LinkedIn URL" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: false },
-        signatureExperiences: { title: "Signature Experience", endpoint: "/signature-experiences", fields: [{ name: "title", placeholder: "Experience Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
-        planWeddings: { title: "Plan Your Wedding", endpoint: "/plan-weddings", fields: [{ name: "title", placeholder: "Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
-        nearbyAttractions: { title: "Nearby Attraction", endpoint: "/nearby-attractions", fields: [{ name: "title", placeholder: "Attraction Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        banners: { title: "Header Banner", endpoint: "/header-banner/", fields: [{ name: "title", placeholder: "Banner Title" }, { name: "subtitle", placeholder: "Banner Description" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        gallery: { title: "Gallery Image", endpoint: "/gallery/", fields: [{ name: "caption", placeholder: "Image Caption" }, { name: "image", type: "file" }], isMultipart: true },
+        reviews: { title: "Review", endpoint: "/reviews/", fields: [{ name: "name", placeholder: "Customer Name" }, { name: "comment", placeholder: "Review Comment" }, { name: "rating", placeholder: "Rating (1-5)", type: "number" }], isMultipart: false },
+        resortInfo: { title: "Resort Info", endpoint: "/resort-info/", fields: [{ name: "name", placeholder: "Resort Name" }, { name: "address", placeholder: "Resort Address" }, { name: "facebook", placeholder: "Facebook URL" }, { name: "instagram", placeholder: "Instagram URL" }, { name: "twitter", placeholder: "Twitter URL" }, { name: "linkedin", placeholder: "LinkedIn URL" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: false },
+        signatureExperiences: { title: "Signature Experience", endpoint: "/signature-experiences/", fields: [{ name: "title", placeholder: "Experience Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        planWeddings: { title: "Plan Your Wedding", endpoint: "/plan-weddings/", fields: [{ name: "title", placeholder: "Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
+        nearbyAttractions: { title: "Nearby Attraction", endpoint: "/nearby-attractions/", fields: [{ name: "title", placeholder: "Attraction Title" }, { name: "description", placeholder: "Description", type: "textarea" }, { name: "image", type: "file" }, { name: "is_active", type: "checkbox", placeholder: "Is Active?" }], isMultipart: true },
     };
 
     if (isLoading) {
@@ -368,8 +424,22 @@ export default function ResortCMS() {
                     <ManagementSection title="Gallery" onAdd={() => openModal(sectionConfigs.gallery)} isLoading={isLoading}>
                         {resortData.gallery.length > 0 ? resortData.gallery.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.caption} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <p className="text-xs text-gray-600">{item.caption}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.caption || 'Gallery image'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load gallery image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <p className="text-xs text-gray-600">{item.caption || 'No caption'}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.gallery, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
                                     <button onClick={() => handleDelete(sectionConfigs.gallery.endpoint, item.id, 'gallery image')} className="text-red-600 hover:text-red-800"><FaTrashAlt /></button>
@@ -415,9 +485,23 @@ export default function ResortCMS() {
                     <ManagementSection title="✦ Signature Experiences ✦" onAdd={() => openModal(sectionConfigs.signatureExperiences)} isLoading={isLoading}>
                         {resortData.signatureExperiences.length > 0 ? resortData.signatureExperiences.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Signature experience'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load signature experience image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.signatureExperiences, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
@@ -430,9 +514,23 @@ export default function ResortCMS() {
                     <ManagementSection title="Plan Your Wedding" onAdd={() => openModal(sectionConfigs.planWeddings)} isLoading={isLoading}>
                         {resortData.planWeddings.length > 0 ? resortData.planWeddings.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Plan wedding'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load plan wedding image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.planWeddings, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>
@@ -445,9 +543,23 @@ export default function ResortCMS() {
                     <ManagementSection title="Nearby Attractions" onAdd={() => openModal(sectionConfigs.nearbyAttractions)} isLoading={isLoading}>
                         {resortData.nearbyAttractions.length > 0 ? resortData.nearbyAttractions.map(item => (
                             <div key={item.id} className="bg-gray-50 border rounded-lg p-4 space-y-3">
-                                <img src={getImageUrl(item.image_url)} alt={item.title} className="w-full h-32 object-cover rounded-md shadow-sm" />
-                                <h3 className="font-bold text-gray-800">{item.title}</h3>
-                                <p className="text-xs text-gray-600 line-clamp-2">{item.description}</p>
+                                {item.image_url ? (
+                                    <img 
+                                        src={getImageUrl(item.image_url)} 
+                                        alt={item.title || 'Nearby attraction'} 
+                                        className="w-full h-32 object-cover rounded-md shadow-sm"
+                                        onError={(e) => {
+                                            console.error('Failed to load nearby attraction image:', item.image_url);
+                                            e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBub3QgYXZhaWxhYmxlPC90ZXh0Pjwvc3ZnPg==';
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-xs">
+                                        No image
+                                    </div>
+                                )}
+                                <h3 className="font-bold text-gray-800">{item.title || 'No title'}</h3>
+                                <p className="text-xs text-gray-600 line-clamp-2">{item.description || 'No description'}</p>
                                 <p className="text-xs font-semibold">{item.is_active ? "🟢 Active" : "🔴 Inactive"}</p>
                                 <div className="flex gap-2 pt-2 border-t">
                                     <button onClick={() => openModal(sectionConfigs.nearbyAttractions, item)} className="text-blue-600 hover:text-blue-800"><FaPencilAlt /></button>

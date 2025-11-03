@@ -1,0 +1,27 @@
+═══════════════════════════════════════════════════════════════
+  PULL LATEST CHANGES ON SERVER
+═══════════════════════════════════════════════════════════════
+
+In your CMD window (where you're logged into the server), run:
+
+═══════════════════════════════════════════════════════════════
+COMMAND TO RUN:
+═══════════════════════════════════════════════════════════════
+
+cd /var/www/resort/Resort_first && git pull origin main
+
+═══════════════════════════════════════════════════════════════
+
+This will pull all the latest landing page and dashboard changes 
+from GitHub to the server.
+
+═══════════════════════════════════════════════════════════════
+
+After pulling, rebuild and restart:
+
+cd dasboard && npm run build
+cd .. && sudo systemctl restart resort.service && sudo systemctl restart nginx
+
+═══════════════════════════════════════════════════════════════
+
+

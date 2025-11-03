@@ -28,6 +28,7 @@ class FoodOrderOut(BaseModel):
     assigned_employee_id: int
     billing_status: str 
     items: List[FoodOrderItemOut]
+    guest_name: Optional[str] = None  # Added dynamically by CRUD function
 
     model_config = ConfigDict(from_attributes=True)
 

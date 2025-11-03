@@ -44,13 +44,143 @@ def get_package_bookings(db: Session):
         .options(joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room))
     ).all()
 
-def book_package(db: Session, booking: PackageBookingCreate):
-    # Check for an existing package booking to reuse guest details for consistency
-    existing_booking = db.query(PackageBooking).filter(
-        (PackageBooking.guest_email == booking.guest_email) & (PackageBooking.guest_mobile == booking.guest_mobile)
-    ).order_by(PackageBooking.id.desc()).first()
+def get_or_create_guest_user(db: Session, email: str, mobile: str, name: str):
+    """
+    Find or create a guest user based on email and mobile number.
+    Returns the user_id to link bookings to the same user.
+    """
+    from app.models.user import User, Role
+    import bcrypt
+    
+    # Normalize empty strings to None for easier handling
+    email = email.strip() if email and isinstance(email, str) else None
+    mobile = mobile.strip() if mobile and isinstance(mobile, str) else None
+    name = name.strip() if name and isinstance(name, str) else "Guest User"
+    
+    # Need at least one identifier (email or mobile)
+    if not email and not mobile:
+        raise ValueError("Either email or mobile number must be provided")
+    
+    # First, try to find user by email (most reliable identifier)
+    user = None
+    if email:
+        user = db.query(User).filter(User.email == email).first()
+    
+    # If not found by email, try by mobile/phone
+    if not user and mobile:
+        user = db.query(User).filter(User.phone == mobile).first()
+    
+    # If user exists, return the user_id
+    if user:
+        # Update name if provided and different
+        if name and user.name != name:
+            user.name = name
+            db.commit()
+        return user.id
+    
+    # If user doesn't exist, create a new guest user
+    try:
+        # First, ensure 'guest' role exists
+        guest_role = db.query(Role).filter(Role.name == "guest").first()
+        if not guest_role:
+            # Create guest role if it doesn't exist
+            guest_role = Role(name="guest", permissions="[]")
+            db.add(guest_role)
+            db.commit()
+            db.refresh(guest_role)
+        
+        # Generate a placeholder password for guest users (they won't log in)
+        password_bytes = "guest_user_no_password".encode("utf-8")
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+        
+        # Create email if not provided (use mobile-based email or generate unique one)
+        if not email:
+            if mobile:
+                user_email = f"guest_{mobile}@temp.com"
+            else:
+                # Generate a unique email based on timestamp
+                import time
+                user_email = f"guest_{int(time.time())}@temp.com"
+        else:
+            user_email = email
+        
+        # Check if email already exists (race condition check)
+        existing_user = db.query(User).filter(User.email == user_email).first()
+        if existing_user:
+            # User was created between our check and creation attempt
+            return existing_user.id
+        
+        # Create new guest user
+        new_user = User(
+            name=name,
+            email=user_email,
+            phone=mobile if mobile else None,
+            hashed_password=hashed_password,
+            role_id=guest_role.id,
+            is_active=True
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user.id
+    except Exception as e:
+        # If user creation fails due to unique constraint or other DB error, try to find existing user
+        db.rollback()  # Rollback the failed transaction
+        if email:
+            existing_user = db.query(User).filter(User.email == email).first()
+            if existing_user:
+                return existing_user.id
+        if mobile:
+            existing_user = db.query(User).filter(User.phone == mobile).first()
+            if existing_user:
+                return existing_user.id
+        # Re-raise if we can't find existing user
+        raise ValueError(f"Failed to create or find guest user: {str(e)}")
 
-    guest_name_to_use = booking.guest_name
+def book_package(db: Session, booking: PackageBookingCreate):
+    # Find or create guest user based on email and mobile
+    guest_user_id = None
+    # Normalize email and mobile - convert empty strings to None, handle None safely
+    try:
+        guest_email = booking.guest_email.strip() if (booking.guest_email and isinstance(booking.guest_email, str) and booking.guest_email.strip()) else None
+    except (AttributeError, TypeError):
+        guest_email = None
+    
+    try:
+        guest_mobile = booking.guest_mobile.strip() if (booking.guest_mobile and isinstance(booking.guest_mobile, str) and booking.guest_mobile.strip()) else None
+    except (AttributeError, TypeError):
+        guest_mobile = None
+    
+    if guest_email or guest_mobile:
+        try:
+            guest_user_id = get_or_create_guest_user(
+                db=db,
+                email=guest_email,
+                mobile=guest_mobile,
+                name=booking.guest_name or "Guest User"
+            )
+        except Exception as e:
+            # Log error but don't fail the booking if user creation fails
+            print(f"Warning: Could not create/link guest user: {str(e)}")
+    
+    # Check for an existing package booking to reuse guest details for consistency
+    # Only check if we have at least email or mobile
+    existing_booking = None
+    if guest_email or guest_mobile:
+        existing_query = db.query(PackageBooking)
+        
+        # Add email filter if normalized email exists
+        if guest_email:
+            existing_query = existing_query.filter(PackageBooking.guest_email == guest_email)
+        
+        # Add mobile filter if normalized mobile exists
+        if guest_mobile:
+            existing_query = existing_query.filter(PackageBooking.guest_mobile == guest_mobile)
+        
+        existing_booking = existing_query.order_by(PackageBooking.id.desc()).first()
+
+    guest_name_to_use = booking.guest_name or "Guest User"
     if existing_booking:
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
@@ -60,11 +190,12 @@ def book_package(db: Session, booking: PackageBookingCreate):
         check_in=booking.check_in,
         check_out=booking.check_out,
         guest_name=guest_name_to_use,
-        guest_email=booking.guest_email,
-        guest_mobile=booking.guest_mobile,
+        guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
+        guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
         adults=booking.adults,
         children=booking.children,
-        status="booked"
+        status="booked",
+        user_id=guest_user_id,  # Link booking to guest user
     )
     db.add(db_booking)
     db.commit()

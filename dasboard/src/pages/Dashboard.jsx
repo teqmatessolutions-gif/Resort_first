@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { formatCurrency } from '../utils/currency';
 import API from "../services/api";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
@@ -34,14 +35,15 @@ const Dashboard = () => {
         setErr(null); // Clear any previous errors
         
         // Fetch all endpoints with individual error handling to prevent complete failure
+        // Reduced limits for better performance (pagination handles the rest)
         const results = await Promise.allSettled([
-          API.get("/bookings").catch(err => ({ error: err, data: { bookings: [] } })),
-          API.get("/rooms").catch(err => ({ error: err, data: [] })),
-          API.get("/expenses").catch(err => ({ error: err, data: [] })),
-          API.get("/food-orders").catch(err => ({ error: err, data: [] })),
-          API.get("/services/assigned").catch(err => ({ error: err, data: [] })),
-          API.get("/bill/checkouts").catch(err => ({ error: err, data: [] })),
-          API.get("/packages").catch(err => ({ error: err, data: [] })),
+          API.get("/bookings?limit=500").catch(err => ({ error: err, data: { bookings: [] } })),
+          API.get("/rooms?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/expenses?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/food-orders?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/services/assigned?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/bill/checkouts?limit=500").catch(err => ({ error: err, data: [] })),
+          API.get("/packages?limit=500").catch(err => ({ error: err, data: [] })),
         ]);
 
         if (!mounted) return;
@@ -114,14 +116,31 @@ const Dashboard = () => {
   }, []);
 
   // ... (rest of the useMemo and helper functions)
-  const safeDate = (d) => (d ? new Date(d) : null);
-  const fmtCurrency = (n) => `₹ ${Number(n || 0).toLocaleString()}`;
+  const safeDate = useCallback((d) => (d ? new Date(d) : null), []);
+  const fmtCurrency = useCallback((n, decimals = 0) => formatCurrency(Number(n || 0), true, decimals), []);
   const roomCounts = useMemo(() => {
     const total = rooms.length;
-    const occupied = rooms.filter(r => (r.status || r.current_status || "").toLowerCase().includes("booked")).length;
-    const available = rooms.filter(r => (r.status || "").toLowerCase().includes("avail")).length || Math.max(total - occupied, 0);
-    const maintenance = total - occupied - available;
-    return { total, occupied, available, maintenance: Math.max(maintenance, 0) };
+    // Room statuses are: "Available", "Occupied", "Maintenance"
+    const occupied = rooms.filter(r => {
+      const status = (r.status || r.current_status || "").toLowerCase();
+      return status.includes("occupied") || status.includes("booked");
+    }).length;
+    const available = rooms.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status.includes("avail");
+    }).length;
+    const maintenance = rooms.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status.includes("maintenance") || status.includes("maintain");
+    }).length;
+    // Ensure counts add up correctly
+    const calculatedMaintenance = Math.max(0, total - occupied - available);
+    return { 
+      total, 
+      occupied, 
+      available, 
+      maintenance: maintenance > 0 ? maintenance : calculatedMaintenance 
+    };
   }, [rooms]);
   const revenue = useMemo(() => {
     const total = billings.reduce((s, b) => s + Number(b.grand_total || 0), 0);
@@ -130,7 +149,9 @@ const Dashboard = () => {
     const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     let today = 0, month = 0;
     billings.forEach(b => {
-      const d = safeDate(b.created_at);
+      // Use checkout_date if available, otherwise fallback to created_at
+      const dateToUse = b.checkout_date || b.created_at;
+      const d = safeDate(dateToUse);
       if (!d) return;
       const ds = d.toISOString().slice(0, 10);
       if (ds === todayStr) today += Number(b.grand_total || 0);
@@ -154,8 +175,17 @@ const Dashboard = () => {
   }, [expenses]);
   const bookingCounts = useMemo(() => {
     const total = bookings.length;
-    const cancelled = bookings.filter(b => (b.status || "").toLowerCase().includes("cancel")).length;
-    const active = total - cancelled;
+    const cancelled = bookings.filter(b => {
+      const status = (b.status || "").toLowerCase();
+      return status.includes("cancel");
+    }).length;
+    // Active bookings: exclude cancelled and checked-out
+    const active = bookings.filter(b => {
+      const status = (b.status || "").toLowerCase();
+      return !status.includes("cancel") && 
+             !status.includes("checked-out") && 
+             !status.includes("checked_out");
+    }).length;
     return { total, active, cancelled };
   }, [bookings]);
   const revenueSeries = useMemo(() => {
@@ -436,26 +466,26 @@ const Dashboard = () => {
         </section>
 
         {/* Tables */}
-        <section className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <section className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           <Card title="Latest Bookings">
-            <div className="overflow-x-auto w-full">
-              <table className="min-w-full text-sm">
+            <div className="overflow-x-auto w-full -mx-2 sm:mx-0">
+              <table className="min-w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-700">
                     <Th>Guest</Th>
-                    <Th>Room</Th>
-                    <Th>Check-in</Th>
-                    <Th>Check-out</Th>
+                    <Th className="hidden sm:table-cell">Room</Th>
+                    <Th className="hidden lg:table-cell">Check-in</Th>
+                    <Th className="hidden lg:table-cell">Check-out</Th>
                     <Th>Status</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {latestBookings.map((b) => (
                     <tr key={b.id} className="border-t hover:bg-gray-50">
-                      <Td>{b.guest_name || b.guest || "-"}</Td>
-                      <Td>{b.room?.number ? `#${b.room.number} (${b.room?.type || "-"})` : (b.room_number || "-")}</Td>
-                      <Td>{b.check_in}</Td>
-                      <Td>{b.check_out}</Td>
+                      <Td className="text-xs sm:text-sm">{b.guest_name || b.guest || "-"}</Td>
+                      <Td className="text-xs sm:text-sm hidden sm:table-cell">{b.room?.number ? `#${b.room.number}${b.room?.type ? ` (${b.room.type})` : ''}` : (b.room_number || "-")}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{b.check_in}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{b.check_out}</Td>
                       <Td>
                         <span className={`px-2 py-1 text-xs rounded font-semibold ${
                           String(b.status || "").toLowerCase().includes("cancel")
@@ -473,24 +503,24 @@ const Dashboard = () => {
           </Card>
 
           <Card title="Recent Payments (Billing)">
-            <div className="overflow-x-auto w-full">
-              <table className="min-w-full text-sm">
+            <div className="overflow-x-auto w-full -mx-2 sm:mx-0">
+              <table className="min-w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="bg-gray-50 text-gray-700">
                     <Th>Guest</Th>
-                    <Th>Room</Th>
-                    <Th>Method</Th>
+                    <Th className="hidden sm:table-cell">Room</Th>
+                    <Th className="hidden md:table-cell">Method</Th>
                     <Th>Status</Th>
-                    <Th className="text-right">Grand Total</Th>
-                    <Th>Created</Th>
+                    <Th className="text-right">Total</Th>
+                    <Th className="hidden lg:table-cell">Created</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {latestBillings.map((c) => (
                     <tr key={c.id} className="border-t hover:bg-gray-50">
-                      <Td>{c.guest_name || "-"}</Td>
-                      <Td>{c.room_number || "-"}</Td>
-                      <Td className="capitalize">{String(c.payment_method || "").replace("_", " ")}</Td>
+                      <Td className="text-xs sm:text-sm">{c.guest_name || "-"}</Td>
+                      <Td className="text-xs sm:text-sm hidden sm:table-cell">{c.room_number || "-"}</Td>
+                      <Td className="text-xs sm:text-sm capitalize hidden md:table-cell">{String(c.payment_method || "").replace("_", " ")}</Td>
                       <Td className="uppercase">
                         <span className={`px-2 py-1 text-xs rounded font-semibold ${
                           String(c.payment_status || "").toLowerCase() === "paid"
@@ -502,8 +532,8 @@ const Dashboard = () => {
                           {c.payment_status}
                         </span>
                       </Td>
-                      <Td className="text-right font-medium">{fmtCurrency(c.grand_total)}</Td>
-                      <Td>{safeDate(c.created_at)?.toLocaleString() || "-"}</Td>
+                      <Td className="text-right font-medium text-xs sm:text-sm">{fmtCurrency(c.grand_total)}</Td>
+                      <Td className="text-xs sm:text-sm hidden lg:table-cell">{safeDate(c.created_at)?.toLocaleDateString() || "-"}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -609,26 +639,31 @@ const Dashboard = () => {
 };
 
 /* ---------- Small UI bits ---------- */
-const KPICard = ({ label, value, sub }) => (
+const KPICard = memo(({ label, value, sub }) => (
   <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4">
     <div className="text-xs uppercase tracking-wide text-gray-500 truncate">{label}</div>
     <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mt-1 truncate">{value}</div>
     {sub && <div className="text-xs text-gray-400 mt-1 truncate">{sub}</div>}
   </div>
-);
+));
+KPICard.displayName = 'KPICard';
 
-const Card = ({ title, children }) => (
+const Card = memo(({ title, children }) => (
   <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
     <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">{title}</h2>
     {children}
   </div>
-);
+));
+Card.displayName = 'Card';
 
-const Th = ({ children, className = "" }) => (
-  <th className={`px-3 py-2 text-left font-semibold ${className}`}>{children}</th>
-);
-const Td = ({ children, className = "" }) => (
-  <td className={`px-3 py-2 ${className}`}>{children}</td>
-);
+const Th = memo(({ children, className = "" }) => (
+  <th className={`px-2 sm:px-3 py-2 text-left text-xs sm:text-sm font-semibold ${className}`}>{children}</th>
+));
+Th.displayName = 'Th';
+
+const Td = memo(({ children, className = "" }) => (
+  <td className={`px-2 sm:px-3 py-2 text-xs sm:text-sm ${className}`}>{children}</td>
+));
+Td.displayName = 'Td';
 
 export default Dashboard;

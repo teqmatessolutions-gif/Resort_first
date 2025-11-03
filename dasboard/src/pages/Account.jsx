@@ -29,13 +29,13 @@ const KpiCard = ({ title, value, icon, prefix = "", suffix = "", loading }) => {
   );
 };
 
-const SectionCard = ({ title, icon, children, loading }) => {
+const SectionCard = ({ title, icon, children, loading, className = "" }) => {
   if (loading) {
     return <div className="bg-gray-200 h-96 rounded-2xl animate-pulse"></div>;
   }
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-xl p-6 flex flex-col"
+      className={`bg-white rounded-2xl shadow-xl p-6 flex flex-col ${className}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
@@ -91,6 +91,7 @@ export default function ReportsDashboard() {
   const [error, setError] = useState(null);
   const [period, setPeriod] = useState("all"); // 'day', 'week', 'month', 'all'
   const [kpiData, setKpiData] = useState({});
+  const [roomMap, setRoomMap] = useState({}); // room_id -> number
   const [chartData, setChartData] = useState({ revenue_breakdown: [], weekly_performance: [] });
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,21 +169,52 @@ export default function ReportsDashboard() {
         const queryString = params.toString();
 
         // Only fetch data that's actually needed, reduce API calls
-        const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes] = await Promise.all([
-          API.get(`/bookings?${queryString}`),
-          API.get(`/packages?${queryString}`),
-          API.get(`/food-orders?${queryString}`),
-          API.get(`/expenses?${queryString}`),
-          API.get(`/employees?${queryString}`),
+        // Try richer /reports endpoints first; gracefully fall back to base endpoints in production
+        const roomBookingsReq = API.get(`/bookings?${queryString}`);
+        const packageBookingsReq = API.get(`/reports/package-bookings?${queryString}`).catch(() => ({ data: [] }));
+        const foodOrdersReq = API.get(`/reports/food-orders?${queryString}`).catch(() => API.get(`/food-orders?${queryString}`));
+        const expensesReq = API.get(`/reports/expenses?${queryString}`).catch(() => API.get(`/expenses?${queryString}`));
+        const employeesReq = API.get(`/employees?${queryString}`);
+        const roomsReq = API.get(`/rooms?skip=0&limit=1000`).catch(() => ({ data: [] }));
+        const [roomBookingsRes, packageBookingsRes, foodOrdersRes, expensesRes, employeesRes, roomsRes] = await Promise.all([
+          roomBookingsReq, packageBookingsReq, foodOrdersReq, expensesReq, employeesReq, roomsReq
         ]);
+
+        // Build room map for food orders display if only room_id is present
+        const map = {};
+        (roomsRes.data || []).forEach(r => { map[r.id] = r.number; });
+        setRoomMap(map);
         
         // Use a single state update to prevent blinking
+        // Normalize food orders to include room_number and created_at if possible
+        const normalizedFood = (foodOrdersRes.data || []).map(o => ({
+          ...o,
+          room_number: o.room_number || (o.room_id && map[o.room_id]) || '-',
+          created_at: o.created_at || o.createdAt || '-',
+        }));
+
+        // Normalize expenses to avoid N/A and ensure consistent keys
+        const normalizedExpenses = (expensesRes.data || []).map(e => ({
+          category: e.category || '-',
+          description: e.description || '-',
+          amount: e.amount != null ? e.amount : '-',
+          expense_date: e.expense_date || e.date || '-',
+        }));
+
+        // Normalize employees: convert join_date -> hire_date, role object -> role name
+        const normalizedEmployees = (employeesRes.data || []).map(emp => ({
+          name: emp.name || '-',
+          role: (emp.role?.name) || emp.role || '-',
+          salary: emp.salary != null ? emp.salary : '-',
+          hire_date: emp.hire_date || emp.join_date || '-',
+        }));
+
         setDetailedData({
           roomBookings: roomBookingsRes.data.bookings || [],
           packageBookings: packageBookingsRes.data || [],
-          foodOrders: foodOrdersRes.data || [],
-          expenses: expensesRes.data || [],
-          employees: employeesRes.data || [],
+          foodOrders: normalizedFood,
+          expenses: normalizedExpenses,
+          employees: normalizedEmployees,
         });
       } catch (err) {
         console.error("Failed to fetch detailed data:", err);
@@ -214,8 +246,30 @@ export default function ReportsDashboard() {
       params.append('limit', PAGE_LIMIT);
       const queryString = params.toString();
 
-      const response = await API.get(`/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}?${queryString}`);
-      const newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
+      // Map data types to API paths explicitly
+      const endpointMap = {
+        roomBookings: '/bookings',
+        packageBookings: '/reports/package-bookings',
+        foodOrders: '/reports/food-orders',
+        expenses: '/reports/expenses',
+        employees: '/employees',
+      };
+      const path = endpointMap[dataType] || `/${dataType.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+      const response = await API.get(`${path}?${queryString}`).catch(async () => {
+        // Fallback to base endpoints
+        const fallback = {
+          roomBookings: '/bookings',
+          packageBookings: '/report/package-bookings',
+          foodOrders: '/food-orders',
+          expenses: '/expenses',
+          employees: '/employees',
+        };
+        return API.get(`${fallback[dataType]}?${queryString}`);
+      });
+      let newData = dataType === 'roomBookings' ? (response.data.bookings || []) : (response.data || []);
+      if (dataType === 'foodOrders') {
+        newData = newData.map(o => ({ ...o, room_number: o.room_number || (o.room_id && roomMap[o.room_id]) || '-', created_at: o.created_at || o.createdAt || '-' }));
+      }
 
       // Use functional update to prevent race conditions
       setDetailedData(prev => ({

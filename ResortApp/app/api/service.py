@@ -38,7 +38,7 @@ async def create_service(
     return service_crud.create_service(db, name, description, charges, image_urls)
 
 @router.get("/", response_model=List[service_schema.ServiceOut])
-def list_services(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def list_services(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return service_crud.get_services(db, skip=skip, limit=limit)
 
 @router.delete("/{service_id}")
@@ -54,7 +54,7 @@ def assign_service(payload: service_schema.AssignedServiceCreate, db: Session = 
     return service_crud.create_assigned_service(db, payload)
 
 @router.get("/assigned", response_model=List[service_schema.AssignedServiceOut])
-def get_all_assigned_services(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_all_assigned_services(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return service_crud.get_assigned_services(db, skip=skip, limit=limit)
 
 @router.patch("/assigned/{assigned_id}")

@@ -86,7 +86,7 @@ def add_employee(
     )
 
 @router.get("/", response_model=list[Employee])
-def list_employees(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 100):
+def list_employees(db: Session = Depends(get_db), current_user: User = Depends(get_current_user), skip: int = 0, limit: int = 20):
     return crud_employee.get_employees(db, skip=skip, limit=limit)
     
 @router.get("/status-overview", response_model=EmployeeStatusOverview)

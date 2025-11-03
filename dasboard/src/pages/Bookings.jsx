@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +13,7 @@ import BannerMessage from "../components/BannerMessage";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Reusable components (for better structure)
-const KPI_Card = ({ title, value, unit = "", duration = 1.5 }) => (
+const KPI_Card = React.memo(({ title, value, unit = "", duration = 1.5 }) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
     className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center transition-transform duration-200 cursor-pointer"
@@ -26,9 +27,10 @@ const KPI_Card = ({ title, value, unit = "", duration = 1.5 }) => (
       suffix={unit}
     />
   </motion.div>
-);
+));
+KPI_Card.displayName = 'KPI_Card';
 
-const BookingStatusBadge = ({ status }) => {
+const BookingStatusBadge = React.memo(({ status }) => {
   const statusClasses = {
     booked: "bg-green-100 text-green-700",
     cancelled: "bg-red-100 text-red-600",
@@ -44,7 +46,8 @@ const BookingStatusBadge = ({ status }) => {
       {status}
     </span>
   );
-};
+});
+BookingStatusBadge.displayName = 'BookingStatusBadge';
 
 const ImageModal = ({ imageUrl, onClose }) => {
   if (!imageUrl) return null;
@@ -67,12 +70,31 @@ const ImageModal = ({ imageUrl, onClose }) => {
     </div>
   );
 };
-const BookingDetailsModal = ({ booking, onClose, onImageClick }) => {
+const BookingDetailsModal = ({ booking, onClose, onImageClick, roomIdToRoom }) => {
   if (!booking) return null;
 
   const roomInfo = booking.rooms && booking.rooms.length > 0
-    ? booking.rooms.map(room => `${room.number} (${room.type})`).join(", ")
-    : "N/A";
+    ? booking.rooms.map(room => {
+        // Handle package bookings (nested room structure) vs regular bookings
+        if (booking.is_package) {
+          // Package bookings: room has nested room object or only room_id
+          if (room?.room?.number) return `${room.room.number} (${room.room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
+        } else {
+          // Regular bookings: room has number and type directly
+          if (room?.number) return `${room.number} (${room.type})`;
+          if (room?.room_id && roomIdToRoom && roomIdToRoom[room.room_id]) {
+            const r = roomIdToRoom[room.room_id];
+            return `${r.number} (${r.type})`;
+          }
+          return '-';
+        }
+      }).filter(Boolean).join(", ") || '-'
+    : "-";
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
@@ -254,7 +276,7 @@ const CheckInModal = ({ booking, onSave, onClose, feedback, isSubmitting }) => {
   );
 };
 
-const BookingStatusChart = ({ data }) => {
+const BookingStatusChart = React.memo(({ data }) => {
   const chartData = useMemo(() => {
     const statusCounts = data.reduce((acc, booking) => {
       acc[booking.status] = (acc[booking.status] || 0) + 1;
@@ -292,7 +314,8 @@ const BookingStatusChart = ({ data }) => {
       </div>
     </div>
   );
-};
+});
+BookingStatusChart.displayName = 'BookingStatusChart';
 
 const Bookings = () => {
   const navigate = useNavigate();
@@ -356,6 +379,13 @@ const Bookings = () => {
   const [totalBookings, setTotalBookings] = useState(0);
   const [hasMoreBookings, setHasMoreBookings] = useState(true);
 
+  // Map of roomId -> room for robust display when API omits nested room payloads
+  const roomIdToRoom = useMemo(() => {
+    const map = {};
+    (allRooms || []).forEach(r => { if (r && r.id) map[r.id] = r; });
+    return map;
+  }, [allRooms]);
+
   const authHeader = useCallback(() => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
   }), []);
@@ -372,7 +402,7 @@ const Bookings = () => {
       const [roomsRes, bookingsRes, packageBookingsRes, packageRes] = await Promise.all([
         API.get("/rooms/", authHeader()),
         API.get("/bookings?skip=0&limit=20&order_by=id&order=desc", authHeader()), // Order by latest first
-        API.get("/packages/bookingsall?skip=0&limit=10000", authHeader()), // Fetch all package bookings
+        API.get("/packages/bookingsall?skip=0&limit=500", authHeader()), // Reduced from 10000 to 500 for performance
         API.get("/packages/", authHeader()),
       ]);
 
@@ -381,8 +411,8 @@ const Bookings = () => {
       const packageBookings = packageBookingsRes.data || [];
       const todaysDate = new Date().toISOString().split("T")[0];
 
-      // We need all bookings for accurate KPIs. This is a trade-off.
-      const allBookingsRes = await API.get("/bookings?limit=10000&order_by=id&order=desc", authHeader()); // Fetch all for KPIs with ordering
+      // Reduced limit for better performance - KPI calculation uses sample data
+      const allBookingsRes = await API.get("/bookings?limit=500&order_by=id&order=desc", authHeader()); // Reduced from 10000 to 500
       const allRegularBookings = allBookingsRes.data.bookings;
       
       // Combine regular bookings and package bookings
@@ -702,36 +732,117 @@ const Bookings = () => {
     };
   }, [selectedRoomDetails]);
 
-  const filteredBookings = useMemo(() => {
-    console.log("=== FILTERING BOOKINGS ===");
-    console.log("Status filter selected:", statusFilter);
-    console.log("Total bookings:", bookings.length);
-    console.log("Sample booking statuses:", bookings.slice(0, 5).map(b => ({ id: b.id, status: b.status, is_package: b.is_package })));
+  // Generate unique booking ID for sharing
+  const generateBookingId = (booking) => {
+    const prefix = booking.is_package ? "PK" : "BK";
+    const paddedId = String(booking.id).padStart(6, '0');
+    return `${prefix}-${paddedId}`;
+  };
+
+  // Share booking via Email
+  const shareViaEmail = (booking) => {
+    const bookingId = generateBookingId(booking);
+    const rooms = booking.rooms && booking.rooms.length > 0
+      ? booking.rooms.map(r => {
+          if (booking.is_package) {
+            return r.room ? `Room ${r.room.number} (${r.room.type})` : '-';
+          } else {
+            return `Room ${r.number} (${r.type})`;
+          }
+        }).filter(Boolean).join(", ")
+      : "N/A";
+
+    const subject = encodeURIComponent(`Booking Confirmation - ${bookingId}`);
+    const body = encodeURIComponent(
+      `Dear ${booking.guest_name},\n\n` +
+      `Your booking has been confirmed!\n\n` +
+      `Booking ID: ${bookingId}\n` +
+      `Booking Type: ${booking.is_package ? "Package" : "Room"}\n` +
+      `Rooms: ${rooms}\n` +
+      `Check-in: ${booking.check_in}\n` +
+      `Check-out: ${booking.check_out}\n` +
+      `Guests: ${booking.adults} Adults, ${booking.children} Children\n` +
+      `Status: ${booking.status}\n\n` +
+      `Thank you for choosing our resort!\n\n` +
+      `Best regards,\nResort Team`
+    );
+    window.location.href = `mailto:${booking.guest_email}?subject=${subject}&body=${body}`;
+  };
+
+  // Share booking via WhatsApp
+  const shareViaWhatsApp = (booking) => {
+    const bookingId = generateBookingId(booking);
+    const mobile = booking.guest_mobile?.replace(/[^\d]/g, '') || '';
     
+    if (!mobile) {
+      showBannerMessage("error", "Mobile number not available for this booking.");
+      return;
+    }
+
+    const rooms = booking.rooms && booking.rooms.length > 0
+      ? booking.rooms.map(r => {
+          if (booking.is_package) {
+            return r.room ? `Room ${r.room.number} (${r.room.type})` : '-';
+          } else {
+            return `Room ${r.number} (${r.type})`;
+          }
+        }).filter(Boolean).join(", ")
+      : "N/A";
+
+    const message = encodeURIComponent(
+      `Dear ${booking.guest_name},\n\n` +
+      `Your booking has been confirmed!\n\n` +
+      `Booking ID: ${bookingId}\n` +
+      `Booking Type: ${booking.is_package ? "Package" : "Room"}\n` +
+      `Rooms: ${rooms}\n` +
+      `Check-in: ${booking.check_in}\n` +
+      `Check-out: ${booking.check_out}\n` +
+      `Guests: ${booking.adults} Adults, ${booking.children} Children\n` +
+      `Status: ${booking.status}\n\n` +
+      `Thank you for choosing our resort!`
+    );
+    window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
+  };
+
+  // Calculate status counts for better filter clarity
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: bookings.length,
+      booked: 0,
+      cancelled: 0,
+      'checked-in': 0,
+      'checked-out': 0,
+    };
+    
+    bookings.forEach((b) => {
+      const normalizedStatus = (b.status || '').toLowerCase().replace(/[-_]/g, '-').trim();
+      if (normalizedStatus === 'booked') counts.booked++;
+      else if (normalizedStatus === 'cancelled') counts.cancelled++;
+      else if (normalizedStatus === 'checked-in' || normalizedStatus === 'checked_in') counts['checked-in']++;
+      else if (normalizedStatus === 'checked-out' || normalizedStatus === 'checked_out') counts['checked-out']++;
+    });
+    
+    return counts;
+  }, [bookings]);
+
+  const filteredBookings = useMemo(() => {
     return bookings
       .filter((b) => {
-        // Normalize status values to handle both hyphens and underscores - remove ALL special characters
-        const normalizedBookingStatus = b.status?.toLowerCase().replace(/[-_]/g, '');
-        const normalizedFilterStatus = statusFilter?.toLowerCase().replace(/[-_]/g, '');
-        const statusMatch = statusFilter === "All" || normalizedBookingStatus === normalizedFilterStatus;
+        // Normalize status values - handle both hyphens and underscores
+        let normalizedBookingStatus = b.status?.toLowerCase().trim();
+        let normalizedFilterStatus = statusFilter?.toLowerCase().trim();
         
-        // Debug logging for status mismatch
-        if (statusFilter !== "All" && !statusMatch) {
-          console.log("❌ STATUS MISMATCH:", {
-            id: b.id,
-            bookingStatus: b.status,
-            normalizedBookingStatus,
-            filterStatus: statusFilter,
-            normalizedFilterStatus,
-            is_package: b.is_package
-          });
-        } else if (statusFilter !== "All" && statusMatch) {
-          console.log("✅ STATUS MATCH:", {
-            id: b.id,
-            status: b.status,
-            is_package: b.is_package
-          });
-        }
+        // Normalize: replace underscores and hyphens with standard format
+        normalizedBookingStatus = normalizedBookingStatus?.replace(/[-_]/g, '-');
+        normalizedFilterStatus = normalizedFilterStatus?.replace(/[-_]/g, '-');
+        
+        // Handle case variations and exact match - works for both regular and package bookings
+        const statusMatch = statusFilter === "All" || 
+          normalizedBookingStatus === normalizedFilterStatus ||
+          (normalizedBookingStatus === "checked-out" && normalizedFilterStatus === "checked-out") ||
+          (normalizedBookingStatus === "checked_out" && normalizedFilterStatus === "checked-out") ||
+          (normalizedBookingStatus === "checked-in" && normalizedFilterStatus === "checked-in") ||
+          (normalizedBookingStatus === "checked_in" && normalizedFilterStatus === "checked-in");
         const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
         
         // Fix: Apply date filter to both check-in and check-out dates
@@ -766,7 +877,31 @@ const Bookings = () => {
         
         return statusMatch && roomNumberMatch && dateMatch;
       })
-      .sort((a, b) => b.id - a.id); // Sort by ID descending (latest first)
+      .sort((a, b) => {
+        // First, sort by status priority: booked (1), checked-in (2), checked-out (3), cancelled (4)
+        const statusPriority = {
+          'booked': 1,
+          'checked-in': 2,
+          'checked_in': 2,
+          'checked-out': 3,
+          'checked_out': 3,
+          'cancelled': 4
+        };
+        
+        const aStatus = a.status?.toLowerCase().replace(/[-_]/g, '-') || '';
+        const bStatus = b.status?.toLowerCase().replace(/[-_]/g, '-') || '';
+        
+        const aPriority = statusPriority[aStatus] || 99;
+        const bPriority = statusPriority[bStatus] || 99;
+        
+        // If statuses are different, sort by priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // If same status, sort by ID descending (latest first)
+        return b.id - a.id;
+      });
   }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
 
   const handleRoomNumberToggle = (roomNumber) => {
@@ -997,7 +1132,18 @@ const Bookings = () => {
   const cancelBooking = async (id, is_package) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
-      const response = await API.put(`/bookings/${id}/cancel?is_package=${is_package}`, {}, authHeader());
+      // First fetch fresh details; if already cancelled, reflect immediately
+      try {
+        const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+        if (fresh?.data?.status && fresh.data.status.toLowerCase().includes('cancel')) {
+          setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
+          showBannerMessage("success", "Booking is already cancelled.");
+          return;
+        }
+      } catch (_) {}
+
+      const url = is_package ? `/packages/booking/${id}/cancel` : `/bookings/${id}/cancel`;
+      const response = await API.put(url, {}, authHeader());
       showBannerMessage("success", "Booking cancelled successfully.");
       // Update the booking in state instead of refetching everything
       setBookings(prevBookings =>
@@ -1006,12 +1152,26 @@ const Bookings = () => {
         )
       );
     } catch (err) {
+      // If endpoint is unavailable but the booking is actually cancelled, reflect it
+      if (err?.response?.status === 404) {
+        try {
+          const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+          if (fresh?.data) {
+            setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
+            const normalized = fresh.data.status?.toLowerCase() || '';
+            if (normalized.includes('cancel')) {
+              showBannerMessage("success", "Booking status synced to Cancelled.");
+              return;
+            }
+          }
+        } catch (_) {}
+      }
       console.error("Failed to cancel booking:", err);
       showBannerMessage("error", "Failed to cancel booking.");
     }
   };
 
-  const RoomSelection = ({ rooms, selectedRoomNumbers, onRoomToggle }) => {
+  const RoomSelection = React.memo(({ rooms, selectedRoomNumbers, onRoomToggle }) => {
     return (
       <div className="flex flex-wrap gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50 max-h-64 overflow-y-auto">
         {rooms.length > 0 ? (
@@ -1039,7 +1199,7 @@ const Bookings = () => {
               </div>
               <div className={`text-sm ${selectedRoomNumbers.includes(room.number) ? 'text-indigo-200' : 'text-gray-500'}`}>
                 <p>Capacity: {room.adults} Adults, {room.children} Children</p>
-                <p className="font-medium">₹{room.price}/night</p>
+                <p className="font-medium">{formatCurrency(room.price)}/night</p>
               </div>
             </motion.div>
           ))
@@ -1052,7 +1212,8 @@ const Bookings = () => {
         )}
       </div>
     );
-  };
+  });
+  RoomSelection.displayName = 'RoomSelection';
 
 
   return (
@@ -1253,7 +1414,7 @@ const Bookings = () => {
               <div className="space-y-4 flex-grow">
                 <select name="package_id" value={packageBookingForm.package_id} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required>
                   <option value="">Select Package</option>
-                  {packages.map(p => (<option key={p.id} value={p.id}>{p.title} - ₹{p.price}</option>))}
+                  {packages.map(p => (<option key={p.id} value={p.id}>{p.title} - {formatCurrency(p.price)}</option>))}
                 </select>
                 <input name="guest_name" placeholder="Guest Name" value={packageBookingForm.guest_name} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
                 <input type="email" name="guest_email" placeholder="Guest Email" value={packageBookingForm.guest_email} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
@@ -1289,7 +1450,7 @@ const Bookings = () => {
                           `}>
                             <p className="font-semibold">Room {room.number}</p>
                             <p className={`text-sm ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
-                            <p className={`text-xs ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>₹{room.price}/night</p>
+                            <p className={`text-xs ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>{formatCurrency(room.price)}/night</p>
                           </div>
                         ))
                       ) : (
@@ -1314,51 +1475,83 @@ const Bookings = () => {
         </div>
 
         {/* Bookings Table */}
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg overflow-x-auto">
-          <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-700">All Bookings</h2>
-            <div className="flex flex-wrap gap-3 items-center">
-              <select // Status Filter
-                value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
-              >
-                <option value="All">All Statuses</option>
-                <option value="booked">Booked</option>
-                <option value="cancelled">Cancelled</option>
-                <option value="checked-in">Checked-in</option>
-                <option value="checked-out">Checked-out</option>
-              </select>
-              <select // Room Number Filter
-                value={roomNumberFilter} onChange={(e) => setRoomNumberFilter(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
-              >
+        <div className="bg-white p-3 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg overflow-x-auto -mx-2 sm:mx-0">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-between items-start sm:items-center mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-700">All Bookings</h2>
+              <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                Showing {filteredBookings.length} of {statusCounts.all} bookings
+              </span>
+            </div>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">Filter by Status:</label>
+                <select // Status Filter
+                  value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
+                  <option value="All">All Statuses ({statusCounts.all})</option>
+                  <option value="booked">📅 Booked ({statusCounts.booked})</option>
+                  <option value="checked-in">✅ Checked-in ({statusCounts['checked-in']})</option>
+                  <option value="checked-out">🚪 Checked-out ({statusCounts['checked-out']})</option>
+                  <option value="cancelled">❌ Cancelled ({statusCounts.cancelled})</option>
+                </select>
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">Filter by Room:</label>
+                <select // Room Number Filter
+                  value={roomNumberFilter} onChange={(e) => setRoomNumberFilter(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                >
                 {allRoomNumbers.map(roomNumber => (
                   <option key={roomNumber} value={roomNumber}>{roomNumber === "All" ? "All Rooms" : `Room ${roomNumber}`}</option>
                 ))}
-              </select>
-              <input // From Date
-                type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
-              />
-              <input // To Date
-                type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-                className="border-gray-300 rounded-lg p-2 shadow-sm"
-              />
+                </select>
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">From Date:</label>
+                <input // From Date
+                  type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                />
+              </div>
+              <div className="flex flex-col w-full sm:w-auto">
+                <label className="text-xs text-gray-600 mb-1 font-medium">To Date:</label>
+                <input // To Date
+                  type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+                  className="border-gray-300 rounded-lg p-2 shadow-sm text-sm w-full sm:w-auto bg-white hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors"
+                />
+              </div>
+              {(statusFilter !== "All" || roomNumberFilter !== "All" || fromDate || toDate) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter("All");
+                    setRoomNumberFilter("All");
+                    setFromDate("");
+                    setToDate("");
+                  }}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium px-3 py-2 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors self-end sm:self-center"
+                  title="Clear all filters"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           </div>
 
-          <table className="min-w-full text-sm border-collapse rounded-xl">
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <table className="min-w-full text-xs sm:text-sm border-collapse rounded-xl">
             <thead className="bg-gray-100">
               <tr>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">ID</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guest</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Booking Type</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Rooms</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-in</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Check-out</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guests</th>
-                <th className="p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Status</th>
-                <th className="p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-800">Actions</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">ID</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Guest</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden md:table-cell">Type</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Rooms</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden lg:table-cell">Check-in</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden lg:table-cell">Check-out</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800 hidden sm:table-cell">Guests</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wider text-gray-800">Status</th>
+                <th className="p-2 sm:p-4 border-b border-gray-200 text-center text-xs font-semibold uppercase tracking-wider text-gray-800">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -1371,11 +1564,14 @@ const Bookings = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <td className="p-4">{b.id}</td>
-                    <td className="p-4 font-medium text-gray-900">
+                    <td className="p-2 sm:p-4">
+                      <div className="font-mono text-xs sm:text-sm">{generateBookingId(b)}</div>
+                      <div className="text-xs text-gray-500 hidden sm:block">ID: {b.id}</div>
+                    </td>
+                    <td className="p-2 sm:p-4 font-medium text-gray-900 text-xs sm:text-sm">
                       {b.guest_name}
                     </td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4 hidden md:table-cell">
                       {b.is_package ? (
                         <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-semibold">
                           {b.package?.title || 'Package'}
@@ -1384,60 +1580,105 @@ const Bookings = () => {
                         <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-semibold">Room</span>
                       )}
                     </td>
-                    <td className="p-4">
-                      {b.rooms && b.rooms.length > 0 ? b.rooms.map(room => `${room.number} (${room.type})`).join(", ") : "N/A"}
+                    <td className="p-2 sm:p-4 text-xs sm:text-sm">
+                      {b.rooms && b.rooms.length > 0 ? (
+                        b.rooms.map(room => {
+                          // Handle package bookings (nested room structure) vs regular bookings
+                          if (b.is_package) {
+                            // Package bookings: room has nested room object
+                            return room.room ? `${room.room.number}${room.room.type ? ` (${room.room.type})` : ''}` : '-';
+                          } else {
+                            // Regular bookings: room has number and type directly
+                            return `${room.number}${room.type ? ` (${room.type})` : ''}`;
+                          }
+                        }).filter(Boolean).join(", ") || '-'
+                      ) : "-"}
                     </td>
-                    <td className="p-4 text-gray-800">{b.check_in}</td>
-                    <td className="p-4 text-gray-800">{b.check_out}</td>
-                    <td className="p-4 text-gray-800">{b.adults} A, {b.children} C</td>
-                    <td className="p-4">
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden lg:table-cell">{b.check_in}</td>
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden lg:table-cell">{b.check_out}</td>
+                    <td className="p-2 sm:p-4 text-gray-800 text-xs hidden sm:table-cell">{b.adults} A, {b.children} C</td>
+                    <td className="p-2 sm:p-4">
                       <BookingStatusBadge status={b.status || "Pending"} />
                     </td>
-                    <td className="p-4 text-center space-x-2">
-                      <button
-                        onClick={() => viewDetails(b.id, b.is_package)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-700 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => setBookingToCheckIn(b)}
-                        className="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
-                      >
-                        Check-in
-                      </button>
-                      <button
-                        onClick={() => setBookingToExtend(b)}
-                        className="bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && !["booked", "checked-in", "checked_in"].includes(b.status.toLowerCase().replace(/[-_]/g, ''))}
-                      >
-                        Extend
-                      </button>
-                      <button
-                        onClick={() => cancelBooking(b.id, b.is_package)}
-                        className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-                        disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
-                      >
-                        Cancel
-                      </button>
+                    <td className="p-2 sm:p-4 text-center">
+                      <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
+                        <button
+                          onClick={() => viewDetails(b.id, b.is_package)}
+                          className="bg-blue-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-blue-700 transition-colors"
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await API.get(`/bookings/details/${b.id}?is_package=${b.is_package}`, authHeader());
+                              setBookingToCheckIn({ ...b, ...response.data });
+                            } catch (e) {
+                              // Fallback to existing data if details fetch fails
+                              setBookingToCheckIn(b);
+                            }
+                          }}
+                          className="bg-yellow-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-yellow-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
+                        >
+                          Check-in
+                        </button>
+                        <button
+                          onClick={() => setBookingToExtend(b)}
+                          className="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={(() => {
+                            if (!b.status) return true;
+                            const normalizedStatus = b.status.toLowerCase().replace(/[-_]/g, '-');
+                            // Enable extend button for both "booked" and "checked-in" statuses
+                            return !["booked", "checked-in"].includes(normalizedStatus);
+                          })()}
+                        >
+                          Extend
+                        </button>
+                        <button
+                          onClick={() => cancelBooking(b.id, b.is_package)}
+                          className="bg-red-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-red-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                          disabled={b.status && b.status.toLowerCase().replace(/[-_]/g, '') !== 'booked'}
+                        >
+                          Cancel
+                        </button>
+                        {b.guest_email && (
+                          <button
+                            onClick={() => shareViaEmail(b)}
+                            className="bg-purple-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-purple-700 transition-colors"
+                            title={`Share Booking ID: ${generateBookingId(b)} via Email`}
+                          >
+                            📧
+                          </button>
+                        )}
+                        {b.guest_mobile && (
+                          <button
+                            onClick={() => shareViaWhatsApp(b)}
+                            className="bg-green-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-semibold hover:bg-green-700 transition-colors"
+                            title={`Share Booking ID: ${generateBookingId(b)} via WhatsApp`}
+                          >
+                            💬
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </motion.tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="9" className="text-center py-6 text-gray-500 italic">
+                  <td colSpan="9" className="text-center py-6 text-gray-500 italic text-sm sm:text-base">
                     No bookings found.
                   </td>
                 </tr>
               )}
             </tbody>
-            {filteredBookings.length > 0 && hasMoreBookings && (
-              <div ref={loadMoreRef} className="text-center p-4">
-                {isSubmitting && <span className="text-indigo-600">Loading more bookings...</span>}
-              </div>
-            )}
-          </table>
+            </table>
+          </div>
+          {filteredBookings.length > 0 && hasMoreBookings && (
+            <div ref={loadMoreRef} className="text-center p-4">
+              {isSubmitting && <span className="text-indigo-600">Loading more bookings...</span>}
+            </div>
+          )}
         </div>
       </div>
       <AnimatePresence>
@@ -1446,6 +1687,7 @@ const Bookings = () => {
             booking={modalBooking}
             onClose={() => setModalBooking(null)}
             onImageClick={(imageUrl) => setSelectedImage(imageUrl)}
+            roomIdToRoom={roomIdToRoom}
           />
         )}
         {bookingToExtend && (

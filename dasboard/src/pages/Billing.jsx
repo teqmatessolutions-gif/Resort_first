@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, memo, useMemo } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import BannerMessage from "../components/BannerMessage";
 import axios from "axios"; // We need axios to create the api service object
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { DollarSign, BedDouble, Users, Utensils, Package, Hash, Calendar, CreditCard, X } from 'lucide-react';
+import { DollarSign, BedDouble, Users, Utensils, Package, Hash, Calendar, CreditCard, X, Search, Filter, XCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { useNavigate } from "react-router-dom";
 import autoTable from 'jspdf-autotable';
 // Make sure to place your logo in the specified path or update the path accordingly.
 import { useInfiniteScroll } from "./useInfiniteScroll";
-import logo from '../assets/logo.jpeg'; 
+import logo from '../assets/logo.jpeg';
+import { formatCurrency } from '../utils/currency'; 
 
 
 // --- Placeholder for DashboardLayout ---
@@ -50,7 +51,7 @@ api.interceptors.response.use(response => {
 
 // --- Helper Components ---
 
-const KpiCard = ({ title, value, icon, color, prefix = '', suffix = '' }) => (
+const KpiCard = React.memo(({ title, value, icon, color, prefix = '', suffix = '' }) => (
   <div className="bg-white p-4 rounded-xl shadow-md flex items-center">
     <div className={`rounded-full p-3 mr-4 ${color}`}>
       {icon}
@@ -60,9 +61,10 @@ const KpiCard = ({ title, value, icon, color, prefix = '', suffix = '' }) => (
       <p className="text-2xl font-bold text-gray-800">{prefix}{value}{suffix}</p>
     </div>
   </div>
-);
+));
+KpiCard.displayName = 'KpiCard';
 
-const CheckoutDetailModal = ({ checkout, onClose }) => {
+const CheckoutDetailModal = React.memo(({ checkout, onClose }) => {
   if (!checkout) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
@@ -80,14 +82,15 @@ const CheckoutDetailModal = ({ checkout, onClose }) => {
           {checkout.package_booking_id && <p><strong>Package ID:</strong> {checkout.package_booking_id}</p>}
           <div className="mt-4 pt-4 border-t">
             <p className="text-xl font-bold text-right text-indigo-600">
-              Grand Total: ₹{checkout.grand_total.toFixed(2)}
+              Grand Total: {formatCurrency(checkout.grand_total)}
             </p>
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
+CheckoutDetailModal.displayName = 'CheckoutDetailModal';
 
 const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6'];
 
@@ -95,6 +98,7 @@ const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6'];
 const Billing = () => {
   const navigate = useNavigate(); // Not used here, but good practice if you use react-router for navigation
   const [roomNumber, setRoomNumber] = useState("");
+  const [checkoutMode, setCheckoutMode] = useState("multiple");
   const [billData, setBillData] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("Card");
   const [discount, setDiscount] = useState(0);
@@ -105,6 +109,17 @@ const Billing = () => {
   const [selectedCheckout, setSelectedCheckout] = useState(null);
   const [hasMoreCheckouts, setHasMoreCheckouts] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  
+  // Filter and search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [guestNameFilter, setGuestNameFilter] = useState("");
+  const [roomNumberFilter, setRoomNumberFilter] = useState("");
+  const [bookingIdFilter, setBookingIdFilter] = useState("");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("All");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
 
   // Function to show banner message
   const showBannerMessage = (type, text) => {
@@ -195,20 +210,30 @@ const Billing = () => {
 
   const handleGetBill = async () => {
     if (!roomNumber) {
-      showBannerMessage("error", "Please enter a room number.");
+      showBannerMessage("error", "Please select a booking to checkout.");
       return;
     }
     setLoading(true);
     setBillData(null);
     setDiscount(0); // Reset discount when fetching a new bill
     try {
-      const res = await api.get(`/bill/${roomNumber}`);
-      setBillData(res.data);
-      showBannerMessage("success", "Bill for the entire booking retrieved successfully.");
+      // Extract actual room number from composite key if needed
+      const actualRoomNumber = roomNumber.includes('-') ? roomNumber.split('-')[1] : roomNumber;
+      const res = await api.get(`/bill/${actualRoomNumber}?checkout_mode=${checkoutMode}`);
+      if (res.data && res.data.room_numbers) {
+        setBillData(res.data);
+        const roomCount = res.data.room_numbers.length;
+        const modeText = checkoutMode === "single" ? "single room" : "all rooms in the booking";
+        showBannerMessage("success", `Bill retrieved for ${roomCount} room(s) (${modeText}).`);
+      } else {
+        throw new Error("Invalid bill data received");
+      }
     } catch (error) {
       const errorMsg = error.response?.data?.detail;
       const message = typeof errorMsg === 'string' ? errorMsg : (error.message || 'Unknown error');
       showBannerMessage("error", `Error: ${message}`);
+      setBillData(null);
+      console.error("Error fetching bill:", error);
     } finally {
       setLoading(false);
     }
@@ -219,26 +244,61 @@ const Billing = () => {
       showBannerMessage("error", "Please retrieve the bill before checkout.");
       return;
     }
+    if (!roomNumber) {
+      showBannerMessage("error", "No booking selected for checkout.");
+      return;
+    }
+    // Validate discount amount
+    const discountAmount = parseFloat(discount) || 0;
+    if (discountAmount < 0) {
+      showBannerMessage("error", "Discount amount cannot be negative.");
+      return;
+    }
+    if (discountAmount > billData.charges.total_due * 1.05) {
+      showBannerMessage("error", "Discount cannot exceed the grand total.");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await api.post(`/bill/checkout/${roomNumber}`, {
+      // Extract actual room number from composite key if needed
+      const actualRoomNumber = roomNumber.includes('-') ? roomNumber.split('-')[1] : roomNumber;
+      const res = await api.post(`/bill/checkout/${actualRoomNumber}`, {
         payment_method: paymentMethod,
-        discount_amount: parseFloat(discount) || 0,
+        discount_amount: discountAmount,
+        checkout_mode: checkoutMode,
       });
+      const roomCount = billData.room_numbers?.length || 1;
+      const modeText = checkoutMode === "single" ? "single room" : "all rooms";
       setBillData(null);
       setDiscount(0);
       setRoomNumber(""); // Clear input on successful checkout
-      showBannerMessage("success", `${res.data.message} (ID: ${res.data.checkout_id})`);
-      fetchInitialData(); // Refresh all data
+      setCheckoutMode("multiple"); // Reset to default
+      showBannerMessage("success", `Checkout successful! ${roomCount} room(s) (${modeText}) checked out. Checkout ID: ${res.data.checkout_id}`);
+      // Refresh all data after successful checkout
+      setTimeout(() => {
+        fetchInitialData();
+      }, 1000);
     } catch (error) {
-      const errorMessage = `Error: ${error.response?.data?.detail || error.message}`;
-      showBannerMessage("error", errorMessage);
+      const errorMessage = error.response?.data?.detail || error.message || "Checkout failed";
+      showBannerMessage("error", `Error: ${errorMessage}`);
       // If it's a conflict error, it means it's already checked out. Clear the form.
       if (error.response?.status === 409) {
         setBillData(null);
         setDiscount(0);
         setRoomNumber("");
+        // Refresh active rooms list
+        setTimeout(() => {
+          fetchInitialData();
+        }, 1000);
+      } else if (error.response?.status === 404) {
+        // Booking not found - might have been checked out already
+        setBillData(null);
+        setRoomNumber("");
+        setTimeout(() => {
+          fetchInitialData();
+        }, 1000);
       }
+      console.error("Checkout error:", error);
     } finally {
       setLoading(false);
     }
@@ -279,10 +339,10 @@ const Billing = () => {
 
     // 3. Itemized Charges Table
     const chargesBody = [];
-    if (billData.charges.room_charges > 0) chargesBody.push(['Room Charges', `Stay for ${billData.stay_nights} nights`, `₹${billData.charges.room_charges.toFixed(2)}`]);
-    if (billData.charges.package_charges > 0) chargesBody.push(['Package Charges', `Package for ${billData.stay_nights} nights`, `₹${billData.charges.package_charges.toFixed(2)}`]);
-    billData.charges.food_items.forEach(item => chargesBody.push([`Food: ${item.item_name}`, `Quantity: ${item.quantity}`, `₹${item.amount.toFixed(2)}`]));
-    billData.charges.service_items.forEach(item => chargesBody.push([`Service: ${item.service_name}`, '', `₹${item.charges.toFixed(2)}`]));
+    if (billData.charges.room_charges > 0) chargesBody.push(['Room Charges', `Stay for ${billData.stay_nights} nights`, formatCurrency(billData.charges.room_charges)]);
+    if (billData.charges.package_charges > 0) chargesBody.push(['Package Charges', `Package for ${billData.stay_nights} nights`, formatCurrency(billData.charges.package_charges)]);
+    billData.charges.food_items.forEach(item => chargesBody.push([`Food: ${item.item_name}`, `Quantity: ${item.quantity}`, formatCurrency(item.amount)]));
+    billData.charges.service_items.forEach(item => chargesBody.push([`Service: ${item.service_name}`, '', formatCurrency(item.charges)]));
 
     autoTable(doc, {
       startY: 65,
@@ -297,10 +357,10 @@ const Billing = () => {
     const tax = subtotal * 0.05;
     const grandTotal = Math.max(0, subtotal + tax - (parseFloat(discount) || 0));
     const totals = [
-      ['Subtotal', `₹${subtotal.toFixed(2)}`],
-      ['Tax (5%)', `+₹${tax.toFixed(2)}`],
-      ...(discount > 0 ? [['Discount', `-₹${parseFloat(discount).toFixed(2)}`]] : []),
-      ['Grand Total', `₹${grandTotal.toFixed(2)}`]
+      ['Subtotal', formatCurrency(subtotal)],
+      ['Tax (5%)', `+${formatCurrency(tax)}`],
+      ...(discount > 0 ? [['Discount', `-${formatCurrency(parseFloat(discount))}`]] : []),
+      ['Grand Total', formatCurrency(grandTotal)]
     ];
 
     autoTable(doc, {
@@ -352,26 +412,26 @@ const Billing = () => {
     text += `Check-out: ${new Date(billData.check_out).toLocaleDateString()}\n`;
     text += `${line}\n`;
     text += `${bold('Itemized Charges:')}\n`;
-    if (billData.charges.room_charges > 0) text += `Room Charges: ₹${billData.charges.room_charges.toFixed(2)}\n`;
-    if (billData.charges.package_charges > 0) text += `Package Charges: ₹${billData.charges.package_charges.toFixed(2)}\n`;
+    if (billData.charges.room_charges > 0) text += `Room Charges: ${formatCurrency(billData.charges.room_charges)}\n`;
+    if (billData.charges.package_charges > 0) text += `Package Charges: ${formatCurrency(billData.charges.package_charges)}\n`;
 
     if (billData.charges.food_items.length > 0) {
       text += `\nFood & Beverage:\n`;
       billData.charges.food_items.forEach(item => {
-        text += `- ${item.item_name} (x${item.quantity}): ₹${item.amount.toFixed(2)}\n`;
+        text += `- ${item.item_name} (x${item.quantity}): ${formatCurrency(item.amount)}\n`;
       });
     }
     if (billData.charges.service_items.length > 0) {
       text += `\nAdditional Services:\n`;
       billData.charges.service_items.forEach(item => {
-        text += `- ${item.service_name}: ₹${item.charges.toFixed(2)}\n`;
+        text += `- ${item.service_name}: ${formatCurrency(item.charges)}\n`;
       });
     }
     text += `${line}\n`;
-    text += `Subtotal: ₹${billData.charges.total_due.toFixed(2)}\n`;
-    text += `Tax (5%): +₹${(billData.charges.total_due * 0.05).toFixed(2)}\n`;
-    if (discount > 0) text += `Discount: -₹${parseFloat(discount).toFixed(2)}\n`;
-    text += `${bold('Grand Total:')} ₹${Math.max(0, billData.charges.total_due * 1.05 - discount).toFixed(2)}\n`;
+    text += `Subtotal: ${formatCurrency(billData.charges.total_due)}\n`;
+    text += `Tax (5%): +${formatCurrency(billData.charges.total_due * 0.05)}\n`;
+    if (discount > 0) text += `Discount: -${formatCurrency(parseFloat(discount))}\n`;
+    text += `${bold('Grand Total:')} ${formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}\n`;
     text += `${line}\nThank you for staying with us!`;
 
     return encodeURIComponent(text);
@@ -412,11 +472,11 @@ const Billing = () => {
         <li></li>
       </div>
 
-      <div className="p-4 md:p-6 bg-gray-50 min-h-screen">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Business Dashboard & Checkout</h1>
+      <div className="p-2 sm:p-4 md:p-6 bg-gray-50 min-h-screen">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-6">Business Dashboard & Checkout</h1>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <KpiCard title="Checkouts Today" value={kpiData.checkouts_today} icon={<Hash size={22} className="text-indigo-600"/>} color="bg-indigo-100" />
           <KpiCard title="Total Checkouts" value={kpiData.checkouts_total} icon={<Hash size={22} className="text-green-600"/>} color="bg-green-100" />
           <KpiCard title="Available Rooms" value={kpiData.available_rooms} icon={<BedDouble size={22} className="text-blue-600"/>} color="bg-blue-100" />
@@ -426,7 +486,7 @@ const Billing = () => {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8 mb-6 sm:mb-8">
           <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-bold text-gray-800 mb-4">Weekly Performance</h2>
             <ResponsiveContainer width="100%" height={300}>
@@ -458,32 +518,102 @@ const Billing = () => {
         </div>
 
         {/* Checkout Form */}
-        <div className="bg-white p-6 md:p-8 rounded-xl shadow-md w-full max-w-2xl mx-auto mb-8">
-          <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Process New Checkout</h2>
+        <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl shadow-md w-full max-w-2xl mx-auto mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-4 sm:mb-6">Process New Checkout</h2>
           <div className="mb-4">
             <label htmlFor="room-select" className="block text-gray-700 font-medium mb-2">
-              Select a Room from an Active Booking
+              Select a Room or Booking to Checkout
             </label>
             <select
               id="room-select"
               value={roomNumber}
-              onChange={(e) => setRoomNumber(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (!value) {
+                  setRoomNumber("");
+                  setCheckoutMode("multiple");
+                  setBillData(null);
+                  return;
+                }
+                // Use composite key: booking_id-room_number-checkout_mode
+                const parts = value.split('-');
+                if (parts.length >= 3) {
+                  const [bookingId, roomNum, mode] = parts;
+                  const selected = activeRooms.find(b => 
+                    b.booking_id.toString() === bookingId && 
+                    b.room_number === roomNum && 
+                    b.checkout_mode === mode
+                  );
+                  setRoomNumber(value);
+                  if (selected) {
+                    setCheckoutMode(selected.checkout_mode || mode || "multiple");
+                    setBillData(null); // Clear bill data when selection changes
+                  }
+                } else {
+                  // Fallback for old format (shouldn't happen, but just in case)
+                  const selected = activeRooms.find(b => b.room_number === value);
+                  setRoomNumber(value);
+                  if (selected) {
+                    setCheckoutMode(selected.checkout_mode || "multiple");
+                    setBillData(null);
+                  }
+                }
+              }}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="">-- Select a Room --</option>
-              {activeRooms.map(room => (
-                <option key={room.number} value={room.number}>
-                  Room {room.number} ({room.guest_name})
-                </option>
-              ))}
+              <option value="">-- Select a Room or Booking to Checkout --</option>
+              {activeRooms.map((booking, index) => {
+                // Create unique composite key: booking_id-room_number-checkout_mode
+                const uniqueValue = `${booking.booking_id}-${booking.room_number}-${booking.checkout_mode}`;
+                return (
+                  <option key={`${uniqueValue}-${index}`} value={uniqueValue}>
+                    {booking.display_label || `${booking.room_numbers?.join(', ') || booking.room_number} (${booking.guest_name})`}
+                  </option>
+                );
+              })}
             </select>
+            {roomNumber && (() => {
+              // Parse composite key to find the correct selection
+              let selected = null;
+              let actualMode = "multiple";
+              
+              if (roomNumber.includes('-')) {
+                const parts = roomNumber.split('-');
+                if (parts.length >= 3) {
+                  const [bookingId, roomNum, mode] = parts;
+                  selected = activeRooms.find(b => 
+                    b.booking_id.toString() === bookingId && 
+                    b.room_number === roomNum && 
+                    b.checkout_mode === mode
+                  );
+                  actualMode = selected?.checkout_mode || mode || "multiple";
+                }
+              } else {
+                // Fallback for old format
+                selected = activeRooms.find(b => b.room_number === roomNumber);
+                actualMode = selected?.checkout_mode || "multiple";
+              }
+              
+              const isMultiple = actualMode === "multiple";
+              return (
+                <div className={`mt-2 p-3 ${isMultiple ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'} border rounded-lg text-sm ${isMultiple ? 'text-blue-800' : 'text-green-800'}`}>
+                  <p className="font-semibold">
+                    {isMultiple ? "⚠️ Important: This will checkout ALL rooms in the booking" : "✓ Single Room Checkout: Only this room will be checked out"}
+                  </p>
+                  <p className="mt-1">Rooms: {selected?.room_numbers?.join(', ') || roomNumber}</p>
+                  {selected?.room_numbers && selected.room_numbers.length > 1 && !isMultiple && (
+                    <p className="mt-1 text-xs italic">Other rooms in this booking will remain checked in.</p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
           <button
             onClick={handleGetBill}
             className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mb-4"
             disabled={loading}
           >
-            {loading ? "Fetching Bill..." : "Get Bill for Entire Booking"}
+            {loading ? "Fetching Bill..." : checkoutMode === "single" ? "Get Bill for Single Room" : "Get Bill for Entire Booking"}
           </button>
 
           {billData && (
@@ -501,15 +631,15 @@ const Billing = () => {
               <div className="mt-4 pt-4 border-t">
                 <h3 className="font-bold text-gray-700 mb-2">Itemized Charges:</h3>
                 <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  {billData.charges.room_charges > 0 && <li>Room Charges: ₹{billData.charges.room_charges.toFixed(2)}</li>}
-                  {billData.charges.package_charges > 0 && <li>Package Charges: ₹{billData.charges.package_charges.toFixed(2)}</li>}
+                  {billData.charges.room_charges > 0 && <li>Room Charges: {formatCurrency(billData.charges.room_charges)}</li>}
+                  {billData.charges.package_charges > 0 && <li>Package Charges: {formatCurrency(billData.charges.package_charges)}</li>}
                 </ul>
 
                 {billData.charges.food_items.length > 0 && (
                   <div className="mt-3">
                     <h4 className="font-semibold text-gray-600">Food & Beverage:</h4>
                     <ul className="list-decimal list-inside ml-4 text-xs text-gray-500">
-                      {billData.charges.food_items.map((item, i) => <li key={i}>{item.item_name} (x{item.quantity}) - ₹{item.amount.toFixed(2)}</li>)}
+                      {billData.charges.food_items.map((item, i) => <li key={i}>{item.item_name} (x{item.quantity}) - {formatCurrency(item.amount)}</li>)}
                     </ul>
                   </div>
                 )}
@@ -518,19 +648,19 @@ const Billing = () => {
                   <div className="mt-3">
                     <h4 className="font-semibold text-gray-600">Additional Services:</h4>
                     <ul className="list-decimal list-inside ml-4 text-xs text-gray-500">
-                      {billData.charges.service_items.map((item, i) => <li key={i}>{item.service_name} - ₹{item.charges.toFixed(2)}</li>)}
+                      {billData.charges.service_items.map((item, i) => <li key={i}>{item.service_name} - {formatCurrency(item.charges)}</li>)}
                     </ul>
                   </div>
                 )}
 
                 <div className="mt-4 pt-4 border-t text-right space-y-1">
-                  <p className="text-sm text-gray-600">Subtotal: ₹{billData.charges.total_due.toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">Tax (5%): +₹{(billData.charges.total_due * 0.05).toFixed(2)}</p>
+                  <p className="text-sm text-gray-600">Subtotal: {formatCurrency(billData.charges.total_due)}</p>
+                  <p className="text-sm text-gray-600">Tax (5%): +{formatCurrency(billData.charges.total_due * 0.05)}</p>
                   {discount > 0 && (
-                    <p className="text-sm text-green-600">Discount: -₹{parseFloat(discount).toFixed(2)}</p>
+                    <p className="text-sm text-green-600">Discount: -{formatCurrency(parseFloat(discount))}</p>
                   )}
                   <p className="font-bold text-xl text-gray-900">
-                    Grand Total: ₹{Math.max(0, billData.charges.total_due * 1.05 - discount).toFixed(2)}
+                    Grand Total: {formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}
                   </p>
                 </div>
               </div>
@@ -578,47 +708,206 @@ const Billing = () => {
         </div>
 
         {/* All Checkouts Report */}
-        <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-7xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Completed Checkouts</h2>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
+        <div className="bg-white p-3 sm:p-6 rounded-xl shadow-md w-full max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Completed Checkouts</h2>
+            {activeFiltersCount > 0 && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>Showing {filteredCheckouts.length} of {checkouts.length} checkouts</span>
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <XCircle size={14} />
+                  Clear Filters ({activeFiltersCount})
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Filters Section */}
+          <div className="bg-gray-50 p-4 rounded-lg mb-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter size={18} className="text-indigo-600" />
+              <h3 className="font-semibold text-gray-800">Filters & Search</h3>
+            </div>
+            
+            {/* General Search */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by ID, guest name, room number, booking ID..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            {/* Filter Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Guest Name Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Guest Name</label>
+                <input
+                  type="text"
+                  value={guestNameFilter}
+                  onChange={(e) => setGuestNameFilter(e.target.value)}
+                  placeholder="Filter by guest name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* Room Number Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
+                <input
+                  type="text"
+                  value={roomNumberFilter}
+                  onChange={(e) => setRoomNumberFilter(e.target.value)}
+                  placeholder="Filter by room number"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* Booking/Package ID Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Booking/Package ID</label>
+                <input
+                  type="text"
+                  value={bookingIdFilter}
+                  onChange={(e) => setBookingIdFilter(e.target.value)}
+                  placeholder="Filter by booking ID"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* Payment Method Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select
+                  value={paymentMethodFilter}
+                  onChange={(e) => setPaymentMethodFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-white"
+                >
+                  <option value="All">All Methods</option>
+                  {paymentMethods.map((method) => (
+                    <option key={method} value={method}>{method}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Date Range and Amount Filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              {/* From Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* To Date */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* Min Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Min Amount (₹)</label>
+                <input
+                  type="number"
+                  value={minAmount}
+                  onChange={(e) => setMinAmount(e.target.value)}
+                  placeholder="0"
+                  min="0"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+
+              {/* Max Amount */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Max Amount (₹)</label>
+                <input
+                  type="number"
+                  value={maxAmount}
+                  onChange={(e) => setMaxAmount(e.target.value)}
+                  placeholder="No limit"
+                  min="0"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <table className="min-w-full text-xs sm:text-sm text-left">
               <thead className="bg-gray-50 border-b-2 border-gray-200 text-gray-800 uppercase tracking-wider">
                 <tr>
-                  <th className="p-3">ID</th>
-                  <th className="p-3">Guest</th>
-                  <th className="p-3">Rooms</th>
-                  <th className="p-3">Booking/Package ID</th>
-                  <th className="p-3">Payment</th>
-                  <th className="p-3">Date</th>
-                  <th className="p-3 text-right">Grand Total</th>
+                  <th className="p-2 sm:p-3">ID</th>
+                  <th className="p-2 sm:p-3 hidden sm:table-cell">Guest</th>
+                  <th className="p-2 sm:p-3">Rooms</th>
+                  <th className="p-2 sm:p-3 hidden lg:table-cell">Booking/Package ID</th>
+                  <th className="p-2 sm:p-3 hidden md:table-cell">Payment</th>
+                  <th className="p-2 sm:p-3 hidden lg:table-cell">Date</th>
+                  <th className="p-2 sm:p-3 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {checkouts.length > 0 ? (
-                  checkouts.map((c) => (
+                {filteredCheckouts.length > 0 ? (
+                  filteredCheckouts.map((c) => (
                     <tr key={c.id} className="hover:bg-indigo-50 cursor-pointer" onClick={() => setSelectedCheckout(c)}>
-                      <td className="p-3 font-medium text-gray-800">{c.id}</td>
-                      <td className="p-3 font-semibold text-gray-900">{c.guest_name}</td>
-                      <td className="p-3 text-gray-800">{c.room_number}</td>
-                      <td className="p-3 text-gray-800">{c.booking_id || c.package_booking_id || 'N/A'}</td>
-                      <td className="p-3 text-gray-800">{c.payment_method}</td>
-                      <td className="p-3 text-gray-800">{new Date(c.created_at).toLocaleDateString()}</td>
-                      <td className="p-3 font-bold text-gray-900 text-right">₹{c.grand_total.toFixed(2)}</td>
+                      <td className="p-2 sm:p-3 font-medium text-gray-800 text-xs sm:text-sm">{c.id}</td>
+                      <td className="p-2 sm:p-3 font-semibold text-gray-900 text-xs sm:text-sm hidden sm:table-cell">{c.guest_name}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm">{c.room_number}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{c.booking_id || c.package_booking_id || 'N/A'}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden md:table-cell">{c.payment_method}</td>
+                      <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{new Date(c.created_at).toLocaleDateString()}</td>
+                      <td className="p-2 sm:p-3 font-bold text-gray-900 text-right text-xs sm:text-sm">{formatCurrency(c.grand_total)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="p-4 text-center text-gray-500">No completed checkouts found.</td>
+                    <td colSpan="7" className="p-4 text-center text-gray-500 text-sm sm:text-base">
+                      {activeFiltersCount > 0 ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <span>No checkouts match your filters.</span>
+                          <button
+                            onClick={clearAllFilters}
+                            className="text-indigo-600 hover:text-indigo-800 underline text-sm"
+                          >
+                            Clear all filters
+                          </button>
+                        </div>
+                      ) : (
+                        "No completed checkouts found."
+                      )}
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
-            {hasMoreCheckouts && (
-              <div ref={loadMoreRef} className="text-center p-4">
-                {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
-              </div>
-            )}
           </div>
+          {hasMoreCheckouts && (
+            <div ref={loadMoreRef} className="text-center p-4">
+              {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
+            </div>
+          )}
         </div>
 
         <CheckoutDetailModal checkout={selectedCheckout} onClose={() => setSelectedCheckout(null)} />

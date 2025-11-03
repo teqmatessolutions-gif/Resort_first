@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import api from "../services/api";
 import { motion } from "framer-motion";
@@ -117,7 +118,7 @@ const UserHistory = () => {
               >
                 <option value="">-- Select a User --</option>
                 {users.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={user.user_id || user.id}>
                     {user.name} ({user.role})
                   </option>
                 ))}
@@ -188,7 +189,7 @@ const ActivityCard = ({ activity }) => (
         <h4 className="font-bold text-gray-800">{activity.type}</h4>
         <p className="text-sm text-gray-600">{activity.description}</p>
         <div className="text-xs mt-2 flex items-center gap-4 flex-wrap">
-          {activity.amount != null && <span className="font-semibold text-green-600">Amount: ₹{activity.amount.toFixed(2)}</span>}
+          {activity.amount != null && <span className="font-semibold text-green-600">Amount: {formatCurrency(activity.amount)}</span>}
           {activity.status && <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-800 font-medium">{activity.status}</span>}
         </div>
       </div>

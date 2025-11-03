@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import api from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -66,11 +67,18 @@ const UserHistory = () => {
     setError("");
     setHistory(null);
     try {
-      const response = await api.get("/reports/user-history", {
-        params: {
-          user_id: selectedUserId, from_date: fromDate, to_date: toDate
-        }
-      });
+      // Build params object, only including dates if they have values
+      const params = {
+        user_id: selectedUserId
+      };
+      if (fromDate && fromDate.trim() !== "") {
+        params.from_date = fromDate;
+      }
+      if (toDate && toDate.trim() !== "") {
+        params.to_date = toDate;
+      }
+      
+      const response = await api.get("/reports/user-history", { params });
       setHistory(response.data);
     } catch (err) {
       setError(err.response?.data?.detail || "An error occurred.");
@@ -115,7 +123,7 @@ const UserHistory = () => {
                 <p className="text-xs text-gray-500">{new Date(activity.activity_date).toLocaleString()}</p>
                 <h4 className="font-bold">{activity.type}</h4>
                 <p className="text-sm">{activity.description}</p>
-                {activity.amount != null && <span className="text-sm font-semibold text-green-600">Amount: ₹{activity.amount.toFixed(2)}</span>}
+                {activity.amount != null && <span className="text-sm font-semibold text-green-600">Amount: {formatCurrency(activity.amount)}</span>}
               </div>
             )) : <p>No activities found.</p>}
           </div>
@@ -346,31 +354,69 @@ const AttendanceTracking = () => {
     const dailySummary = workLogs.reduce((acc, log) => {
       const date = log.date;
       if (!acc[date]) {
-        acc[date] = { totalHours: 0, logs: [] };
+        acc[date] = { totalHours: 0, logs: [], completedLogs: [], openLogs: [] };
       }
-      acc[date].totalHours += log.duration_hours || 0;
+      const hours = log.duration_hours || 0;
+      acc[date].totalHours += hours;
       acc[date].logs.push(log);
+      
+      // Separate completed and open logs for better display
+      if (log.check_out_time && hours > 0) {
+        acc[date].completedLogs.push(log);
+      } else if (!log.check_out_time) {
+        acc[date].openLogs.push(log);
+      }
+      
       return acc;
     }, {});
 
     return Object.entries(dailySummary).map(([date, data]) => {
+      const totalHours = data.totalHours;
       let status = 'Absent';
-      if (data.totalHours >= 8) {
+      let statusDescription = '';
+      
+      // Determine status based on total working hours
+      if (totalHours >= 8) {
         status = 'Present';
-      } else if (data.totalHours >= 4) {
+        statusDescription = 'Full Day Present (8+ hours)';
+      } else if (totalHours >= 4 && totalHours < 8) {
         status = 'Half Day';
-      } else if (data.totalHours > 0) {
-        status = 'Present'; // Less than 4 hours but still present
+        statusDescription = 'Half Day (4-8 hours)';
+      } else if (totalHours > 0 && totalHours < 4) {
+        status = 'Partial';
+        statusDescription = `Partial Day (${totalHours.toFixed(2)} hours)`;
+      } else {
+        status = 'Absent';
+        statusDescription = 'No attendance recorded';
       }
-      return { date, totalHours: data.totalHours, status, logs: data.logs };
+      
+      // Calculate summary stats
+      const completedHours = data.completedLogs.reduce((sum, log) => sum + (log.duration_hours || 0), 0);
+      const openLogsCount = data.openLogs.length;
+      const completedLogsCount = data.completedLogs.length;
+      
+      return { 
+        date, 
+        totalHours, 
+        status, 
+        statusDescription,
+        logs: data.logs,
+        completedLogs: data.completedLogs,
+        openLogs: data.openLogs,
+        completedHours,
+        completedLogsCount,
+        openLogsCount
+      };
     }).sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [workLogs]);
 
   const getStatusColor = (status) => {
-    if (status === 'Present') return 'bg-green-100 text-green-800';
-    if (status === 'Half Day') return 'bg-yellow-100 text-yellow-800';
-    return 'bg-red-100 text-red-800';
+    if (status === 'Present') return 'bg-green-100 text-green-800 border-green-300';
+    if (status === 'Half Day') return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    if (status === 'Partial') return 'bg-orange-100 text-orange-800 border-orange-300';
+    return 'bg-red-100 text-red-800 border-red-300';
   };
+
 
   return (
     <div className="space-y-6">
@@ -417,72 +463,196 @@ const AttendanceTracking = () => {
 
           {/* Calculated Attendance Report */}
           <div className="bg-white p-4 rounded-lg space-y-4 lg:col-span-2">
-            <h3 className="text-lg font-semibold">Calculated Daily Attendance</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Daily Attendance Summary</h3>
+              {!loading && workLogs.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  <span className="font-semibold">Total Records:</span> {workLogs.length}
+                </div>
+              )}
+            </div>
             {loading && <p className="text-center text-gray-500">Loading attendance records...</p>}
             {!loading && workLogs.length === 0 && (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <p className="text-gray-600">No attendance records found for this employee.</p>
+              <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <p className="text-gray-600 font-medium">No attendance records found for this employee.</p>
                 <p className="text-sm text-gray-500 mt-2">Use the Clock In button above to create attendance records.</p>
               </div>
             )}
             {!loading && workLogs.length > 0 && (
-            <div className="max-h-96 overflow-y-auto">
-              <table className="min-w-full bg-white text-sm">
-                <thead className="bg-gray-200 sticky top-0">
-                  <tr>
-                    <th className="py-2 px-3 text-left">Date</th>
-                    <th className="py-2 px-3 text-left">Total Hours (Completed)</th>
-                    <th className="py-2 px-3 text-left">Status</th>
-                    <th className="py-2 px-3 text-left">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dailyAttendance.map(day => (
-                    <React.Fragment key={day.date}>
-                      <tr
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedDay(selectedDay === day.date ? null : day.date)}
-                      >
-                        <td className="py-2 px-3">{day.date}</td>
-                        <td className="py-2 px-3">{day.totalHours.toFixed(2)}</td>
-                        <td className="py-2 px-3"><span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(day.status)}`}>{day.status}</span></td>
-                        <td className="py-2 px-3">
-                          {selectedDay === day.date ? '▲ Hide' : '▼ Show'}
-                        </td>
-                      </tr>
-                      {selectedDay === day.date && (
-                        <tr>
-                          <td colSpan="4" className="p-0">
-                            <div className="bg-gray-100 p-3">
-                              <h4 className="font-semibold mb-2">Detailed Logs for {day.date}</h4>
-                              <table className="min-w-full bg-white text-xs border border-gray-200">
-                                <thead className="bg-gray-200">
-                                  <tr>
-                                    <th className="py-1 px-2 text-left">Check-in</th>
-                                    <th className="py-1 px-2 text-left">Check-out</th>
-                                    <th className="py-1 px-2 text-left">Location</th>
-                                    <th className="py-1 px-2 text-left">Duration (Hrs)</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {day.logs.map((log, logIndex) => (
-                                    <tr key={logIndex} className="border-b last:border-b-0">
-                                      <td className="py-1 px-2">{log.check_in_time}</td>
-                                      <td className="py-1 px-2">{log.check_out_time || 'N/A'}</td>
-                                      <td className="py-1 px-2">{log.location || 'N/A'}</td>
-                                      <td className="py-1 px-2">{log.duration_hours ? log.duration_hours.toFixed(2) : 'N/A'}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+            <div className="space-y-4">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                {(() => {
+                  const totalDays = dailyAttendance.length;
+                  const presentDays = dailyAttendance.filter(d => d.status === 'Present').length;
+                  const halfDays = dailyAttendance.filter(d => d.status === 'Half Day').length;
+                  const totalHours = dailyAttendance.reduce((sum, d) => sum + d.totalHours, 0);
+                  
+                  return (
+                    <>
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-600 font-medium">Total Days</p>
+                        <p className="text-lg font-bold text-blue-800">{totalDays}</p>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <p className="text-xs text-green-600 font-medium">Present Days</p>
+                        <p className="text-lg font-bold text-green-800">{presentDays}</p>
+                      </div>
+                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <p className="text-xs text-yellow-600 font-medium">Half Days</p>
+                        <p className="text-lg font-bold text-yellow-800">{halfDays}</p>
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                        <p className="text-xs text-purple-600 font-medium">Total Hours</p>
+                        <p className="text-lg font-bold text-purple-800">{totalHours.toFixed(2)}</p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Attendance Table */}
+              <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
+                <table className="min-w-full bg-white text-sm">
+                  <thead className="bg-gray-100 sticky top-0 z-10">
+                    <tr>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700 border-b">Date</th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700 border-b">Total Hours</th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700 border-b">Status</th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700 border-b">Sessions</th>
+                      <th className="py-3 px-4 text-left font-semibold text-gray-700 border-b">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dailyAttendance.map(day => (
+                      <React.Fragment key={day.date}>
+                        <tr
+                          className="border-b hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => setSelectedDay(selectedDay === day.date ? null : day.date)}
+                        >
+                          <td className="py-3 px-4 font-medium text-gray-800">
+                            {new Date(day.date).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-900">{day.totalHours.toFixed(2)} hrs</span>
+                              {day.completedHours > 0 && day.openLogsCount > 0 && (
+                                <span className="text-xs text-gray-500">
+                                  {day.completedHours.toFixed(2)} completed
+                                </span>
+                              )}
                             </div>
                           </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col gap-1">
+                              <span className={`px-3 py-1 rounded-md text-xs font-semibold border ${getStatusColor(day.status)}`}>
+                                {day.status}
+                              </span>
+                              <span className="text-xs text-gray-500">{day.statusDescription}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col gap-1">
+                              <span className="text-xs">
+                                <span className="font-semibold text-green-600">{day.completedLogsCount}</span> completed
+                              </span>
+                              {day.openLogsCount > 0 && (
+                                <span className="text-xs">
+                                  <span className="font-semibold text-orange-600">{day.openLogsCount}</span> open
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                              {selectedDay === day.date ? '▲ Hide Details' : '▼ Show Details'}
+                            </button>
+                          </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  ))}
-                </tbody>
-              </table>
+                        {selectedDay === day.date && (
+                          <tr>
+                            <td colSpan="5" className="p-0 bg-gray-50">
+                              <div className="p-4 border-t-2 border-gray-200">
+                                <div className="flex items-center justify-between mb-3">
+                                  <h4 className="font-semibold text-gray-800">Detailed Logs for {day.date}</h4>
+                                  <span className="text-xs text-gray-500">
+                                    Total: {day.totalHours.toFixed(2)} hours | 
+                                    Completed: {day.completedHours.toFixed(2)} hours
+                                    {day.openLogsCount > 0 && ` | Open: ${day.openLogsCount} session(s)`}
+                                  </span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                  <table className="min-w-full bg-white text-xs border border-gray-200 rounded-lg">
+                                    <thead className="bg-gray-100">
+                                      <tr>
+                                        <th className="py-2 px-3 text-left font-semibold text-gray-700 border-b">Check-in Time</th>
+                                        <th className="py-2 px-3 text-left font-semibold text-gray-700 border-b">Check-out Time</th>
+                                        <th className="py-2 px-3 text-left font-semibold text-gray-700 border-b">Location</th>
+                                        <th className="py-2 px-3 text-left font-semibold text-gray-700 border-b">Duration</th>
+                                        <th className="py-2 px-3 text-left font-semibold text-gray-700 border-b">Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {day.logs.length > 0 ? day.logs.map((log, logIndex) => {
+                                        const isOpen = !log.check_out_time;
+                                        const hours = log.duration_hours || 0;
+                                        return (
+                                          <tr key={logIndex} className={`border-b last:border-b-0 ${isOpen ? 'bg-orange-50' : ''}`}>
+                                            <td className="py-2 px-3 font-medium">{log.check_in_time || 'N/A'}</td>
+                                            <td className="py-2 px-3">
+                                              {log.check_out_time || (
+                                                <span className="text-orange-600 font-medium">In Progress...</span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-3">
+                                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                {log.location || 'N/A'}
+                                              </span>
+                                            </td>
+                                            <td className="py-2 px-3">
+                                              {hours > 0 ? (
+                                                <span className="font-semibold">{hours.toFixed(2)} hrs</span>
+                                              ) : (
+                                                <span className="text-gray-400">-</span>
+                                              )}
+                                            </td>
+                                            <td className="py-2 px-3">
+                                              {isOpen ? (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                  Open
+                                                </span>
+                                              ) : (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                  Completed
+                                                </span>
+                                              )}
+                                            </td>
+                                          </tr>
+                                        );
+                                      }) : (
+                                        <tr>
+                                          <td colSpan="5" className="py-4 text-center text-gray-500">
+                                            No logs available for this date
+                                          </td>
+                                        </tr>
+                                      )}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
             )}
           </div>
@@ -579,13 +749,13 @@ const MonthlyReport = () => {
                         <h4 className="font-semibold mb-2">Salary Calculation for the Month</h4>
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">₹{(report.base_salary || 0).toFixed(2)}</p>
+                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">{formatCurrency(report.base_salary || 0)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- ₹{(report.deductions || 0).toFixed(2)}</p>
+                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- {formatCurrency(report.deductions || 0)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">₹{(report.net_salary || 0).toFixed(2)}</p>
+                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">{formatCurrency(report.net_salary || 0)}</p>
                             </div>
                         </div>
                     </div>

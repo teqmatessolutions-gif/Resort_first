@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 // Lucide React is used for elegant icons
 import { BedDouble, Coffee, ConciergeBell, Package, ChevronRight, ChevronDown, Image as ImageIcon, Star, Quote, ChevronUp, MessageSquare, Send, X, Facebook, Instagram, Linkedin, Twitter, Moon, Sun, Droplet } from 'lucide-react';
+// Currency formatting utility
+import { formatCurrency } from './utils/currency';
 
 // Custom hook to detect if an element is in the viewport
 const useOnScreen = (ref, rootMargin = "0px") => {
@@ -626,6 +628,10 @@ const BackgroundAnimation = ({ theme }) => {
                     from { opacity: 0; transform: translateY(30px); }
                     to { opacity: 1; transform: translateY(0); }
                 }
+
+                /* Lazy reveal utility */
+                .reveal { opacity: 0; transform: translateY(18px) scale(.98); filter: blur(6px); will-change: opacity, transform, filter; }
+                .reveal.in { opacity: 1; transform: none; filter: blur(0); transition: opacity .6s ease, transform .6s ease, filter .6s ease; }
                 @keyframes gentle-glow {
                     0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
                     50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
@@ -677,6 +683,7 @@ export default function App() {
     const [planWeddings, setPlanWeddings] = useState([]);
     const [nearbyAttractions, setNearbyAttractions] = useState([]);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [currentWeddingIndex, setCurrentWeddingIndex] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showBackToTop, setShowBackToTop] = useState(false);
@@ -769,13 +776,36 @@ export default function App() {
         return `${baseUrl}${path}`;
     };
 
+    // Determine gallery card height for a mosaic layout.
+    // Specifically, for the SECOND ROW (indices 5-9), apply:
+    // [tall, short, tall, tall, short]
+    // For other rows, use a gentle alternating pattern for visual rhythm.
+    const getGalleryCardHeight = (index) => {
+        const columns = 5; // grid is 5 columns on desktop
+        const rowIndex = Math.floor(index / columns);
+        const colIndex = index % columns;
+
+        // Heights in pixels
+        const TALL = 440;
+        const SHORT = 280;
+
+        if (rowIndex === 1) {
+            const secondRowPattern = [TALL, SHORT, TALL, TALL, SHORT];
+            return `${secondRowPattern[colIndex]}px`;
+        }
+
+        // Default pattern for other rows (subtle variation)
+        const defaultPattern = [320, 360, 300, 360, 320];
+        return `${defaultPattern[colIndex]}px`;
+    };
+
     // *** FIX: Added useEffect to fetch all resort data on component mount ***
     useEffect(() => {
         const fetchResortData = async () => {
             const API_BASE_URL = process.env.NODE_ENV === 'production' ? "https://www.teqmates.com/api" : "http://localhost:8000/api";
             const endpoints = {
                 rooms: '/rooms/test',  // Use working test endpoint for real room data
-                bookings: '/bookings?limit=10000', // Fetch all bookings for availability check
+                bookings: '/bookings?limit=500&skip=0', // Reduced limit for better performance - only recent bookings needed
                 foodItems: '/food-items/',
                 packages: '/packages/',
                 resortInfo: '/resort-info/',
@@ -838,12 +868,26 @@ export default function App() {
         if (bannerData.length > 1) {
             const interval = setInterval(() => {
                 setCurrentBannerIndex((prev) => (prev + 1) % bannerData.length);
-            }, 5000); // Change image every 5 seconds
+            }, 9000); // Slower transition: change image every 9 seconds
             return () => clearInterval(interval);
         } else if (bannerData.length === 1) {
             setCurrentBannerIndex(0); // Ensure first banner is shown
         }
     }, [bannerData.length]);
+
+    // Auto-change wedding images (optimized with pause on hover)
+    const [isWeddingHovered, setIsWeddingHovered] = useState(false);
+    const activeWeddings = useMemo(() => planWeddings.filter(w => w.is_active), [planWeddings]);
+    useEffect(() => {
+        if (activeWeddings.length > 1 && !isWeddingHovered) {
+            const interval = setInterval(() => {
+                setCurrentWeddingIndex((prev) => (prev + 1) % activeWeddings.length);
+            }, 10000); // Change image every 10 seconds
+            return () => clearInterval(interval);
+        } else if (activeWeddings.length === 1) {
+            setCurrentWeddingIndex(0); // Ensure first wedding is shown
+        }
+    }, [activeWeddings.length, isWeddingHovered]);
 
     const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -853,6 +897,22 @@ export default function App() {
         setIsRoomBookingFormOpen(true);
         setBookingMessage({ type: null, text: "" });
     };
+
+    // Lazy reveal on scroll for elements with .reveal
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '100px' });
+
+        const nodes = document.querySelectorAll('.reveal');
+        nodes.forEach((n) => observer.observe(n));
+        return () => observer.disconnect();
+    }, [galleryImages, packages]);
 
     const handleOpenPackageBookingForm = (packageId) => {
         // Always prioritize dates from bookingData (selected on previous page) over packageBookingData
@@ -1179,10 +1239,10 @@ export default function App() {
                 try {
                     const contentType = response.headers.get("content-type");
                     if (contentType && contentType.includes("application/json")) {
-                        const errorData = await response.json();
+                const errorData = await response.json();
                         console.error("Package Booking Error Response:", errorData);
                         
-                        // Check if it's a validation error from the backend
+                // Check if it's a validation error from the backend
                         if (errorData.detail) {
                             if (typeof errorData.detail === 'string') {
                                 errorMessage = errorData.detail;
@@ -1190,7 +1250,7 @@ export default function App() {
                                 // Handle Pydantic validation errors
                                 const errors = errorData.detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
                                 errorMessage = `Validation error: ${errors}`;
-                            } else {
+                } else {
                                 errorMessage = JSON.stringify(errorData.detail);
                             }
                         }
@@ -1353,9 +1413,19 @@ export default function App() {
     }, [theme]);
 
 
+    // Debounced scroll handler for better performance
     useEffect(() => {
-        const handleScroll = () => setShowBackToTop(window.scrollY > 300);
-        window.addEventListener('scroll', handleScroll);
+        let ticking = false;
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setShowBackToTop(window.scrollY > 300);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
@@ -1496,18 +1566,18 @@ export default function App() {
             {/* Luxury Navigation Dots - Only show if multiple banners */}
             {bannerData.length > 1 && (
                 <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex space-x-3 z-20">
-                    {bannerData.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setCurrentBannerIndex(index)}
-                            className={`transition-all duration-300 ${
-                                index === currentBannerIndex
-                                    ? "w-12 h-1 bg-amber-400 rounded-full"
-                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
-                            }`}
-                        />
-                    ))}
-                </div>
+                {bannerData.map((_, index) => (
+                    <button
+                        key={index}
+                        onClick={() => setCurrentBannerIndex(index)}
+                        className={`transition-all duration-300 ${
+                            index === currentBannerIndex
+                                ? "w-12 h-1 bg-amber-400 rounded-full"
+                                : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                        }`}
+                    />
+                ))}
+            </div>
             )}
         </>
     ) : (
@@ -1541,17 +1611,23 @@ export default function App() {
                                         return (
                                             <div 
                                                 key={featuredPkg.id}
-                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl`}
+                                                className={`${theme.bgCard} rounded-3xl overflow-hidden shadow-2xl border ${theme.border} transition-all duration-500 hover:shadow-3xl reveal`}
+                                                style={{ transitionDelay: '80ms' }}
                                             >
                                                 <div className="flex flex-col md:flex-row items-stretch">
                                                     {/* Large Image Section - Left */}
                                                     <div className="w-full md:w-1/2 h-80 md:h-[500px] overflow-hidden relative">
-                                                        <img 
+                                                    <img 
                                                             src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                             alt={featuredPkg.title} 
-                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                                            className="w-full h-full object-cover transition-transform duration-700 hover:scale-110 reveal" 
+                                                            loading="lazy"
                                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                         />
+                                                        {/* Price badge - large card */}
+                                                        <div className="absolute bottom-4 left-4 bg-white/95 text-amber-700 font-extrabold text-2xl md:text-3xl px-4 py-2 rounded-xl shadow-lg">
+                                                            {formatCurrency(featuredPkg.price || 0)}
+                                                        </div>
                                                         {/* Image Slider Dots */}
                                                         {featuredPkg.images && featuredPkg.images.length > 1 && (
                                                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
@@ -1581,15 +1657,21 @@ export default function App() {
                                                         <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed mb-6`}>
                                                             {featuredPkg.description}
                                                         </p>
+                                                        {/* Price Section */}
+                                                        <div className="mb-6 pt-4 border-t border-gray-200">
+                                                            <p className={`text-sm ${theme.textSecondary} mb-2`}>Starting from</p>
+                                                            <p className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent} mb-6`}>
+                                                                {formatCurrency(featuredPkg.price || 0)}
+                                                                <span className={`text-lg ${theme.textSecondary} font-normal ml-2`}>/package</span>
+                                                            </p>
+                                                        </div>
+                                                        
                                                         <div className="flex items-center justify-between flex-wrap gap-4">
-                                                            <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
-                                                                ₹{featuredPkg.price}
-                                                            </span>
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
                                                                 className={`px-8 py-3 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2`}
                                                             >
-                                                                KNOW MORE
+                                                                Book Now
                                                                 <ChevronRight className="w-5 h-5" />
                                                             </button>
                                                         </div>
@@ -1602,51 +1684,87 @@ export default function App() {
                                     {/* Smaller Packages Grid - Only show if more than 1 package */}
                                     {packages.length > 1 && (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                            {packages.slice(1, 4).map((pkg) => {
-                                                const imgIndex = packageImageIndex[pkg.id] || 0;
-                                                const currentImage = pkg.images && pkg.images[imgIndex];
-                                                return (
-                                                    <div 
-                                                        key={pkg.id} 
-                                                        className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border}`}
-                                                    >
+                                    {packages.slice(1).map((pkg) => {
+                                        const imgIndex = packageImageIndex[pkg.id] || 0;
+                                        const currentImage = pkg.images && pkg.images[imgIndex];
+                                        return (
+                                            <div 
+                                                key={pkg.id} 
+                                                onClick={() => handleOpenPackageBookingForm(pkg.id)}
+                                                className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer reveal`}
+                                                style={{ transitionDelay: `${(imgIndex % 5) * 70}ms` }}
+                                            >
                                                         {/* Image Container */}
-                                                        <div className="relative h-64 overflow-hidden">
-                                                            <img 
+                                                    <div className="relative h-64 overflow-hidden">
+                                                    <img 
                                                                 src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
-                                                                alt={pkg.title} 
-                                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                            />
-                                                            {/* Image Slider Dots */}
-                                                            {pkg.images && pkg.images.length > 1 && (
-                                                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
-                                                                    {pkg.images.map((_, imgIdx) => (
-                                                                        <button
-                                                                            key={imgIdx}
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
-                                                                            }}
-                                                                            className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
-                                                                        />
-                                                                    ))}
-                                                                </div>
-                                                            )}
+                                                        alt={pkg.title} 
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 reveal" 
+                                                        loading="lazy"
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
+                                                    {/* Price badge - always visible */}
+                                                    <div className="absolute bottom-3 left-3 bg-white/90 text-amber-700 font-extrabold text-lg px-3 py-1 rounded-lg shadow-md">
+                                                        {formatCurrency(pkg.price || 0)}
+                                                    </div>
+                                                            {/* Quick Book button overlay */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                className="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md hover:bg-amber-600"
+                                                            >
+                                                                Book Now
+                                                            </button>
+                                                    {/* Image Slider Dots */}
+                                                    {pkg.images && pkg.images.length > 1 && (
+                                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
+                                                            {pkg.images.map((_, imgIdx) => (
+                                                                <button
+                                                                    key={imgIdx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setPackageImageIndex(prev => ({ ...prev, [pkg.id]: imgIdx }));
+                                                                    }}
+                                                                    className={`w-2 h-2 rounded-full transition-all ${imgIdx === imgIndex ? 'bg-white' : 'bg-white/40'}`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                         </div>
 
                                                         {/* Content - Simplified like Mountain Shadows */}
                                                         <div className={`p-6 ${theme.bgCard}`}>
                                                             <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
-                                                                {pkg.title}
-                                                            </h3>
-                                                            <p className={`text-base ${theme.textSecondary} font-medium`}>
+                                                            {pkg.title}
+                                                        </h3>
+                                                            <p className={`text-base ${theme.textSecondary} font-medium mb-2`}>
                                                                 (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
                                                             </p>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                                            {/* Price */}
+                                                            <div className="mb-4 pt-3 border-t border-gray-200">
+                                                                <p className={`text-sm ${theme.textSecondary} mb-1`}>Starting from</p>
+                                                                <p className={`text-2xl font-extrabold ${theme.textAccent || theme.textPrimary}`}>
+                                                                    {formatCurrency(pkg.price || 0)}
+                                                                    <span className={`text-sm ${theme.textSecondary} font-normal`}>/package</span>
+                                                                </p>
+                                                            </div>
+                                                            {/* CTA Row */}
+                                                            <div className="mt-4 flex items-center justify-between">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); handleOpenPackageBookingForm(pkg.id); }}
+                                                                    className={`px-5 py-2 rounded-full border-2 ${theme.border} ${theme.textAccent} font-semibold hover:${theme.bgSecondary} transition-all duration-300`}
+                                                                >
+                                                                    Book Now
+                                                                </button>
+                                                                <span className={`text-sm ${theme.textSecondary}`}>
+                                                                    Tap card to book
+                                                                </span>
+                                                            </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                         </div>
                                     )}
                                 </div>
@@ -1711,7 +1829,7 @@ export default function App() {
                                             Showing all <span className="font-semibold ${theme.textPrimary}">{rooms.length}</span> rooms
                                         </p>
                                     </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                                         {rooms.map((room, index) => (
                                         <div 
                                             key={room.id} 
@@ -1736,17 +1854,17 @@ export default function App() {
 
                                                 {/* Availability Badge - Only show when dates are selected */}
                                                 {bookingData.check_in && bookingData.check_out && (
-                                                    <div className="absolute top-4 right-4">
+                                                <div className="absolute top-4 right-4">
                                                         {roomAvailability[room.id] ? (
                                                             <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-green-500 text-white">
                                                                 Available
-                                                            </span>
+                                                    </span>
                                                         ) : (
                                                             <span className="px-4 py-2 rounded-full text-xs font-bold shadow-lg bg-red-500 text-white">
                                                                 Booked
                                                             </span>
                                                         )}
-                                                    </div>
+                                                </div>
                                                 )}
 
                                                 {/* Hover Effect Overlay */}
@@ -1780,7 +1898,7 @@ export default function App() {
                                                     <div>
                                                         <p className={`text-sm ${theme.textCardSecondary || theme.textSecondary}`}>Starting from</p>
                                                         <p className={`text-3xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
-                                                            ₹{room.price}
+                                                            {formatCurrency(room.price)}
                                                             <span className={`text-sm ${theme.textCardSecondary || theme.textSecondary} font-normal`}>/night</span>
                                                         </p>
                                                     </div>
@@ -1802,7 +1920,7 @@ export default function App() {
                                             </div>
                                         </div>
                                     ))}
-                                    </div>
+                                </div>
                                 </>
                             ) : (
                                 <div className="text-center py-12">
@@ -1844,9 +1962,9 @@ export default function App() {
                                                 <img 
                                                     src={getImageUrl(experience.image_url)} 
                                                     alt={experience.title} 
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                                                    onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                />
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                                    />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                                             </div>
 
@@ -1914,19 +2032,19 @@ export default function App() {
                                                         <span className="px-2 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-bold rounded-full">
                                                             +{service.images.length - 1}
                                                         </span>
-                                                    </div>
+                                                </div>
                                                 )}
                                             </div>
 
                                             {/* Content */}
                                             <div className="p-4 space-y-3">
                                                 <h3 className={`text-lg font-bold ${theme.textCardPrimary || theme.textPrimary} group-hover:${theme.textCardAccent || theme.textAccent} transition-colors line-clamp-2`}>
-                                                    {service.name}
-                                                </h3>
+                                                        {service.name}
+                                                    </h3>
                                                 <p className={`${theme.textCardSecondary || theme.textSecondary} text-sm leading-relaxed line-clamp-3`}>
-                                                    {service.description}
-                                                </p>
-                                            </div>
+                                                        {service.description}
+                                                    </p>
+                                                </div>
                                         </div>
                                     ))}
                                 </div>
@@ -1946,7 +2064,7 @@ export default function App() {
                     </section>
 
                     {/* Premium Cuisine Section - Mountain Shadows Style */}
-                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
+                    <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 pb-28 transition-colors duration-500`}>
                         <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                             {/* Section Header */}
                             <div className="text-center mb-16">
@@ -2029,17 +2147,18 @@ export default function App() {
 
                             {/* Gallery Grid */}
                             {galleryImages.length > 0 ? (
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {galleryImages.slice(0, 9).map((image, index) => (
-                                        <div 
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-auto gap-4" style={{overflow: 'visible'}}>
+                                    {galleryImages.map((image, index) => (
+                                            <div 
                                             key={image.id} 
-                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-                                            style={{ height: index % 3 === 1 ? '400px' : '300px' }}
+                                            className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 reveal"
+                                            style={{ height: getGalleryCardHeight(index), transitionDelay: `${(index % 5) * 70}ms` }}
                                         >
                                             <img 
                                                 src={process.env.NODE_ENV === 'production' ? `https://www.teqmates.com${image.image_url}` : `http://localhost:8000${image.image_url}`} 
                                                 alt={image.caption || 'Gallery image'} 
                                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                loading="lazy"
                                                 onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                             />
                                             
@@ -2058,28 +2177,25 @@ export default function App() {
                                 <p className={`text-center py-12 ${theme.textSecondary}`}>No gallery images available at the moment.</p>
                             )}
 
-                            {/* View More Button */}
-                            {galleryImages.length > 9 && (
-                                <div className="text-center mt-12">
-                                    <button className="px-10 py-4 bg-white text-amber-600 font-bold text-lg rounded-full border-2 border-amber-600 hover:bg-amber-50 transition-all duration-300">
-                                        View All Photos
-                                    </button>
-                                </div>
-                            )}
+                            {/* View More Button removed: grid now wraps into multiple rows automatically */}
                         </div>
                     </section>
                     
-                    {/* Plan Your Wedding Section - Dynamic */}
+                    {/* Plan Your Wedding Section - Dynamic with Slider */}
                     {planWeddings.length > 0 && planWeddings.some(w => w.is_active) && (
-                        <section className="relative w-full min-h-screen overflow-hidden">
-                            {planWeddings.filter(w => w.is_active).slice(0, 1).map((wedding) => (
+                        <section className="relative w-full h-[600px] md:h-[700px] overflow-hidden">
+                            {planWeddings.filter(w => w.is_active).map((wedding, index) => (
                                 <div key={wedding.id}>
-                                    {/* Background Image with Parallax Effect */}
+                                    {/* Background Images with Animation and Auto-Change */}
                                     <div className="absolute inset-0">
                                         <img 
                                             src={getImageUrl(wedding.image_url)} 
                                             alt={wedding.title} 
-                                            className="w-full h-full object-cover animate-[slow-pan_20s_ease-in-out_infinite] scale-110" 
+                                            className={`absolute inset-0 w-[110%] h-[110%] object-cover object-center transition-all duration-[10000ms] ease-in-out ${index === currentWeddingIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'} animate-[slow-pan_20s_ease-in-out_infinite]`}
+                                            style={{
+                                                animationDelay: `${index * 2}s`,
+                                                animationDirection: index % 2 === 0 ? 'alternate' : 'alternate-reverse'
+                                            }}
                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }}
                                         />
                                         {/* Gradient Overlay */}
@@ -2087,7 +2203,7 @@ export default function App() {
                                     </div>
 
                                     {/* Content Overlay */}
-                                    <div className="relative h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+                                    <div className={`relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8 transition-all duration-1000 ease-in-out ${index === currentWeddingIndex ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                                         <div className="max-w-5xl mx-auto text-center text-white">
                                             {/* Badge */}
                                             <div className="mb-6 inline-block px-6 py-2 bg-amber-500/20 backdrop-blur-sm rounded-full border border-amber-400/30 animate-[fadeInUp_1s_ease-out]">
@@ -2112,22 +2228,40 @@ export default function App() {
                                     </div>
                                 </div>
                             ))}
+                            
+                            {/* Navigation Dots */}
+                            {planWeddings.filter(w => w.is_active).length > 1 && (
+                                <div className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
+                                    {planWeddings.filter(w => w.is_active).map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => setCurrentWeddingIndex(index)}
+                                            className={`transition-all duration-300 ${
+                                                index === currentWeddingIndex
+                                                    ? "w-12 h-1 bg-amber-400 rounded-full"
+                                                    : "w-8 h-1 bg-white/40 hover:bg-white/60 rounded-full"
+                                            }`}
+                                            aria-label={`Go to slide ${index + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                            )}
                         </section>
                     )}
 
                     {/* Nearby Attractions Section - Mountain Shadows Style */}
                     {nearbyAttractions.length > 0 && nearbyAttractions.some(a => a.is_active) && (
                         <section className={`bg-gradient-to-b ${theme.bgCard} ${theme.bgSecondary} py-20 transition-colors duration-500`}>
-                            <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
+                        <div className="w-full mx-auto px-2 sm:px-4 md:px-6">
                                 <div className="text-center mb-16">
                                     <span className={`inline-block px-6 py-2 bg-amber-500/10 ${theme.textAccent} text-sm font-semibold tracking-widest uppercase rounded-full mb-4`}>
-                                        ✦ Explore ✦
-                                    </span>
+                                    ✦ Explore ✦
+                                </span>
                                     <h2 className={`text-4xl md:text-5xl font-extrabold ${theme.textPrimary} mb-4`}>
-                                        NEARBY ATTRACTIONS
-                                    </h2>
-                                </div>
-                                
+                                    NEARBY ATTRACTIONS
+                                </h2>
+                            </div>
+
                                 {/* Split Layout - Image Left, Text Right or vice versa */}
                                 <div className="space-y-12">
                                     {nearbyAttractions.filter(attr => attr.is_active).map((attraction, index) => (
@@ -2142,9 +2276,9 @@ export default function App() {
                                                         src={getImageUrl(attraction.image_url)} 
                                                         alt={attraction.title} 
                                                         className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
-                                                        onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
-                                                    />
-                                                </div>
+                                                onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
+                                            />
+                                            </div>
                                                 
                                                 {/* Content Section */}
                                                 <div className={`w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center ${theme.bgCard}`}>
@@ -2156,12 +2290,12 @@ export default function App() {
                                                         {attraction.description}
                                                     </p>
                                                 </div>
-                                            </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    </div>
+                                ))}
                             </div>
-                        </section>
+                        </div>
+                    </section>
                     )}
 
 
@@ -2274,14 +2408,14 @@ export default function App() {
                                 {bookingData.check_in && bookingData.check_out && (
                                     <div className="pt-4 space-y-3 border-t border-gray-200 dark:border-neutral-700">
                                         <p className={`text-sm ${theme.textSecondary} text-center`}>Continue with booking:</p>
-                                        <button 
-                                            onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
-                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                        >
-                                            <BedDouble className="w-5 h-5" />
-                                            <span>Book a Room</span>
-                                        </button>
-                                        <button 
+                                <button 
+                                    onClick={() => { setIsGeneralBookingOpen(false); setIsRoomBookingFormOpen(true); }}
+                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                >
+                                    <BedDouble className="w-5 h-5" />
+                                    <span>Book a Room</span>
+                                </button>
+                                <button 
                                             onClick={() => { 
                                                 setIsGeneralBookingOpen(false);
                                                 // Copy dates from bookingData to packageBookingData
@@ -2292,11 +2426,11 @@ export default function App() {
                                                 }));
                                                 setIsPackageSelectionOpen(true); 
                                             }}
-                                            className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
-                                        >
-                                            <Package className="w-5 h-5" />
-                                            <span>Book a Package</span>
-                                        </button>
+                                    className={`w-full py-3 rounded-full ${theme.buttonBg} ${theme.buttonText} font-bold shadow-lg ${theme.buttonHover} transition-colors flex items-center justify-center space-x-2`}
+                                >
+                                    <Package className="w-5 h-5" />
+                                    <span>Book a Package</span>
+                                </button>
                                     </div>
                                 )}
                             </div>
@@ -2329,16 +2463,16 @@ export default function App() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex space-x-4">
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
                                             <input type="date" name="check_in" value={bookingData.check_in || ''} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
                                     </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
@@ -2350,7 +2484,7 @@ export default function App() {
                                     ) : (
                                         <>
                                             <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {bookingData.check_in} to {bookingData.check_out}</p>
-                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                                 {rooms.length > 0 ? (
                                                     rooms.map(room => (
                                                 <div key={room.id} onClick={() => handleRoomSelection(room.id)}
@@ -2366,18 +2500,18 @@ export default function App() {
                                                         <p className="font-semibold text-xs">Room {room.number}</p>
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        <p className="text-xs font-bold mt-1">{formatCurrency(room.price)}</p>
                                                     </div>
                                                 </div>
-                                                    ))
-                                                ) : (
-                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                            ))
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
                                                         <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                                         <p className="text-sm font-semibold mb-1">No rooms available</p>
                                                         <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
-                                                    </div>
-                                                )}
                                             </div>
+                                        )}
+                                    </div>
                                         </>
                                     )}
                                 </div>
@@ -2445,16 +2579,16 @@ export default function App() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex space-x-4">
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
+                                <div className="flex space-x-4">
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
                                             <input type="date" name="check_in" value={packageBookingData.check_in || ''} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
-                                        <div className="space-y-2 w-1/2">
-                                            <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
-                                        </div>
                                     </div>
+                                    <div className="space-y-2 w-1/2">
+                                        <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
+                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                    </div>
+                                </div>
                                 )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
@@ -2466,7 +2600,7 @@ export default function App() {
                                     ) : (
                                         <>
                                             <p className={`text-xs ${theme.textSecondary} mb-2`}>Showing rooms available from {packageBookingData.check_in} to {packageBookingData.check_out}</p>
-                                            <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
+                                    <div className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-48 overflow-y-auto p-3 rounded-xl ${theme.bgSecondary}`}>
                                                 {rooms.length > 0 ? (
                                                     rooms.map(room => {
                                                         const isAvailable = Object.keys(packageRoomAvailability).length === 0 || packageRoomAvailability[room.id] !== false;
@@ -2490,7 +2624,7 @@ export default function App() {
                                                         <p className="font-semibold text-xs">Room {room.number}</p>
                                                         <p className="text-xs opacity-80">{room.type}</p>
                                                         <p className="text-xs opacity-60 mt-1">Max: {room.adults}A, {room.children}C</p>
-                                                        <p className="text-xs font-bold mt-1">₹{room.price}</p>
+                                                        <p className="text-xs font-bold mt-1">{formatCurrency(room.price)}</p>
                                                         {!isAvailable && (
                                                             <p className="text-xs text-red-600 font-bold mt-1">Unavailable</p>
                                                         )}
@@ -2498,14 +2632,14 @@ export default function App() {
                                                 </div>
                                                         );
                                                     })
-                                                ) : (
-                                                    <div className="col-span-full text-center py-8 text-gray-500">
+                                        ) : (
+                                            <div className="col-span-full text-center py-8 text-gray-500">
                                                         <BedDouble className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                                                         <p className="text-sm font-semibold mb-1">No rooms available</p>
                                                         <p className="text-xs">No rooms are available for the selected dates. Please try different dates.</p>
-                                                    </div>
-                                                )}
                                             </div>
+                                        )}
+                                    </div>
                                         </>
                                     )}
                                 </div>
@@ -2603,7 +2737,7 @@ export default function App() {
                                                         </p>
                                                         <div className={`flex items-center justify-between pt-3 border-t ${theme.cardBorder || theme.border}`}>
                                                             <span className={`text-2xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
-                                                                ₹{pkg.price}
+                                                                {formatCurrency(pkg.price || 0)}
                                                             </span>
                                                             <button 
                                                                 className={`px-6 py-2 text-sm font-bold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow-lg ${theme.buttonHover} transition-all duration-300 transform hover:scale-105`}
@@ -2626,7 +2760,7 @@ export default function App() {
                         </div>
                     </div>
                 )}
-
+                
                 {/* Service Booking Modal */}
                 {isServiceBookingFormOpen && (
                     <div className="fixed inset-0 z-[100] bg-neutral-950/80 backdrop-blur-sm flex items-center justify-center p-4">

@@ -1,0 +1,40 @@
+===========================================
+🚀 QUICK DEPLOYMENT COMMANDS
+===========================================
+
+Connect to server: ssh root@139.84.211.200
+
+BACKEND DEPLOYMENT:
+-------------------
+cd /var/www/resort/Resort_first
+git pull origin main
+sudo systemctl restart resort.service
+sudo systemctl status resort.service
+
+FRONTEND DEPLOYMENT:
+--------------------
+cd /var/www/resort/Resort_first/dasboard
+npm run build
+sudo cp -r build/* /var/www/resort/dashboard/
+
+OR USE AUTOMATED SCRIPT:
+------------------------
+cd /var/www/resort/Resort_first
+chmod +x deploy_fix_500.sh
+./deploy_fix_500.sh
+
+VERIFY:
+-------
+# Test backend
+curl http://localhost:8000/api/bookings
+
+# Test frontend
+Visit: https://www.teqmates.com/admin/bookings
+Check: Bookings sorted by status (booked → checked-in → checked-out)
+
+MONITOR:
+--------
+sudo journalctl -u resort.service -f
+
+===========================================
+

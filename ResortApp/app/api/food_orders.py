@@ -13,7 +13,7 @@ def create_order(order: FoodOrderCreate, db: Session = Depends(get_db), current_
     return crud.create_food_order(db, order)
 
 @router.get("/", response_model=List[FoodOrderOut])
-def get_orders(db: Session = Depends(get_db), skip: int = 0, limit: int = 100):
+def get_orders(db: Session = Depends(get_db), skip: int = 0, limit: int = 20):
     return crud.get_food_orders(db, skip=skip, limit=limit)
 
 @router.delete("/{order_id}")

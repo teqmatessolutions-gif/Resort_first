@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import BannerMessage from "../components/BannerMessage";
 import API from "../services/api";
@@ -18,12 +19,12 @@ const getImageUrl = (imageUrl) => {
 
 // KPI Card for quick stats
 const KpiCard = ({ title, value, icon, color }) => (
-  <div className={`p-6 rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
+  <div className={`p-4 sm:p-6 rounded-xl sm:rounded-2xl text-white shadow-lg flex items-center justify-between transition-transform duration-300 transform hover:scale-105 ${color}`}>
     <div>
-      <h4 className="text-lg font-medium">{title}</h4>
-      <p className="text-3xl font-bold mt-1">{value}</p>
+      <h4 className="text-sm sm:text-base md:text-lg font-medium">{title}</h4>
+      <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-1">{value}</p>
     </div>
-    <div className="text-4xl opacity-80">{icon}</div>
+    <div className="text-2xl sm:text-3xl md:text-4xl opacity-80">{icon}</div>
   </div>
 );
 
@@ -44,19 +45,19 @@ const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter, checki
   });
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-2xl shadow-lg relative max-w-5xl w-full m-4 max-h-[80vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-2 sm:p-4">
+      <div className="bg-white p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-lg relative max-w-5xl w-full max-h-[90vh] sm:max-h-[80vh] overflow-hidden">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10 w-8 h-8 flex items-center justify-center"
+          className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10 w-8 h-8 flex items-center justify-center"
         >
           &times;
         </button>
-        <div className="pr-12 mb-4">
-          <h3 className="text-2xl font-bold mb-4">
+        <div className="pr-10 sm:pr-12 mb-3 sm:mb-4">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4">
             Booking History for Room {roomNumber}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
             <div className="flex flex-col">
               <label className="text-xs font-medium text-gray-700 mb-1">Filter by Status:</label>
               <select
@@ -91,29 +92,29 @@ const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter, checki
           </div>
         </div>
         {filteredBookings.length > 0 ? (
-          <div className="overflow-y-auto max-h-[60vh]">
-            <table className="w-full border-collapse border border-gray-300">
+          <div className="overflow-x-auto overflow-y-auto max-h-[60vh] -mx-2 sm:mx-0">
+            <table className="w-full border-collapse border border-gray-300 text-xs sm:text-sm">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Booking ID</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Guest Name</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Check-in</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Check-out</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Guests</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Status</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Mobile</th>
-                  <th className="border border-gray-300 px-4 py-2 text-left font-semibold">Email</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold">ID</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold hidden sm:table-cell">Guest</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">Check-in</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold">Check-out</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold hidden md:table-cell">Guests</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold">Status</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">Mobile</th>
+                  <th className="border border-gray-300 px-2 sm:px-4 py-2 text-left text-xs sm:text-sm font-semibold hidden lg:table-cell">Email</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredBookings.map((booking, index) => (
                   <tr key={booking.id || index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="border border-gray-300 px-4 py-2">{booking.id}</td>
-                    <td className="border border-gray-300 px-4 py-2 font-medium">{booking.guest_name}</td>
-                    <td className="border border-gray-300 px-4 py-2">{booking.check_in}</td>
-                    <td className="border border-gray-300 px-4 py-2">{booking.check_out}</td>
-                    <td className="border border-gray-300 px-4 py-2">{booking.adults}A, {booking.children}C</td>
-                    <td className="border border-gray-300 px-4 py-2">
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">{booking.id}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium hidden sm:table-cell">{booking.guest_name}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm hidden lg:table-cell">{booking.check_in}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">{booking.check_out}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm hidden md:table-cell">{booking.adults}A, {booking.children}C</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
                         booking.status === 'booked' ? 'bg-blue-100 text-blue-800' :
                         booking.status === 'checked-in' ? 'bg-green-100 text-green-800' :
@@ -123,8 +124,8 @@ const BookingModal = ({ onClose, roomNumber, bookings, filter, setFilter, checki
                         {booking.status || 'Pending'}
                       </span>
                     </td>
-                    <td className="border border-gray-300 px-4 py-2">{booking.guest_mobile}</td>
-                    <td className="border border-gray-300 px-4 py-2">{booking.guest_email}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm hidden lg:table-cell">{booking.guest_mobile}</td>
+                    <td className="border border-gray-300 px-2 sm:px-4 py-2 text-xs sm:text-sm hidden lg:table-cell truncate max-w-[150px]">{booking.guest_email}</td>
                   </tr>
                 ))}
               </tbody>
@@ -413,10 +414,10 @@ const Rooms = () => {
         autoDismiss={true}
         duration={5000}
       />
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Room Management</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800">Room Management</h1>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
         <KpiCard title="Total Rooms" value={totalRooms} color="bg-gradient-to-r from-blue-500 to-blue-700" icon={<i className="fas fa-door-closed"></i>} />
         <KpiCard title="Available" value={availableRooms} color="bg-gradient-to-r from-green-500 to-green-700" icon={<i className="fas fa-check-circle"></i>} />
         <KpiCard title="Occupied" value={occupiedRooms} color="bg-gradient-to-r from-red-500 to-red-700" icon={<i className="fas fa-bed"></i>} />
@@ -427,12 +428,12 @@ const Rooms = () => {
       {/* Room Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-lg mb-8"
+        className="bg-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg mb-6 sm:mb-8"
       >
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
+        <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-800">
           {isEditing ? "Edit Room" : "Add New Room"}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Room Number</label>
             <input
@@ -561,15 +562,15 @@ const Rooms = () => {
       </form>
 
       {/* Rooms Grid */}
-      <div className="bg-white p-8 rounded-2xl shadow-lg">
-        <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">All Rooms</h2>
-          <div className="flex flex-wrap gap-4">
-            <select onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))} className="p-2 border border-gray-300 rounded-lg">
+      <div className="bg-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-between items-start sm:items-center mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 w-full sm:w-auto">All Rooms</h2>
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 w-full sm:w-auto">
+            <select onChange={(e) => setFilter(prev => ({ ...prev, type: e.target.value }))} className="p-2 text-sm border border-gray-300 rounded-lg w-full sm:w-auto">
               <option value="all">All Types</option>
               {[...new Set(rooms.map(r => r.type))].map(type => <option key={type} value={type}>{type}</option>)}
             </select>
-            <select onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))} className="p-2 border border-gray-300 rounded-lg">
+            <select onChange={(e) => setFilter(prev => ({ ...prev, status: e.target.value }))} className="p-2 text-sm border border-gray-300 rounded-lg w-full sm:w-auto">
               <option value="all">All Statuses</option>
               <option value="Available">Available</option>
               <option value="Booked">Booked</option>
@@ -577,7 +578,7 @@ const Rooms = () => {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredRooms.map((room) => (
             <motion.div key={room.id} className="bg-gray-50 rounded-2xl shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-all duration-300 flex flex-col" whileHover={{ y: -5 }}>
               <div className="relative">
@@ -597,7 +598,7 @@ const Rooms = () => {
                     <h4 className="font-bold text-lg text-gray-800">Room {room.number}</h4>
                     <p className="text-sm text-gray-500">{room.type}</p>
                   </div>
-                  <p className="text-indigo-600 font-bold text-xl">₹{room.price}</p>
+                  <p className="text-indigo-600 font-bold text-xl">{formatCurrency(room.price)}</p>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">Capacity: {room.adults} Adults, {room.children} Children</p>
                 <div className="h-16 mt-4">

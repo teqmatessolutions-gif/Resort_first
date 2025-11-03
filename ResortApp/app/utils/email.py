@@ -78,7 +78,12 @@ def create_booking_confirmation_email(
     check_out: str,
     rooms: List[Dict],
     total_amount: Optional[float] = None,
-    package_name: Optional[str] = None
+    package_name: Optional[str] = None,
+    guests: Optional[Dict] = None,  # {'adults': int, 'children': int}
+    guest_mobile: Optional[str] = None,
+    room_charges: Optional[float] = None,
+    package_charges: Optional[float] = None,
+    stay_nights: Optional[int] = None
 ) -> str:
     """
     Create HTML email template for booking confirmation.
@@ -98,13 +103,59 @@ def create_booking_confirmation_email(
     """
     if rooms:
         rooms_html = ''.join([
-            f'<li><strong>Room {room.get("number", "N/A")}</strong> - {room.get("type", "N/A")}</li>'
+            f'<li><strong>Room {room.get("number", "N/A")}</strong> - {room.get("type", "N/A")} - ₹{room.get("price", 0):,.2f}/night</li>'
             for room in rooms
         ])
     else:
         rooms_html = '<li>No rooms assigned</li>'
     
     booking_title = f"Package: {package_name}" if booking_type == 'package' and package_name else "Room Booking"
+    
+    # Format booking ID (BK-000001 or PK-000001)
+    formatted_booking_id = f"BK-{str(booking_id).zfill(6)}" if booking_type == 'room' else f"PK-{str(booking_id).zfill(6)}"
+    
+    # Calculate total amount if not provided
+    if total_amount is None:
+        if booking_type == 'package' and package_charges:
+            total_amount = package_charges
+        elif room_charges:
+            total_amount = room_charges
+        elif rooms:
+            # Calculate from room prices if available
+            total_amount = sum(room.get("price", 0) * (stay_nights or 1) for room in rooms)
+    
+    # Format charges section
+    charges_html = ""
+    if total_amount or room_charges or package_charges:
+        charges_html = '<div class="booking-details"><h2 style="margin-top: 0; color: #f59e0b;">Booking Charges</h2>'
+        
+        if stay_nights:
+            charges_html += f'<div class="detail-row"><span class="detail-label">Stay Duration:</span><span class="detail-value">{stay_nights} night(s)</span></div>'
+        
+        if booking_type == 'package' and package_charges:
+            charges_html += f'<div class="detail-row"><span class="detail-label">Package Charges:</span><span class="detail-value">₹{package_charges:,.2f}</span></div>'
+        elif room_charges:
+            charges_html += f'<div class="detail-row"><span class="detail-label">Room Charges:</span><span class="detail-value">₹{room_charges:,.2f}</span></div>'
+        
+        if total_amount:
+            # Calculate tax (5%)
+            tax = total_amount * 0.05
+            grand_total = total_amount + tax
+            charges_html += f'<div class="detail-row"><span class="detail-label">Subtotal:</span><span class="detail-value">₹{total_amount:,.2f}</span></div>'
+            charges_html += f'<div class="detail-row"><span class="detail-label">Tax (5%):</span><span class="detail-value">₹{tax:,.2f}</span></div>'
+            charges_html += f'<div class="detail-row" style="border-top: 2px solid #f59e0b; padding-top: 15px; margin-top: 15px;"><span class="detail-label" style="font-size: 18px;">Grand Total:</span><span class="detail-value" style="font-size: 18px; color: #f59e0b; font-weight: bold;">₹{grand_total:,.2f}</span></div>'
+        
+        charges_html += '</div>'
+    
+    # Guest details section
+    guest_details_html = ""
+    if guests or guest_mobile:
+        guest_details_html = '<div class="detail-row"><span class="detail-label">Guests:</span><span class="detail-value">'
+        if guests:
+            guest_details_html += f'{guests.get("adults", 0)} Adult(s), {guests.get("children", 0)} Child(ren)'
+        if guest_mobile:
+            guest_details_html += f'<br><span class="detail-label">Mobile:</span> {guest_mobile}'
+        guest_details_html += '</span></div>'
     
     html = f"""
     <!DOCTYPE html>
@@ -194,12 +245,24 @@ def create_booking_confirmation_email(
             <p>Thank you for your booking! We are delighted to confirm your reservation at Elysian Retreat.</p>
             
             <div class="highlight">
-                <strong>Booking Confirmation Number: #{booking_id}</strong><br>
+                <strong>Booking ID: {formatted_booking_id}</strong><br>
                 <strong>Booking Type: {booking_title}</strong>
             </div>
             
             <div class="booking-details">
                 <h2 style="margin-top: 0; color: #f59e0b;">Booking Details</h2>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value">{formatted_booking_id}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Guest Name:</span>
+                    <span class="detail-value">{guest_name}</span>
+                </div>
+                
+                {guest_details_html}
                 
                 <div class="detail-row">
                     <span class="detail-label">Check-in:</span>
@@ -220,6 +283,8 @@ def create_booking_confirmation_email(
                     </span>
                 </div>
             </div>
+            
+            {charges_html}
             
             <div class="highlight">
                 <strong>Important Information:</strong><br>
