@@ -929,11 +929,22 @@ const Bookings = () => {
     setFeedback({ message: "", type: "" });
     setIsSubmitting(true);
 
+    // Double-check booking status before submitting
+    const booking = bookings.find(b => b.id === bookingId && b.is_package === (bookingToCheckIn?.is_package || false));
+    const normalizedStatus = booking?.status?.toLowerCase().replace(/[-_]/g, '');
+    
+    if (normalizedStatus !== 'booked') {
+      console.error("Check-in blocked: Invalid booking status", { bookingId, status: booking?.status, normalizedStatus });
+      showBannerMessage("error", `Cannot check in. Booking status is: ${booking?.status || 'unknown'}`);
+      setBookingToCheckIn(null);
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("id_card_image", images.id_card_image);
     formData.append("guest_photo", images.guest_photo);
 
-    const booking = bookings.find(b => b.id === bookingId);
     const url = booking?.is_package ? `/packages/booking/${bookingId}/check-in` : `/bookings/${bookingId}/check-in`;
 
     try {
