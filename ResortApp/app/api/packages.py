@@ -245,6 +245,23 @@ def delete_package_booking_api(booking_id: int, db: Session = Depends(get_db), c
         raise HTTPException(status_code=404, detail="Booking not found")
     return {"deleted": success}
 
+# ------------------- Cancel a package booking -------------------
+@router.put("/booking/{booking_id}/cancel", response_model=PackageBookingOut)
+def cancel_package_booking(booking_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    booking = db.query(PackageBooking).filter(PackageBooking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(status_code=404, detail="Package booking not found")
+
+    # Free rooms back to Available
+    if booking.rooms:
+        room_ids = [br.room_id for br in booking.rooms]
+        db.query(Room).filter(Room.id.in_(room_ids)).update({"status": "Available"}, synchronize_session=False)
+
+    booking.status = "cancelled"
+    db.commit()
+    db.refresh(booking)
+    return booking
+
 @router.put("/booking/{booking_id}/check-in", response_model=PackageBookingOut)
 def check_in_package_booking(
     booking_id: int,

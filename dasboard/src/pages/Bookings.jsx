@@ -1121,7 +1121,8 @@ const Bookings = () => {
   const cancelBooking = async (id, is_package) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
-      const response = await API.put(`/bookings/${id}/cancel?is_package=${is_package}`, {}, authHeader());
+      const url = is_package ? `/packages/booking/${id}/cancel` : `/bookings/${id}/cancel`;
+      const response = await API.put(url, {}, authHeader());
       showBannerMessage("success", "Booking cancelled successfully.");
       // Update the booking in state instead of refetching everything
       setBookings(prevBookings =>
