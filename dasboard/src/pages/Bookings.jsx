@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import API from "../services/api";
 import { useNavigate } from "react-router-dom";
@@ -1162,7 +1163,7 @@ const Bookings = () => {
               </div>
               <div className={`text-sm ${selectedRoomNumbers.includes(room.number) ? 'text-indigo-200' : 'text-gray-500'}`}>
                 <p>Capacity: {room.adults} Adults, {room.children} Children</p>
-                <p className="font-medium">₹{room.price}/night</p>
+                <p className="font-medium">{formatCurrency(room.price)}/night</p>
               </div>
             </motion.div>
           ))
@@ -1377,7 +1378,7 @@ const Bookings = () => {
               <div className="space-y-4 flex-grow">
                 <select name="package_id" value={packageBookingForm.package_id} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required>
                   <option value="">Select Package</option>
-                  {packages.map(p => (<option key={p.id} value={p.id}>{p.title} - ₹{p.price}</option>))}
+                  {packages.map(p => (<option key={p.id} value={p.id}>{p.title} - {formatCurrency(p.price)}</option>))}
                 </select>
                 <input name="guest_name" placeholder="Guest Name" value={packageBookingForm.guest_name} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" required />
                 <input type="email" name="guest_email" placeholder="Guest Email" value={packageBookingForm.guest_email} onChange={handlePackageBookingChange} className="w-full p-3 rounded-lg border border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 transition-all" />
@@ -1413,7 +1414,7 @@ const Bookings = () => {
                           `}>
                             <p className="font-semibold">Room {room.number}</p>
                             <p className={`text-sm ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-600'}`}>{room.type}</p>
-                            <p className={`text-xs ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>₹{room.price}/night</p>
+                            <p className={`text-xs ${packageBookingForm.room_ids.includes(room.id) ? 'text-indigo-200' : 'text-gray-500'}`}>{formatCurrency(room.price)}/night</p>
                           </div>
                         ))
                       ) : (

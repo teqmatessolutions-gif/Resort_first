@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback, memo } from "react";
+import { formatCurrency } from '../utils/currency';
 import API from "../services/api";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
@@ -116,7 +117,7 @@ const Dashboard = () => {
 
   // ... (rest of the useMemo and helper functions)
   const safeDate = useCallback((d) => (d ? new Date(d) : null), []);
-  const fmtCurrency = useCallback((n) => `₹ ${Number(n || 0).toLocaleString()}`, []);
+  const fmtCurrency = useCallback((n, decimals = 0) => formatCurrency(Number(n || 0), true, decimals), []);
   const roomCounts = useMemo(() => {
     const total = rooms.length;
     // Room statuses are: "Available", "Occupied", "Maintenance"

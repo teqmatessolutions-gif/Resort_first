@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 import autoTable from 'jspdf-autotable';
 // Make sure to place your logo in the specified path or update the path accordingly.
 import { useInfiniteScroll } from "./useInfiniteScroll";
-import logo from '../assets/logo.jpeg'; 
+import logo from '../assets/logo.jpeg';
+import { formatCurrency } from '../utils/currency'; 
 
 
 // --- Placeholder for DashboardLayout ---
@@ -81,7 +82,7 @@ const CheckoutDetailModal = React.memo(({ checkout, onClose }) => {
           {checkout.package_booking_id && <p><strong>Package ID:</strong> {checkout.package_booking_id}</p>}
           <div className="mt-4 pt-4 border-t">
             <p className="text-xl font-bold text-right text-indigo-600">
-              Grand Total: ₹{checkout.grand_total.toFixed(2)}
+              Grand Total: {formatCurrency(checkout.grand_total)}
             </p>
           </div>
         </div>
@@ -338,10 +339,10 @@ const Billing = () => {
 
     // 3. Itemized Charges Table
     const chargesBody = [];
-    if (billData.charges.room_charges > 0) chargesBody.push(['Room Charges', `Stay for ${billData.stay_nights} nights`, `₹${billData.charges.room_charges.toFixed(2)}`]);
-    if (billData.charges.package_charges > 0) chargesBody.push(['Package Charges', `Package for ${billData.stay_nights} nights`, `₹${billData.charges.package_charges.toFixed(2)}`]);
-    billData.charges.food_items.forEach(item => chargesBody.push([`Food: ${item.item_name}`, `Quantity: ${item.quantity}`, `₹${item.amount.toFixed(2)}`]));
-    billData.charges.service_items.forEach(item => chargesBody.push([`Service: ${item.service_name}`, '', `₹${item.charges.toFixed(2)}`]));
+    if (billData.charges.room_charges > 0) chargesBody.push(['Room Charges', `Stay for ${billData.stay_nights} nights`, formatCurrency(billData.charges.room_charges)]);
+    if (billData.charges.package_charges > 0) chargesBody.push(['Package Charges', `Package for ${billData.stay_nights} nights`, formatCurrency(billData.charges.package_charges)]);
+    billData.charges.food_items.forEach(item => chargesBody.push([`Food: ${item.item_name}`, `Quantity: ${item.quantity}`, formatCurrency(item.amount)]));
+    billData.charges.service_items.forEach(item => chargesBody.push([`Service: ${item.service_name}`, '', formatCurrency(item.charges)]));
 
     autoTable(doc, {
       startY: 65,
@@ -356,10 +357,10 @@ const Billing = () => {
     const tax = subtotal * 0.05;
     const grandTotal = Math.max(0, subtotal + tax - (parseFloat(discount) || 0));
     const totals = [
-      ['Subtotal', `₹${subtotal.toFixed(2)}`],
-      ['Tax (5%)', `+₹${tax.toFixed(2)}`],
-      ...(discount > 0 ? [['Discount', `-₹${parseFloat(discount).toFixed(2)}`]] : []),
-      ['Grand Total', `₹${grandTotal.toFixed(2)}`]
+      ['Subtotal', formatCurrency(subtotal)],
+      ['Tax (5%)', `+${formatCurrency(tax)}`],
+      ...(discount > 0 ? [['Discount', `-${formatCurrency(parseFloat(discount))}`]] : []),
+      ['Grand Total', formatCurrency(grandTotal)]
     ];
 
     autoTable(doc, {
@@ -411,26 +412,26 @@ const Billing = () => {
     text += `Check-out: ${new Date(billData.check_out).toLocaleDateString()}\n`;
     text += `${line}\n`;
     text += `${bold('Itemized Charges:')}\n`;
-    if (billData.charges.room_charges > 0) text += `Room Charges: ₹${billData.charges.room_charges.toFixed(2)}\n`;
-    if (billData.charges.package_charges > 0) text += `Package Charges: ₹${billData.charges.package_charges.toFixed(2)}\n`;
+    if (billData.charges.room_charges > 0) text += `Room Charges: ${formatCurrency(billData.charges.room_charges)}\n`;
+    if (billData.charges.package_charges > 0) text += `Package Charges: ${formatCurrency(billData.charges.package_charges)}\n`;
 
     if (billData.charges.food_items.length > 0) {
       text += `\nFood & Beverage:\n`;
       billData.charges.food_items.forEach(item => {
-        text += `- ${item.item_name} (x${item.quantity}): ₹${item.amount.toFixed(2)}\n`;
+        text += `- ${item.item_name} (x${item.quantity}): ${formatCurrency(item.amount)}\n`;
       });
     }
     if (billData.charges.service_items.length > 0) {
       text += `\nAdditional Services:\n`;
       billData.charges.service_items.forEach(item => {
-        text += `- ${item.service_name}: ₹${item.charges.toFixed(2)}\n`;
+        text += `- ${item.service_name}: ${formatCurrency(item.charges)}\n`;
       });
     }
     text += `${line}\n`;
-    text += `Subtotal: ₹${billData.charges.total_due.toFixed(2)}\n`;
-    text += `Tax (5%): +₹${(billData.charges.total_due * 0.05).toFixed(2)}\n`;
-    if (discount > 0) text += `Discount: -₹${parseFloat(discount).toFixed(2)}\n`;
-    text += `${bold('Grand Total:')} ₹${Math.max(0, billData.charges.total_due * 1.05 - discount).toFixed(2)}\n`;
+    text += `Subtotal: ${formatCurrency(billData.charges.total_due)}\n`;
+    text += `Tax (5%): +${formatCurrency(billData.charges.total_due * 0.05)}\n`;
+    if (discount > 0) text += `Discount: -${formatCurrency(parseFloat(discount))}\n`;
+    text += `${bold('Grand Total:')} ${formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}\n`;
     text += `${line}\nThank you for staying with us!`;
 
     return encodeURIComponent(text);
@@ -630,15 +631,15 @@ const Billing = () => {
               <div className="mt-4 pt-4 border-t">
                 <h3 className="font-bold text-gray-700 mb-2">Itemized Charges:</h3>
                 <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  {billData.charges.room_charges > 0 && <li>Room Charges: ₹{billData.charges.room_charges.toFixed(2)}</li>}
-                  {billData.charges.package_charges > 0 && <li>Package Charges: ₹{billData.charges.package_charges.toFixed(2)}</li>}
+                  {billData.charges.room_charges > 0 && <li>Room Charges: {formatCurrency(billData.charges.room_charges)}</li>}
+                  {billData.charges.package_charges > 0 && <li>Package Charges: {formatCurrency(billData.charges.package_charges)}</li>}
                 </ul>
 
                 {billData.charges.food_items.length > 0 && (
                   <div className="mt-3">
                     <h4 className="font-semibold text-gray-600">Food & Beverage:</h4>
                     <ul className="list-decimal list-inside ml-4 text-xs text-gray-500">
-                      {billData.charges.food_items.map((item, i) => <li key={i}>{item.item_name} (x{item.quantity}) - ₹{item.amount.toFixed(2)}</li>)}
+                      {billData.charges.food_items.map((item, i) => <li key={i}>{item.item_name} (x{item.quantity}) - {formatCurrency(item.amount)}</li>)}
                     </ul>
                   </div>
                 )}
@@ -647,19 +648,19 @@ const Billing = () => {
                   <div className="mt-3">
                     <h4 className="font-semibold text-gray-600">Additional Services:</h4>
                     <ul className="list-decimal list-inside ml-4 text-xs text-gray-500">
-                      {billData.charges.service_items.map((item, i) => <li key={i}>{item.service_name} - ₹{item.charges.toFixed(2)}</li>)}
+                      {billData.charges.service_items.map((item, i) => <li key={i}>{item.service_name} - {formatCurrency(item.charges)}</li>)}
                     </ul>
                   </div>
                 )}
 
                 <div className="mt-4 pt-4 border-t text-right space-y-1">
-                  <p className="text-sm text-gray-600">Subtotal: ₹{billData.charges.total_due.toFixed(2)}</p>
-                  <p className="text-sm text-gray-600">Tax (5%): +₹{(billData.charges.total_due * 0.05).toFixed(2)}</p>
+                  <p className="text-sm text-gray-600">Subtotal: {formatCurrency(billData.charges.total_due)}</p>
+                  <p className="text-sm text-gray-600">Tax (5%): +{formatCurrency(billData.charges.total_due * 0.05)}</p>
                   {discount > 0 && (
-                    <p className="text-sm text-green-600">Discount: -₹{parseFloat(discount).toFixed(2)}</p>
+                    <p className="text-sm text-green-600">Discount: -{formatCurrency(parseFloat(discount))}</p>
                   )}
                   <p className="font-bold text-xl text-gray-900">
-                    Grand Total: ₹{Math.max(0, billData.charges.total_due * 1.05 - discount).toFixed(2)}
+                    Grand Total: {formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}
                   </p>
                 </div>
               </div>
@@ -877,7 +878,7 @@ const Billing = () => {
                       <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{c.booking_id || c.package_booking_id || 'N/A'}</td>
                       <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden md:table-cell">{c.payment_method}</td>
                       <td className="p-2 sm:p-3 text-gray-800 text-xs sm:text-sm hidden lg:table-cell">{new Date(c.created_at).toLocaleDateString()}</td>
-                      <td className="p-2 sm:p-3 font-bold text-gray-900 text-right text-xs sm:text-sm">₹{c.grand_total.toFixed(2)}</td>
+                      <td className="p-2 sm:p-3 font-bold text-gray-900 text-right text-xs sm:text-sm">{formatCurrency(c.grand_total)}</td>
                     </tr>
                   ))
                 ) : (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import BannerMessage from "../components/BannerMessage";
 import API from "../services/api";
@@ -597,7 +598,7 @@ const Rooms = () => {
                     <h4 className="font-bold text-lg text-gray-800">Room {room.number}</h4>
                     <p className="text-sm text-gray-500">{room.type}</p>
                   </div>
-                  <p className="text-indigo-600 font-bold text-xl">₹{room.price}</p>
+                  <p className="text-indigo-600 font-bold text-xl">{formatCurrency(room.price)}</p>
                 </div>
                 <p className="text-sm text-gray-600 mt-2">Capacity: {room.adults} Adults, {room.children} Children</p>
                 <div className="h-16 mt-4">

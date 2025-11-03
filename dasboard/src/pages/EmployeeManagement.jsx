@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import api from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -122,7 +123,7 @@ const UserHistory = () => {
                 <p className="text-xs text-gray-500">{new Date(activity.activity_date).toLocaleString()}</p>
                 <h4 className="font-bold">{activity.type}</h4>
                 <p className="text-sm">{activity.description}</p>
-                {activity.amount != null && <span className="text-sm font-semibold text-green-600">Amount: ₹{activity.amount.toFixed(2)}</span>}
+                {activity.amount != null && <span className="text-sm font-semibold text-green-600">Amount: {formatCurrency(activity.amount)}</span>}
               </div>
             )) : <p>No activities found.</p>}
           </div>
@@ -748,13 +749,13 @@ const MonthlyReport = () => {
                         <h4 className="font-semibold mb-2">Salary Calculation for the Month</h4>
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">₹{(report.base_salary || 0).toFixed(2)}</p>
+                                <p className="font-medium text-gray-600">Base Salary</p><p className="font-bold text-lg">{formatCurrency(report.base_salary || 0)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- ₹{(report.deductions || 0).toFixed(2)}</p>
+                                <p className="font-medium text-red-600">Deductions (Unpaid)</p><p className="font-bold text-lg text-red-500">- {formatCurrency(report.deductions || 0)}</p>
                             </div>
                             <div>
-                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">₹{(report.net_salary || 0).toFixed(2)}</p>
+                                <p className="font-medium text-green-600">Net Salary</p><p className="font-bold text-xl text-green-700">{formatCurrency(report.net_salary || 0)}</p>
                             </div>
                         </div>
                     </div>

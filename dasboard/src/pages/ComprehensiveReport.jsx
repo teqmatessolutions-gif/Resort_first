@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { formatCurrency } from '../utils/currency';
 import DashboardLayout from "../layout/DashboardLayout";
 import API from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -43,7 +44,6 @@ const DataTable = ({ headers, data, renderRow }) => (
   </table>
 );
 
-const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString()}`;
 const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString() : '-';
 
 export default function ComprehensiveReport() {

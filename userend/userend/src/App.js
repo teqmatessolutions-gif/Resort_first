@@ -1579,6 +1579,10 @@ export default function App() {
                                                             className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
                                                             onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                         />
+                                                        {/* Price badge - large card */}
+                                                        <div className="absolute bottom-4 left-4 bg-white/95 text-amber-700 font-extrabold text-2xl md:text-3xl px-4 py-2 rounded-xl shadow-lg">
+                                                            {formatCurrency(featuredPkg.price || 0)}
+                                                        </div>
                                                         {/* Image Slider Dots */}
                                                         {featuredPkg.images && featuredPkg.images.length > 1 && (
                                                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-full z-10">
@@ -1608,10 +1612,16 @@ export default function App() {
                                                         <p className={`text-base md:text-lg ${theme.textSecondary} leading-relaxed mb-6`}>
                                                             {featuredPkg.description}
                                                         </p>
+                                                        {/* Price Section */}
+                                                        <div className="mb-6 pt-4 border-t border-gray-200">
+                                                            <p className={`text-sm ${theme.textSecondary} mb-2`}>Starting from</p>
+                                                            <p className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent} mb-6`}>
+                                                                {formatCurrency(featuredPkg.price || 0)}
+                                                                <span className={`text-lg ${theme.textSecondary} font-normal ml-2`}>/package</span>
+                                                            </p>
+                                                        </div>
+                                                        
                                                         <div className="flex items-center justify-between flex-wrap gap-4">
-                                                            <span className={`text-3xl md:text-4xl font-extrabold ${theme.textAccent}`}>
-                                                                {formatCurrency(featuredPkg.price)}
-                                                            </span>
                                                             <button
                                                                 onClick={() => handleOpenPackageBookingForm(featuredPkg.id)} 
                                                                 className={`px-8 py-3 border-2 ${theme.border} ${theme.textAccent} font-bold rounded-full hover:${theme.bgSecondary} transition-all duration-300 transform hover:scale-105 flex items-center gap-2`}
@@ -1639,13 +1649,17 @@ export default function App() {
                                                 className={`group relative ${theme.bgCard} rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 border ${theme.border} cursor-pointer`}
                                             >
                                                         {/* Image Container */}
-                                                        <div className="relative h-64 overflow-hidden">
+                                                    <div className="relative h-64 overflow-hidden">
                                                     <img 
                                                                 src={currentImage ? getImageUrl(currentImage.image_url) : ITEM_PLACEHOLDER} 
                                                         alt={pkg.title} 
                                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                         onError={(e) => { e.target.src = ITEM_PLACEHOLDER; }} 
                                                     />
+                                                    {/* Price badge - always visible */}
+                                                    <div className="absolute bottom-3 left-3 bg-white/90 text-amber-700 font-extrabold text-lg px-3 py-1 rounded-lg shadow-md">
+                                                        {formatCurrency(pkg.price || 0)}
+                                                    </div>
                                                             {/* Quick Book button overlay */}
                                                             <button
                                                                 type="button"
@@ -1676,9 +1690,17 @@ export default function App() {
                                                             <h3 className={`text-xl md:text-2xl font-extrabold ${theme.textPrimary} mb-2 leading-tight`}>
                                                             {pkg.title}
                                                         </h3>
-                                                            <p className={`text-base ${theme.textSecondary} font-medium`}>
+                                                            <p className={`text-base ${theme.textSecondary} font-medium mb-2`}>
                                                                 (Luxury Package {pkg.duration || '2 Nights & 3 Days'})
                                                             </p>
+                                                            {/* Price */}
+                                                            <div className="mb-4 pt-3 border-t border-gray-200">
+                                                                <p className={`text-sm ${theme.textSecondary} mb-1`}>Starting from</p>
+                                                                <p className={`text-2xl font-extrabold ${theme.textAccent || theme.textPrimary}`}>
+                                                                    {formatCurrency(pkg.price || 0)}
+                                                                    <span className={`text-sm ${theme.textSecondary} font-normal`}>/package</span>
+                                                                </p>
+                                                            </div>
                                                             {/* CTA Row */}
                                                             <div className="mt-4 flex items-center justify-between">
                                                                 <button
@@ -2674,7 +2696,7 @@ export default function App() {
                                                         </p>
                                                         <div className={`flex items-center justify-between pt-3 border-t ${theme.cardBorder || theme.border}`}>
                                                             <span className={`text-2xl font-extrabold ${theme.textCardAccent || theme.textAccent}`}>
-                                                                {formatCurrency(pkg.price)}
+                                                                {formatCurrency(pkg.price || 0)}
                                                             </span>
                                                             <button 
                                                                 className={`px-6 py-2 text-sm font-bold ${theme.buttonBg} ${theme.buttonText} rounded-full shadow-lg ${theme.buttonHover} transition-all duration-300 transform hover:scale-105`}
