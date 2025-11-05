@@ -30,6 +30,8 @@ const Services = () => {
     status: "pending",
   });
   const [rooms, setRooms] = useState([]);
+  const [allRooms, setAllRooms] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filters, setFilters] = useState({
     room: "",
@@ -47,16 +49,55 @@ const Services = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [sRes, aRes, rRes, eRes] = await Promise.all([
+      const [sRes, aRes, rRes, eRes, bRes, pbRes] = await Promise.all([
         api.get("/services?limit=1000"),
         api.get("/services/assigned?skip=0&limit=20"),
         api.get("/rooms?limit=1000"),
         api.get("/employees"),
+        api.get("/bookings?limit=1000").catch(() => ({ data: { bookings: [] } })),
+        api.get("/packages/bookingsall?limit=1000").catch(() => ({ data: [] })),
       ]);
       setServices(sRes.data);
       setAssignedServices(aRes.data);
-      setRooms(rRes.data);
+      setAllRooms(rRes.data);
       setEmployees(eRes.data);
+      
+      // Combine regular and package bookings
+      const regularBookings = bRes.data?.bookings || [];
+      const packageBookings = (pbRes.data || []).map(pb => ({ ...pb, is_package: true }));
+      setBookings([...regularBookings, ...packageBookings]);
+      
+      // Filter rooms to only show checked-in rooms
+      const today = new Date().toISOString().split('T')[0];
+      const checkedInRoomIds = new Set();
+      
+      // Get room IDs from checked-in regular bookings
+      regularBookings.forEach(booking => {
+        const normalizedStatus = booking.status?.toLowerCase().replace(/[-_\s]/g, '');
+        if (normalizedStatus === 'checkedin' && booking.check_in <= today && booking.check_out > today) {
+          if (booking.rooms && Array.isArray(booking.rooms)) {
+            booking.rooms.forEach(room => {
+              if (room && room.id) checkedInRoomIds.add(room.id);
+            });
+          }
+        }
+      });
+      
+      // Get room IDs from checked-in package bookings
+      packageBookings.forEach(booking => {
+        const normalizedStatus = booking.status?.toLowerCase().replace(/[-_\s]/g, '');
+        if (normalizedStatus === 'checkedin' && booking.check_in <= today && booking.check_out > today) {
+          if (booking.rooms && Array.isArray(booking.rooms)) {
+            booking.rooms.forEach(room => {
+              if (room && room.id) checkedInRoomIds.add(room.id);
+            });
+          }
+        }
+      });
+      
+      // Filter rooms to only show checked-in rooms
+      const checkedInRooms = rRes.data.filter(room => checkedInRoomIds.has(room.id));
+      setRooms(checkedInRooms);
     } catch (error) {
       setHasMore(aRes.data.length === 10);
       setPage(1);
@@ -306,13 +347,13 @@ const Services = () => {
                 className="w-full border p-3 rounded-lg"
               >
                 <option value="">Select Room</option>
-                {rooms.filter(r => {
-                  // Only show rooms with checked-in status (not just booked)
-                  const normalizedStatus = r.status?.toLowerCase().replace(/[-_\s]/g, '');
-                  return normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
-                }).map((r) => (
-                  <option key={r.id} value={r.id}>Room {r.number}</option>
-                ))}
+                {rooms.length === 0 ? (
+                  <option value="" disabled>No checked-in rooms available</option>
+                ) : (
+                  rooms.map((r) => (
+                    <option key={r.id} value={r.id}>Room {r.number}</option>
+                  ))
+                )}
               </select>
               <select
                 value={assignForm.status}
@@ -417,7 +458,10 @@ const Services = () => {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <select value={filters.room} onChange={(e) => setFilters({ ...filters, room: e.target.value })} className="border p-2 rounded-lg">
               <option value="">All Rooms</option>
-              {rooms.map((r) => (<option key={r.id} value={r.id}>Room {r.number}</option>))}
+              {assignedServices.map((s) => {
+                const room = s.room;
+                return room ? <option key={room.id} value={room.id}>Room {room.number}</option> : null;
+              }).filter(Boolean)}
             </select>
             <select value={filters.employee} onChange={(e) => setFilters({ ...filters, employee: e.target.value })} className="border p-2 rounded-lg">
               <option value="">All Employees</option>
