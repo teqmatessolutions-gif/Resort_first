@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
 from typing import List
 from datetime import date
 from app.models.service import Service, AssignedService, ServiceImage
