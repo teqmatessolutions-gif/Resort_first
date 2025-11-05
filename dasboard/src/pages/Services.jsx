@@ -307,8 +307,9 @@ const Services = () => {
               >
                 <option value="">Select Room</option>
                 {rooms.filter(r => {
+                  // Only show rooms with checked-in status (not just booked)
                   const normalizedStatus = r.status?.toLowerCase().replace(/[-_\s]/g, '');
-                  return normalizedStatus === 'booked' || normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
+                  return normalizedStatus === 'checkedin' || normalizedStatus === 'occupied';
                 }).map((r) => (
                   <option key={r.id} value={r.id}>Room {r.number}</option>
                 ))}
