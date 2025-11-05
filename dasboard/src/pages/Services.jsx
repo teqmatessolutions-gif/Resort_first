@@ -68,17 +68,30 @@ const Services = () => {
       setBookings([...regularBookings, ...packageBookings]);
       
       // Filter rooms to only show checked-in rooms
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of day for comparison
       const checkedInRoomIds = new Set();
       
       // Get room IDs from checked-in regular bookings
       regularBookings.forEach(booking => {
         const normalizedStatus = booking.status?.toLowerCase().replace(/[-_\s]/g, '');
-        if (normalizedStatus === 'checkedin' && booking.check_in <= today && booking.check_out > today) {
-          if (booking.rooms && Array.isArray(booking.rooms)) {
-            booking.rooms.forEach(room => {
-              if (room && room.id) checkedInRoomIds.add(room.id);
-            });
+        if (normalizedStatus === 'checkedin' || normalizedStatus === 'checked-in') {
+          // Parse dates properly
+          const checkInDate = new Date(booking.check_in);
+          const checkOutDate = new Date(booking.check_out);
+          checkInDate.setHours(0, 0, 0, 0);
+          checkOutDate.setHours(0, 0, 0, 0);
+          
+          // Check if booking is active (today is between check-in and check-out)
+          if (checkInDate <= today && checkOutDate > today) {
+            if (booking.rooms && Array.isArray(booking.rooms)) {
+              booking.rooms.forEach(room => {
+                if (room && room.id) {
+                  checkedInRoomIds.add(room.id);
+                  console.log(`Added checked-in room: ${room.number} (ID: ${room.id}) from booking ${booking.id}`);
+                }
+              });
+            }
           }
         }
       });
@@ -86,17 +99,32 @@ const Services = () => {
       // Get room IDs from checked-in package bookings
       packageBookings.forEach(booking => {
         const normalizedStatus = booking.status?.toLowerCase().replace(/[-_\s]/g, '');
-        if (normalizedStatus === 'checkedin' && booking.check_in <= today && booking.check_out > today) {
-          if (booking.rooms && Array.isArray(booking.rooms)) {
-            booking.rooms.forEach(room => {
-              if (room && room.id) checkedInRoomIds.add(room.id);
-            });
+        if (normalizedStatus === 'checkedin' || normalizedStatus === 'checked-in') {
+          // Parse dates properly
+          const checkInDate = new Date(booking.check_in);
+          const checkOutDate = new Date(booking.check_out);
+          checkInDate.setHours(0, 0, 0, 0);
+          checkOutDate.setHours(0, 0, 0, 0);
+          
+          // Check if booking is active (today is between check-in and check-out)
+          if (checkInDate <= today && checkOutDate > today) {
+            if (booking.rooms && Array.isArray(booking.rooms)) {
+              booking.rooms.forEach(room => {
+                if (room && room.id) {
+                  checkedInRoomIds.add(room.id);
+                  console.log(`Added checked-in package room: ${room.number} (ID: ${room.id}) from booking ${booking.id}`);
+                }
+              });
+            }
           }
         }
       });
       
+      console.log(`Total checked-in room IDs: ${checkedInRoomIds.size}`, Array.from(checkedInRoomIds));
+      
       // Filter rooms to only show checked-in rooms
       const checkedInRooms = rRes.data.filter(room => checkedInRoomIds.has(room.id));
+      console.log(`Filtered checked-in rooms: ${checkedInRooms.length}`, checkedInRooms.map(r => r.number));
       setRooms(checkedInRooms);
     } catch (error) {
       setHasMore(aRes.data.length === 10);
