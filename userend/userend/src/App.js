@@ -629,9 +629,9 @@ const BackgroundAnimation = ({ theme }) => {
                     to { opacity: 1; transform: translateY(0); }
                 }
 
-                /* Lazy reveal utility */
+                /* Lazy reveal utility - optimized for performance */
                 .reveal { opacity: 0; transform: translateY(18px) scale(.98); filter: blur(6px); will-change: opacity, transform, filter; }
-                .reveal.in { opacity: 1; transform: none; filter: blur(0); transition: opacity .6s ease, transform .6s ease, filter .6s ease; }
+                .reveal.in { opacity: 1; transform: none; filter: blur(0); transition: opacity .2s ease, transform .2s ease, filter .2s ease; }
                 @keyframes gentle-glow {
                     0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3)); }
                     50% { filter: brightness(1.1) drop-shadow(0 0 30px rgba(245, 158, 11, 0.5)); }
@@ -898,16 +898,22 @@ export default function App() {
         setBookingMessage({ type: null, text: "" });
     };
 
-    // Lazy reveal on scroll for elements with .reveal
+    // Lazy reveal on scroll for elements with .reveal - optimized for performance
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('in');
-                    observer.unobserve(entry.target);
-                }
+            // Use requestAnimationFrame for smoother updates
+            requestAnimationFrame(() => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in');
+                        observer.unobserve(entry.target);
+                    }
+                });
             });
-        }, { threshold: 0.1, rootMargin: '100px' });
+        }, { 
+            threshold: 0.1, 
+            rootMargin: '50px' // Reduced from 100px for better performance
+        });
 
         const nodes = document.querySelectorAll('.reveal');
         nodes.forEach((n) => observer.observe(n));
@@ -949,21 +955,43 @@ export default function App() {
     // Handlers for form changes
     const handleRoomBookingChange = (e) => {
         const { name, value } = e.target;
-        setBookingData(prev => ({ ...prev, [name]: value }));
+        setBookingData(prev => {
+            const updated = { ...prev, [name]: value };
+            // If check_in is changed and is after check_out, clear check_out
+            if (name === 'check_in' && value && prev.check_out && value >= prev.check_out) {
+                updated.check_out = '';
+            }
+            // If check_out is changed and is before check_in, clear check_in
+            if (name === 'check_out' && value && prev.check_in && value <= prev.check_in) {
+                updated.check_in = '';
+            }
+            return updated;
+        });
     };
 
-    const handleRoomSelection = (roomId) => {
+    const handleRoomSelection = useCallback((roomId) => {
         setBookingData(prev => {
             const newRoomIds = prev.room_ids.includes(roomId)
                 ? prev.room_ids.filter(id => id !== roomId)
                 : [...prev.room_ids, roomId];
             return { ...prev, room_ids: newRoomIds };
         });
-    };
+    }, []);
 
     const handlePackageBookingChange = (e) => {
         const { name, value } = e.target;
-        setPackageBookingData(prev => ({ ...prev, [name]: value }));
+        setPackageBookingData(prev => {
+            const updated = { ...prev, [name]: value };
+            // If check_in is changed and is after check_out, clear check_out
+            if (name === 'check_in' && value && prev.check_out && value >= prev.check_out) {
+                updated.check_out = '';
+            }
+            // If check_out is changed and is before check_in, clear check_in
+            if (name === 'check_out' && value && prev.check_in && value <= prev.check_in) {
+                updated.check_in = '';
+            }
+            return updated;
+        });
     };
 
     const handleServiceBookingChange = (e) => {
@@ -971,14 +999,14 @@ export default function App() {
         setServiceBookingData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handlePackageRoomSelection = (roomId) => {
+    const handlePackageRoomSelection = useCallback((roomId) => {
         setPackageBookingData(prev => {
             const newRoomIds = prev.room_ids.includes(roomId)
                 ? prev.room_ids.filter(id => id !== roomId)
                 : [...prev.room_ids, roomId];
             return { ...prev, room_ids: newRoomIds };
         });
-    };
+    }, []);
 
     const handleFoodOrderChange = (e, foodItemId) => {
         const { value } = e.target;
@@ -994,70 +1022,86 @@ export default function App() {
     // Check room availability based on selected dates (but always show all rooms)
     const [roomAvailability, setRoomAvailability] = useState({});
     
-    useEffect(() => {
-        if (bookingData.check_in && bookingData.check_out && allRooms.length > 0) {
-            // Calculate availability for each room
-            const availability = {};
-            allRooms.forEach(room => {
-                const hasConflict = bookings.some(booking => {
-                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
-                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
-                    
-                    const bookingCheckIn = new Date(booking.check_in);
-                    const bookingCheckOut = new Date(booking.check_out);
-                    const requestedCheckIn = new Date(bookingData.check_in);
-                    const requestedCheckOut = new Date(bookingData.check_out);
-                    
-                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
-                    if (!isRoomInBooking) return false;
-                    
-                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
-                });
-                
-                availability[room.id] = !hasConflict;
-            });
-            setRoomAvailability(availability);
-        } else {
-            // If no dates selected, clear availability data (all rooms shown without availability check)
-            setRoomAvailability({});
+    // Optimized room availability calculation with useMemo and debouncing
+    const roomAvailabilityMemo = useMemo(() => {
+        if (!bookingData.check_in || !bookingData.check_out || allRooms.length === 0) {
+            return {};
         }
+        
+        // Calculate availability for each room (memoized for performance)
+        const availability = {};
+        allRooms.forEach(room => {
+            const hasConflict = bookings.some(booking => {
+                const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
+                if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
+                
+                const bookingCheckIn = new Date(booking.check_in);
+                const bookingCheckOut = new Date(booking.check_out);
+                const requestedCheckIn = new Date(bookingData.check_in);
+                const requestedCheckOut = new Date(bookingData.check_out);
+                
+                const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+                if (!isRoomInBooking) return false;
+                
+                return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+            });
+            
+            availability[room.id] = !hasConflict;
+        });
+        return availability;
     }, [bookingData.check_in, bookingData.check_out, allRooms, bookings]);
+    
+    // Update state with debouncing to prevent excessive re-renders
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setRoomAvailability(roomAvailabilityMemo);
+        }, 100); // 100ms debounce
+        return () => clearTimeout(timer);
+    }, [roomAvailabilityMemo]);
     
     // Always set rooms to allRooms - availability filtering happens in UI
     useEffect(() => {
         setRooms(allRooms);
     }, [allRooms]);
 
-    // Package booking availability - check availability based on packageBookingData dates
+    // Package booking availability - optimized with useMemo
     const [packageRoomAvailability, setPackageRoomAvailability] = useState({});
     
-    useEffect(() => {
-        if (packageBookingData.check_in && packageBookingData.check_out && allRooms.length > 0 && isPackageBookingFormOpen) {
-            // Calculate availability for each room for package booking
-            const availability = {};
-            allRooms.forEach(room => {
-                const hasConflict = bookings.some(booking => {
-                    const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
-                    if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
-                    
-                    const bookingCheckIn = new Date(booking.check_in);
-                    const bookingCheckOut = new Date(booking.check_out);
-                    const requestedCheckIn = new Date(packageBookingData.check_in);
-                    const requestedCheckOut = new Date(packageBookingData.check_out);
-                    
-                    const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
-                    if (!isRoomInBooking) return false;
-                    
-                    return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
-                });
-                
-                availability[room.id] = !hasConflict;
-            });
-            setPackageRoomAvailability(availability);
-        } else {
-            setPackageRoomAvailability({});
+    const packageRoomAvailabilityMemo = useMemo(() => {
+        if (!packageBookingData.check_in || !packageBookingData.check_out || allRooms.length === 0 || !isPackageBookingFormOpen) {
+            return {};
         }
+        
+        // Calculate availability for each room for package booking (memoized for performance)
+        const availability = {};
+        allRooms.forEach(room => {
+            const hasConflict = bookings.some(booking => {
+                const normalizedStatus = booking.status?.toLowerCase().replace(/_/g, '-');
+                if (normalizedStatus === "cancelled" || normalizedStatus === "checked-out") return false;
+                
+                const bookingCheckIn = new Date(booking.check_in);
+                const bookingCheckOut = new Date(booking.check_out);
+                const requestedCheckIn = new Date(packageBookingData.check_in);
+                const requestedCheckOut = new Date(packageBookingData.check_out);
+                
+                const isRoomInBooking = booking.rooms && booking.rooms.some(r => r.id === room.id);
+                if (!isRoomInBooking) return false;
+                
+                return (requestedCheckIn < bookingCheckOut && requestedCheckOut > bookingCheckIn);
+            });
+            
+            availability[room.id] = !hasConflict;
+        });
+        return availability;
     }, [packageBookingData.check_in, packageBookingData.check_out, allRooms, bookings, isPackageBookingFormOpen]);
+    
+    // Update state with debouncing to prevent excessive re-renders
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setPackageRoomAvailability(packageRoomAvailabilityMemo);
+        }, 100); // 100ms debounce
+        return () => clearTimeout(timer);
+    }, [packageRoomAvailabilityMemo]);
 
     // Handlers for form submissions
     const handleRoomBookingSubmit = async (e) => {

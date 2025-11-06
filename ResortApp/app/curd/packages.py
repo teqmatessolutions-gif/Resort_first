@@ -185,25 +185,11 @@ def book_package(db: Session, booking: PackageBookingCreate):
         # If a guest with the same email and mobile exists, use their established name
         guest_name_to_use = existing_booking.guest_name
 
-    db_booking = PackageBooking(
-        package_id=booking.package_id,
-        check_in=booking.check_in,
-        check_out=booking.check_out,
-        guest_name=guest_name_to_use,
-        guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
-        guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
-        adults=booking.adults,
-        children=booking.children,
-        status="booked",
-        user_id=guest_user_id,  # Link booking to guest user
-    )
-    db.add(db_booking)
-    db.commit()
-    db.refresh(db_booking)
-
-    # Assign multiple rooms
+    # CRITICAL FIX: Check for conflicts BEFORE creating the booking
+    # This prevents invalid bookings from being created in the database
     for room_id in booking.room_ids:
-        conflict = (
+        # Check for conflicts with package bookings
+        package_conflict = (
             db.query(PackageBookingRoom)
             .join(PackageBooking)
             .filter(
@@ -227,15 +213,59 @@ def book_package(db: Session, booking: PackageBookingCreate):
             .first()
         )
 
-        if conflict:
+        # Check for conflicts with regular bookings (THIS WAS MISSING!)
+        from app.models.booking import Booking, BookingRoom
+        regular_conflict = (
+            db.query(BookingRoom)
+            .join(Booking)
+            .filter(
+                BookingRoom.room_id == room_id,
+                Booking.status.in_(["booked", "checked-in"]),  # Only check for active bookings
+                or_(
+                    and_(
+                        Booking.check_in <= booking.check_in,
+                        Booking.check_out > booking.check_in
+                    ),
+                    and_(
+                        Booking.check_in < booking.check_out,
+                        Booking.check_out >= booking.check_out
+                    ),
+                    and_(
+                        Booking.check_in >= booking.check_in,
+                        Booking.check_out <= booking.check_out
+                    ),
+                )
+            )
+            .first()
+        )
+
+        if package_conflict or regular_conflict:
             room = db.query(Room).filter(Room.id == room_id).first()
             raise HTTPException(status_code=400, detail=f"Room {room.number if room else room_id} is not available for the selected dates.")
-        
-        # --- FIX: Update the room's status to 'Booked' ---
+
+    # All conflict checks passed - now create the booking
+    db_booking = PackageBooking(
+        package_id=booking.package_id,
+        check_in=booking.check_in,
+        check_out=booking.check_out,
+        guest_name=guest_name_to_use,
+        guest_email=guest_email or booking.guest_email or None,  # Use normalized email or original, fallback to None
+        guest_mobile=guest_mobile or booking.guest_mobile or None,  # Use normalized mobile or original, fallback to None
+        adults=booking.adults,
+        children=booking.children,
+        status="booked",
+        user_id=guest_user_id,  # Link booking to guest user
+    )
+    db.add(db_booking)
+    db.commit()
+    db.refresh(db_booking)
+
+    # Assign multiple rooms (conflicts already checked, safe to proceed)
+    for room_id in booking.room_ids:
+        # Update the room's status to 'Booked'
         room_to_update = db.query(Room).filter(Room.id == room_id).first()
         if room_to_update:
             room_to_update.status = "Booked"
-        # ----------------------------------------------------
 
         db_room_link = PackageBookingRoom(package_booking_id=db_booking.id, room_id=room_id)
         db.add(db_room_link)
