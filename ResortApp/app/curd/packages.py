@@ -194,7 +194,7 @@ def book_package(db: Session, booking: PackageBookingCreate):
             .join(PackageBooking)
             .filter(
                 PackageBookingRoom.room_id == room_id,
-                PackageBooking.status.in_(["booked", "checked-in"]),  # Only check for active bookings
+                PackageBooking.status.in_(["booked", "checked-in", "checked_in"]),  # Only check for active bookings
                 or_(
                     and_(
                         PackageBooking.check_in <= booking.check_in,
@@ -220,7 +220,7 @@ def book_package(db: Session, booking: PackageBookingCreate):
             .join(Booking)
             .filter(
                 BookingRoom.room_id == room_id,
-                Booking.status.in_(["booked", "checked-in"]),  # Only check for active bookings
+                Booking.status.in_(["booked", "checked-in", "checked_in"]),  # Only check for active bookings
                 or_(
                     and_(
                         Booking.check_in <= booking.check_in,
