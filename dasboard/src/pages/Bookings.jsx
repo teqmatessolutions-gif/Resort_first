@@ -637,6 +637,25 @@ const Bookings = () => {
     return null;
   }, []);
 
+  const dedupeBookings = useCallback((list) => {
+    const map = new Map();
+    list.forEach((booking) => {
+      if (!booking || booking.id === undefined || booking.id === null) {
+        return;
+      }
+      const key = booking.is_package ? `package_${booking.id}` : `regular_${booking.id}`;
+      if (!map.has(key)) {
+        map.set(key, booking);
+      } else {
+        const existing = map.get(key);
+        if (existing && existing.status !== booking.status) {
+          map.set(key, { ...existing, ...booking });
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => b.id - a.id);
+  }, []);
+
   const roomTypes = useMemo(() => {
     return [...new Set(rooms.map((r) => r.type))];
   }, [rooms]);
@@ -752,15 +771,7 @@ const Bookings = () => {
       };
       
       // Use functional update to prevent duplicates
-      setBookings(prev => {
-        // Check if booking already exists (only check package bookings, not regular)
-        const exists = prev.some(b => b.is_package && b.id === newPackageBooking.id);
-        if (exists) {
-          console.log("Booking already exists, not adding duplicate:", newPackageBooking.id);
-          return prev;
-        }
-        return [newPackageBooking, ...prev]; // Add to beginning of list
-      });
+      setBookings(prev => dedupeBookings([newPackageBooking, ...prev]));
     } catch (err) {
       console.error(err);
       const errorMessage = err.response?.data?.detail || "Failed to process package booking.";
@@ -877,7 +888,8 @@ const Bookings = () => {
   }, [bookings]);
 
   const filteredBookings = useMemo(() => {
-    return bookings
+    const uniqueBookings = dedupeBookings(bookings);
+    return uniqueBookings
       .filter((b) => {
         // Normalize status values - handle both hyphens and underscores
         let normalizedBookingStatus = b.status?.toLowerCase().trim();
@@ -954,7 +966,7 @@ const Bookings = () => {
         // If same status, sort by ID descending (latest first)
         return b.id - a.id;
       });
-  }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate, extractRoomNumber]);
+  }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate, extractRoomNumber, dedupeBookings]);
 
   const handleRoomNumberToggle = (roomNumber) => {
     const isSelected = formData.roomNumbers.includes(roomNumber);
@@ -1072,15 +1084,7 @@ const Bookings = () => {
       };
       
       // Use functional update to prevent duplicates
-      setBookings(prev => {
-        // Check if booking already exists (only check regular bookings, not packages)
-        const exists = prev.some(b => !b.is_package && b.id === newBooking.id);
-        if (exists) {
-          console.log("Booking already exists, not adding duplicate:", newBooking.id);
-          return prev;
-        }
-        return [newBooking, ...prev]; // Add to beginning of list
-      });
+      setBookings(prev => dedupeBookings([newBooking, ...prev]));
     } catch (err) {
       console.error("Booking creation error:", err);
       const errorMessage = err.response?.data?.message || "Error creating booking.";
