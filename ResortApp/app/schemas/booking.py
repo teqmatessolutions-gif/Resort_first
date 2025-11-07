@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator, model_validator
 from typing import List, Optional
 from datetime import date
 from .user import UserOut
@@ -50,6 +50,7 @@ class BookingCreate(BaseModel):
 # This is the main output schema for displaying bookings
 class BookingOut(BaseModel):
     id: int
+    display_id: Optional[str] = None  # Format: BK-000001
     guest_name: str
     guest_mobile: str
     guest_email: str
@@ -65,6 +66,13 @@ class BookingOut(BaseModel):
     is_package: bool = False
     # ----------------------------------------------------
     rooms: List[RoomOut] = []
+    
+    @model_validator(mode='after')
+    def set_display_id(self):
+        """Auto-generate display_id if not provided"""
+        if not self.display_id:
+            self.display_id = f"BK-{str(self.id).zfill(6)}"
+        return self
 
     class Config:
         from_attributes = True

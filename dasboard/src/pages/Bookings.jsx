@@ -732,8 +732,13 @@ const Bookings = () => {
     };
   }, [selectedRoomDetails]);
 
-  // Generate unique booking ID for sharing
+  // Generate unique booking ID for sharing - use display_id from API if available
   const generateBookingId = (booking) => {
+    // Use display_id from API response if available (backend will provide BK-000001 or PK-000001)
+    if (booking.display_id) {
+      return booking.display_id;
+    }
+    // Fallback: generate it client-side if not provided
     const prefix = booking.is_package ? "PK" : "BK";
     const paddedId = String(booking.id).padStart(6, '0');
     return `${prefix}-${paddedId}`;
@@ -1574,8 +1579,7 @@ const Bookings = () => {
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
                     <td className="p-2 sm:p-4">
-                      <div className="font-mono text-xs sm:text-sm">{generateBookingId(b)}</div>
-                      <div className="text-xs text-gray-500 hidden sm:block">ID: {b.id}</div>
+                      <div className="font-mono text-xs sm:text-sm font-semibold text-gray-900">{generateBookingId(b)}</div>
                     </td>
                     <td className="p-2 sm:p-4 font-medium text-gray-900 text-xs sm:text-sm">
                       {b.guest_name}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from datetime import date
 from typing import List, Optional
 
@@ -70,9 +70,17 @@ class PackageBookingUpdate(BaseModel):
 
 class PackageBookingOut(PackageBookingBase):
     id: int
+    display_id: Optional[str] = None  # Format: PK-000001
     status: str
     rooms: List[PackageBookingRoomOut] = Field(default_factory=list)
     package: Optional[PackageOut]
+    
+    @model_validator(mode='after')
+    def set_display_id(self):
+        """Auto-generate display_id if not provided"""
+        if not self.display_id:
+            self.display_id = f"PK-{str(self.id).zfill(6)}"
+        return self
 
     class Config:
         from_attributes = True
