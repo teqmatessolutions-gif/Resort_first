@@ -1,7 +1,7 @@
 # booking.py
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session, joinedload, load_only
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from typing import List
 from app.utils.auth import get_db, get_current_user
 from app.models.booking import Booking, BookingRoom
@@ -275,15 +275,23 @@ def create_booking(booking: BookingCreate, db: Session = Depends(get_db), curren
 
     # Check if rooms are available for the requested dates
     for room_id in booking.room_ids:
-        # Check if room is already booked for overlapping dates (only check active bookings, not cancelled or checked-out)
-        conflicting_booking = db.query(BookingRoom).join(Booking).filter(
+        # Check if room is already booked by regular bookings for overlapping dates (only check active bookings, not cancelled or checked-out)
+        conflicting_regular_booking = db.query(BookingRoom).join(Booking).filter(
             BookingRoom.room_id == room_id,
             Booking.status.in_(['booked', 'checked-in']),  # Only check for active bookings
             Booking.check_in < booking.check_out,
             Booking.check_out > booking.check_in
         ).first()
         
-        if conflicting_booking:
+        # Check if room is already booked by package bookings for overlapping dates
+        conflicting_package_booking = db.query(PackageBookingRoom).join(PackageBooking).filter(
+            PackageBookingRoom.room_id == room_id,
+            PackageBooking.status.in_(['booked', 'checked-in']),  # Only check for active bookings
+            PackageBooking.check_in < booking.check_out,
+            PackageBooking.check_out > booking.check_in
+        ).first()
+        
+        if conflicting_regular_booking or conflicting_package_booking:
             room = db.query(Room).filter(Room.id == room_id).first()
             raise HTTPException(
                 status_code=400,
@@ -657,18 +665,107 @@ def cancel_booking(booking_id: int, db: Session = Depends(get_db), current_user:
     
 @router.put("/{booking_id}/extend", response_model=BookingOut)
 def extend_checkout(booking_id: int, new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    """
+    Extend the checkout date for a booking.
+    Validates that the new checkout date is after the current checkout date
+    and checks for conflicts with other bookings on the same rooms.
+    """
+    from datetime import datetime
+    
+    # Parse the new checkout date string to a date object
+    try:
+        new_checkout_date = datetime.strptime(new_checkout, '%Y-%m-%d').date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD format")
+    
+    # Fetch the booking with its rooms
+    booking = db.query(Booking).options(
+        joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
+    ).filter(Booking.id == booking_id).first()
+    
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-
-    if new_checkout <= str(booking.check_out):
-        raise HTTPException(status_code=400, detail="New checkout must be after current checkout")
-
-    booking.check_out = new_checkout
+    
+    # Check if booking is in a valid state for extension
+    if booking.status not in ['booked', 'checked-in', 'checked_in']:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot extend checkout for booking with status '{booking.status}'. Only 'booked' or 'checked-in' bookings can be extended."
+        )
+    
+    # Validate that new checkout date is after current checkout date
+    if new_checkout_date <= booking.check_out:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"New checkout date ({new_checkout_date}) must be after current checkout date ({booking.check_out})"
+        )
+    
+    # Check for conflicts with other bookings on the same rooms
+    room_ids = [br.room_id for br in booking.booking_rooms if br.room_id]
+    
+    if room_ids:
+        # Check for conflicts with regular bookings
+        # A conflict exists if another booking overlaps with the extended period
+        # Extended period: from booking.check_out (exclusive) to new_checkout_date (inclusive)
+        conflicting_bookings = db.query(Booking).join(BookingRoom).filter(
+            Booking.id != booking_id,
+            BookingRoom.room_id.in_(room_ids),
+            Booking.status.in_(['booked', 'checked-in', 'checked_in']),
+            and_(
+                Booking.check_in < new_checkout_date,
+                Booking.check_out > booking.check_out
+            )
+        ).first()
+        
+        if conflicting_bookings:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot extend checkout date. Room(s) are already booked by another booking (ID: {conflicting_bookings.id}) during the extended period."
+            )
+        
+        # Check for conflicts with package bookings
+        # A conflict exists if a package booking overlaps with the extended period
+        conflicting_package_bookings = db.query(PackageBooking).join(PackageBookingRoom).filter(
+            PackageBookingRoom.room_id.in_(room_ids),
+            PackageBooking.status.in_(['booked', 'checked-in', 'checked_in']),
+            and_(
+                PackageBooking.check_in < new_checkout_date,
+                PackageBooking.check_out > booking.check_out
+            )
+        ).first()
+        
+        if conflicting_package_bookings:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot extend checkout date. Room(s) are already booked by a package booking (ID: {conflicting_package_bookings.id}) during the extended period."
+            )
+    
+    # Update the checkout date
+    booking.check_out = new_checkout_date
     db.commit()
     db.refresh(booking)
+    
+    # Reload booking with relationships for response
+    booking_with_rooms = db.query(Booking).options(
+        joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
+    ).filter(Booking.id == booking_id).first()
 
-    return booking
+    return BookingOut(
+        id=booking_with_rooms.id,
+        status=booking_with_rooms.status,
+        guest_name=booking_with_rooms.guest_name,
+        guest_mobile=booking_with_rooms.guest_mobile,
+        guest_email=booking_with_rooms.guest_email,
+        check_in=booking_with_rooms.check_in,
+        check_out=booking_with_rooms.check_out,
+        adults=booking_with_rooms.adults,
+        children=booking_with_rooms.children,
+        id_card_image_url=booking_with_rooms.id_card_image_url,
+        guest_photo_url=booking_with_rooms.guest_photo_url,
+        user_id=booking_with_rooms.user_id,
+        total_amount=booking_with_rooms.total_amount,
+        rooms=[br.room for br in booking_with_rooms.booking_rooms if br.room]
+    )
 # -------------------------------
 # GET booking by ID
 # -------------------------------
