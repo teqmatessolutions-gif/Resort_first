@@ -37,15 +37,15 @@ def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends
     Used to populate the checkout dropdown on the frontend.
     """
     try:
-        # Fetch active bookings and package bookings with their rooms preloaded
+    # Fetch active bookings and package bookings with their rooms preloaded
         # Only include 'checked-in' status (both hyphen and underscore formats)
         # Exclude 'booked' status - only show rooms that are already checked-in
-        active_bookings = db.query(Booking).options(
-            joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
+    active_bookings = db.query(Booking).options(
+        joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
         ).filter(Booking.status.in_(['checked-in', 'checked_in'])).all()
-        
-        active_package_bookings = db.query(PackageBooking).options(
-            joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room)
+    
+    active_package_bookings = db.query(PackageBooking).options(
+        joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room)
         ).filter(PackageBooking.status.in_(['checked-in', 'checked_in'])).all()
         
         result = []
@@ -66,7 +66,7 @@ def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends
                 return None
         
         # Process regular bookings
-        for booking in active_bookings:
+    for booking in active_bookings:
             # Extract room numbers with proper null checks using helper function
             room_numbers = sorted([
                 room_num for link in booking.booking_rooms 
@@ -99,7 +99,7 @@ def get_active_rooms(db: Session = Depends(get_db), current_user: User = Depends
                     })
         
         # Process package bookings
-        for pkg_booking in active_package_bookings:
+    for pkg_booking in active_package_bookings:
             # Extract room numbers with proper null checks using helper function
             room_numbers = sorted([
                 room_num for link in pkg_booking.rooms 
@@ -212,6 +212,32 @@ def _calculate_bill_for_single_room(db: Session, room_number: str):
     charges.food_items = [{"item_name": item.food_item.name, "quantity": item.quantity, "amount": item.quantity * item.food_item.price} for item in unbilled_food_order_items if item.food_item]
     charges.service_items = [{"service_name": ass.service.name, "charges": ass.service.charges} for ass in unbilled_services]
     
+    # Calculate GST
+    # Room charges: 12% GST if <= 7500, 18% GST if > 7500
+    room_charge_amount = charges.room_charges or 0
+    if room_charge_amount > 0:
+        if room_charge_amount <= 7500:
+            charges.room_gst = room_charge_amount * 0.12
+        else:
+            charges.room_gst = room_charge_amount * 0.18
+    
+    # Package charges: Same rule as room charges (12% if <= 7500, 18% if > 7500)
+    package_charge_amount = charges.package_charges or 0
+    if package_charge_amount > 0:
+        if package_charge_amount <= 7500:
+            charges.package_gst = package_charge_amount * 0.12
+        else:
+            charges.package_gst = package_charge_amount * 0.18
+    
+    # Food charges: 5% GST always
+    food_charge_amount = charges.food_charges or 0
+    if food_charge_amount > 0:
+        charges.food_gst = food_charge_amount * 0.05
+    
+    # Total GST
+    charges.total_gst = (charges.room_gst or 0) + (charges.food_gst or 0) + (charges.package_gst or 0)
+    
+    # Total due (subtotal before GST)
     charges.total_due = sum([charges.room_charges, charges.food_charges, charges.service_charges, charges.package_charges])
     
     number_of_guests = getattr(booking, 'number_of_guests', 1)
@@ -317,6 +343,32 @@ def _calculate_bill_for_entire_booking(db: Session, room_number: str):
     charges.food_items = [{"item_name": item.food_item.name, "quantity": item.quantity, "amount": item.quantity * item.food_item.price} for item in unbilled_food_order_items if item.food_item]
     charges.service_items = [{"service_name": ass.service.name, "charges": ass.service.charges} for ass in unbilled_services]
 
+    # Calculate GST
+    # Room charges: 12% GST if <= 7500, 18% GST if > 7500
+    room_charge_amount = charges.room_charges or 0
+    if room_charge_amount > 0:
+        if room_charge_amount <= 7500:
+            charges.room_gst = room_charge_amount * 0.12
+        else:
+            charges.room_gst = room_charge_amount * 0.18
+    
+    # Package charges: Same rule as room charges (12% if <= 7500, 18% if > 7500)
+    package_charge_amount = charges.package_charges or 0
+    if package_charge_amount > 0:
+        if package_charge_amount <= 7500:
+            charges.package_gst = package_charge_amount * 0.12
+        else:
+            charges.package_gst = package_charge_amount * 0.18
+    
+    # Food charges: 5% GST always
+    food_charge_amount = charges.food_charges or 0
+    if food_charge_amount > 0:
+        charges.food_gst = food_charge_amount * 0.05
+    
+    # Total GST
+    charges.total_gst = (charges.room_gst or 0) + (charges.food_gst or 0) + (charges.package_gst or 0)
+
+    # Total due (subtotal before GST)
     charges.total_due = sum([charges.room_charges, charges.food_charges, charges.service_charges, charges.package_charges])
 
     # Assume number_of_guests is a field on the booking model. Default to 1 if not present.
@@ -349,17 +401,17 @@ def get_bill_for_booking(room_number: str, checkout_mode: str = "multiple", db: 
             charges=bill_data["charges"]
         )
     else:
-        bill_data = _calculate_bill_for_entire_booking(db, room_number)
+    bill_data = _calculate_bill_for_entire_booking(db, room_number)
         effective_checkout = bill_data.get("effective_checkout_date", bill_data["booking"].check_out)
-        return BillSummary(
-            guest_name=bill_data["booking"].guest_name,
-            room_numbers=sorted([room.number for room in bill_data["all_rooms"]]),
-            number_of_guests=bill_data["number_of_guests"],
-            stay_nights=bill_data["stay_nights"],
-            check_in=bill_data["booking"].check_in,
+    return BillSummary(
+        guest_name=bill_data["booking"].guest_name,
+        room_numbers=sorted([room.number for room in bill_data["all_rooms"]]),
+        number_of_guests=bill_data["number_of_guests"],
+        stay_nights=bill_data["stay_nights"],
+        check_in=bill_data["booking"].check_in,
             check_out=effective_checkout,  # Use effective checkout date (today if late, booking.check_out if early)
-            charges=bill_data["charges"]
-        )
+        charges=bill_data["charges"]
+    )
 
 
 @router.post("/checkout/{room_number}", response_model=CheckoutSuccess)
@@ -411,9 +463,10 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
         
         try:
-            # Calculate final bill with taxes
+            # Calculate final bill with GST
             subtotal = charges.total_due
-            tax_amount = subtotal * 0.05
+            # Use the calculated GST from charges (already includes room, food, and package GST)
+            tax_amount = charges.total_gst or 0
             discount_amount = max(0, request.discount_amount or 0)
             grand_total = max(0, subtotal + tax_amount - discount_amount)
             
@@ -502,14 +555,14 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
     
     else:
         # Multiple room checkout (entire booking)
-        bill_data = _calculate_bill_for_entire_booking(db, room_number)
-        
-        booking = bill_data["booking"]
-        all_rooms = bill_data["all_rooms"]
-        charges = bill_data["charges"]
-        is_package = bill_data["is_package"]
-        room_ids = [room.id for room in all_rooms]
-        
+    bill_data = _calculate_bill_for_entire_booking(db, room_number)
+
+    booking = bill_data["booking"]
+    all_rooms = bill_data["all_rooms"]
+    charges = bill_data["charges"]
+    is_package = bill_data["is_package"]
+    room_ids = [room.id for room in all_rooms]
+
         # Check if booking is already checked out
         if booking.status in ["checked_out", "checked-out"]:
             raise HTTPException(status_code=409, detail=f"This booking has already been checked out.")
@@ -537,49 +590,50 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
             )
         
         try:
-            # Calculate final bill with taxes
-            subtotal = charges.total_due
-            tax_amount = subtotal * 0.05  # Standard 5% Tax
-            # Apply discount from the request, ensuring it's not negative
-            discount_amount = max(0, request.discount_amount or 0)
-            grand_total = max(0, subtotal + tax_amount - discount_amount)
+            # Calculate final bill with GST
+        subtotal = charges.total_due
+            # Use the calculated GST from charges (already includes room, food, and package GST)
+            tax_amount = charges.total_gst or 0
+        # Apply discount from the request, ensuring it's not negative
+        discount_amount = max(0, request.discount_amount or 0)
+        grand_total = max(0, subtotal + tax_amount - discount_amount)
             
             # Get effective checkout date for billing (today if late checkout, booking.check_out if early)
             effective_checkout = bill_data.get("effective_checkout_date", booking.check_out)
             # Convert date to datetime for checkout_date field
             effective_checkout_datetime = datetime.combine(effective_checkout, datetime.min.time())
-            
-            # Create a single checkout record for the entire booking
-            new_checkout = Checkout(
-                booking_id=booking.id if not is_package else None,
-                package_booking_id=booking.id if is_package else None,
-                room_total=charges.room_charges,
-                food_total=charges.food_charges,
-                service_total=charges.service_charges,
-                package_total=charges.package_charges,
-                tax_amount=tax_amount,
-                discount_amount=discount_amount,
-                grand_total=grand_total,
-                payment_method=request.payment_method,
-                payment_status="Paid",
-                guest_name=booking.guest_name,
+
+        # Create a single checkout record for the entire booking
+        new_checkout = Checkout(
+            booking_id=booking.id if not is_package else None,
+            package_booking_id=booking.id if is_package else None,
+            room_total=charges.room_charges,
+            food_total=charges.food_charges,
+            service_total=charges.service_charges,
+            package_total=charges.package_charges,
+            tax_amount=tax_amount,
+            discount_amount=discount_amount,
+            grand_total=grand_total,
+            payment_method=request.payment_method,
+            payment_status="Paid",
+            guest_name=booking.guest_name,
                 room_number=", ".join(sorted([room.number for room in all_rooms])),
                 checkout_date=effective_checkout_datetime  # Use effective checkout date
-            )
-            db.add(new_checkout)
-            
-            # Atomically update all related records
-            db.query(FoodOrder).filter(FoodOrder.room_id.in_(room_ids), FoodOrder.billing_status == "unbilled").update({"billing_status": "billed"})
-            db.query(AssignedService).filter(AssignedService.room_id.in_(room_ids), AssignedService.billing_status == "unbilled").update({"billing_status": "billed"})
-            
-            booking.status = "checked_out"
-            db.query(Room).filter(Room.id.in_(room_ids)).update({"status": "Available"})
-            
-            db.commit()
-            db.refresh(new_checkout)
-            
-        except Exception as e:
-            db.rollback()
+        )
+        db.add(new_checkout)
+
+        # Atomically update all related records
+        db.query(FoodOrder).filter(FoodOrder.room_id.in_(room_ids), FoodOrder.billing_status == "unbilled").update({"billing_status": "billed"})
+        db.query(AssignedService).filter(AssignedService.room_id.in_(room_ids), AssignedService.billing_status == "unbilled").update({"billing_status": "billed"})
+        
+        booking.status = "checked_out"
+        db.query(Room).filter(Room.id.in_(room_ids)).update({"status": "Available"})
+
+        db.commit()
+        db.refresh(new_checkout)
+
+    except Exception as e:
+        db.rollback()
             error_detail = str(e)
             # Check for unique constraint violation (postgres error code 23505)
             if "unique constraint" in error_detail.lower() or "duplicate key" in error_detail.lower() or "23505" in error_detail:
@@ -588,10 +642,10 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
                     detail=f"This booking has already been checked out. A checkout record already exists for this booking."
                 )
             raise HTTPException(status_code=500, detail=f"Checkout failed due to an internal error: {error_detail}")
-        
-        # Return the data from the newly created checkout record
-        return CheckoutSuccess(
-            checkout_id=new_checkout.id,
-            grand_total=new_checkout.grand_total,
+
+    # Return the data from the newly created checkout record
+    return CheckoutSuccess(
+        checkout_id=new_checkout.id,
+        grand_total=new_checkout.grand_total,
             checkout_date=new_checkout.checkout_date or new_checkout.created_at
-        )
+    )

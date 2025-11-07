@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import autoTable from 'jspdf-autotable';
 // Make sure to place your logo in the specified path or update the path accordingly.
 import { useInfiniteScroll } from "./useInfiniteScroll";
-import logo from '../assets/logo.jpeg';
+import logo from '../assets/logo.jpeg'; 
 import { formatCurrency } from '../utils/currency'; 
 
 
@@ -162,6 +162,97 @@ const Billing = () => {
     weekly_performance: [],
   });
 
+  // Extract unique payment methods from checkouts
+  const paymentMethods = useMemo(() => {
+    const methods = new Set();
+    checkouts.forEach(c => {
+      if (c.payment_method) methods.add(c.payment_method);
+    });
+    return Array.from(methods).sort();
+  }, [checkouts]);
+
+  // Filter checkouts based on all filter criteria
+  const filteredCheckouts = useMemo(() => {
+    return checkouts.filter(c => {
+      // General search - search across ID, guest name, room number, booking ID
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        const matchesSearch = 
+          c.id.toString().toLowerCase().includes(searchLower) ||
+          c.guest_name?.toLowerCase().includes(searchLower) ||
+          c.room_number?.toLowerCase().includes(searchLower) ||
+          c.booking_id?.toString().toLowerCase().includes(searchLower) ||
+          c.package_booking_id?.toString().toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Guest name filter
+      if (guestNameFilter && !c.guest_name?.toLowerCase().includes(guestNameFilter.toLowerCase())) {
+        return false;
+      }
+
+      // Room number filter
+      if (roomNumberFilter && !c.room_number?.toLowerCase().includes(roomNumberFilter.toLowerCase())) {
+        return false;
+      }
+
+      // Booking ID filter
+      if (bookingIdFilter) {
+        const bookingIdStr = bookingIdFilter.toLowerCase();
+        const matchesBookingId = 
+          c.booking_id?.toString().toLowerCase().includes(bookingIdStr) ||
+          c.package_booking_id?.toString().toLowerCase().includes(bookingIdStr);
+        if (!matchesBookingId) return false;
+      }
+
+      // Payment method filter
+      if (paymentMethodFilter !== "All" && c.payment_method !== paymentMethodFilter) {
+        return false;
+      }
+
+      // Date range filter
+      if (fromDate || toDate) {
+        const checkoutDate = new Date(c.created_at);
+        if (fromDate && checkoutDate < new Date(fromDate)) return false;
+        if (toDate && checkoutDate > new Date(toDate + 'T23:59:59')) return false;
+      }
+
+      // Amount range filter
+      if (minAmount && c.grand_total < parseFloat(minAmount)) return false;
+      if (maxAmount && c.grand_total > parseFloat(maxAmount)) return false;
+
+      return true;
+    });
+  }, [checkouts, searchQuery, guestNameFilter, roomNumberFilter, bookingIdFilter, paymentMethodFilter, fromDate, toDate, minAmount, maxAmount]);
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery) count++;
+    if (guestNameFilter) count++;
+    if (roomNumberFilter) count++;
+    if (bookingIdFilter) count++;
+    if (paymentMethodFilter !== "All") count++;
+    if (fromDate) count++;
+    if (toDate) count++;
+    if (minAmount) count++;
+    if (maxAmount) count++;
+    return count;
+  }, [searchQuery, guestNameFilter, roomNumberFilter, bookingIdFilter, paymentMethodFilter, fromDate, toDate, minAmount, maxAmount]);
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setGuestNameFilter("");
+    setRoomNumberFilter("");
+    setBookingIdFilter("");
+    setPaymentMethodFilter("All");
+    setFromDate("");
+    setToDate("");
+    setMinAmount("");
+    setMaxAmount("");
+  };
+
   // Fetch initial data on component mount
   useEffect(() => {
     fetchInitialData();
@@ -169,30 +260,80 @@ const Billing = () => {
 
   const fetchInitialData = async () => {
     try {
-      // Fetch all necessary data in parallel for dashboard and checkout functionality
-      const [checkoutsRes, kpiRes, chartsRes, activeRoomsRes] = await Promise.all([
-        api.get("/bill/checkouts?skip=0&limit=20"),
-        api.get("/dashboard/kpis"), // API call for KPI data
-        api.get("/dashboard/charts"), // API call for Chart data
-        api.get("/bill/active-rooms")
+      // Fetch all necessary data in parallel using Promise.allSettled to handle individual failures
+      const results = await Promise.allSettled([
+        api.get("/bill/checkouts?skip=0&limit=20").catch(err => ({ error: err, data: [] })),
+        api.get("/dashboard/kpis").catch(err => ({ error: err, data: [{ checkouts_today: 0, checkouts_total: 0, available_rooms: 0, booked_rooms: 0, food_revenue_today: 0, package_bookings_today: 0 }] })),
+        api.get("/dashboard/charts").catch(err => ({ error: err, data: { revenue_breakdown: [], weekly_performance: [] } })),
+        api.get("/bill/active-rooms").catch(err => ({ error: err, data: [] }))
       ]);
-      setActiveRooms(activeRoomsRes.data);
-      setCheckouts(Array.isArray(checkoutsRes.data) ? checkoutsRes.data : []);
-      // The API returns an array with one object, so we extract the first element.
-      if (kpiRes.data && Array.isArray(kpiRes.data) && kpiRes.data.length > 0) {
-        setKpiData(kpiRes.data[0]);
-      } else if (kpiRes.data && typeof kpiRes.data === 'object') {
-        // Handle case where API returns object instead of array
-        setKpiData(kpiRes.data);
+
+      // Process checkouts result
+      if (results[0].status === 'fulfilled' && !results[0].value.error) {
+        setCheckouts(Array.isArray(results[0].value.data) ? results[0].value.data : []);
+        setHasMoreCheckouts(results[0].value.data && results[0].value.data.length === 20);
+      } else {
+        console.error("Failed to load checkouts:", results[0].value?.error || results[0].reason);
+        setCheckouts([]);
+        setHasMoreCheckouts(false);
       }
-      setChartData(chartsRes.data || { revenue_breakdown: [], weekly_performance: [] }); // Set Chart data from the API response
-      setHasMoreCheckouts(checkoutsRes.data && checkoutsRes.data.length === 20);
+
+      // Process KPI result
+      if (results[1].status === 'fulfilled' && !results[1].value.error) {
+        const kpiData = results[1].value.data;
+        if (Array.isArray(kpiData) && kpiData.length > 0) {
+          setKpiData(kpiData[0]);
+        } else if (typeof kpiData === 'object') {
+          setKpiData(kpiData);
+        } else {
+          setKpiData({
+            checkouts_today: 0,
+            checkouts_total: 0,
+            available_rooms: 0,
+            booked_rooms: 0,
+            food_revenue_today: 0,
+            package_bookings_today: 0,
+          });
+        }
+      } else {
+        console.error("Failed to load KPIs:", results[1].value?.error || results[1].reason);
+        setKpiData({
+          checkouts_today: 0,
+          checkouts_total: 0,
+          available_rooms: 0,
+          booked_rooms: 0,
+          food_revenue_today: 0,
+          package_bookings_today: 0,
+        });
+      }
+
+      // Process charts result
+      if (results[2].status === 'fulfilled' && !results[2].value.error) {
+        setChartData(results[2].value.data || { revenue_breakdown: [], weekly_performance: [] });
+      } else {
+        console.error("Failed to load charts:", results[2].value?.error || results[2].reason);
+        setChartData({ revenue_breakdown: [], weekly_performance: [] });
+      }
+
+      // Process active rooms result
+      if (results[3].status === 'fulfilled' && !results[3].value.error) {
+        setActiveRooms(Array.isArray(results[3].value.data) ? results[3].value.data : []);
+      } else {
+        console.error("Failed to load active rooms:", results[3].value?.error || results[3].reason);
+        setActiveRooms([]);
+      }
+
+      // Show error message only if all requests failed
+      const allFailed = results.every(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
+      if (allFailed) {
+        showBannerMessage("error", "Could not fetch dashboard data. Please check your connection and try again.");
+      }
     } catch (err) {
-      console.error("Error fetching initial dashboard data:", err);
-      console.error("Error details:", err.response?.data);
+      console.error("Unexpected error fetching initial data:", err);
       showBannerMessage("error", `Could not fetch dashboard data: ${err.message || 'Unknown error'}. Please refresh.`);
-      setCheckouts([]);
       // Set default values to prevent undefined errors
+      setCheckouts([]);
+      setActiveRooms([]);
       setKpiData({
         checkouts_today: 0,
         checkouts_total: 0,
@@ -221,7 +362,7 @@ const Billing = () => {
       const actualRoomNumber = roomNumber.includes('-') ? roomNumber.split('-')[1] : roomNumber;
       const res = await api.get(`/bill/${actualRoomNumber}?checkout_mode=${checkoutMode}`);
       if (res.data && res.data.room_numbers) {
-        setBillData(res.data);
+      setBillData(res.data);
         const roomCount = res.data.room_numbers.length;
         const modeText = checkoutMode === "single" ? "single room" : "all rooms in the booking";
         showBannerMessage("success", `Bill retrieved for ${roomCount} room(s) (${modeText}).`);
@@ -254,7 +395,8 @@ const Billing = () => {
       showBannerMessage("error", "Discount amount cannot be negative.");
       return;
     }
-    if (discountAmount > billData.charges.total_due * 1.05) {
+    const totalWithGST = billData.charges.total_due + (billData.charges.total_gst || 0);
+    if (discountAmount > totalWithGST) {
       showBannerMessage("error", "Discount cannot exceed the grand total.");
       return;
     }
@@ -352,13 +494,16 @@ const Billing = () => {
       headStyles: { fillColor: [38, 41, 61] } // Dark blue color
     });
 
-    // 4. Totals
+    // 4. Totals with GST breakdown
     const subtotal = billData.charges.total_due;
-    const tax = subtotal * 0.05;
-    const grandTotal = Math.max(0, subtotal + tax - (parseFloat(discount) || 0));
+    const totalGST = billData.charges.total_gst || 0;
+    const grandTotal = Math.max(0, subtotal + totalGST - (parseFloat(discount) || 0));
     const totals = [
       ['Subtotal', formatCurrency(subtotal)],
-      ['Tax (5%)', `+${formatCurrency(tax)}`],
+      ...(billData.charges.room_gst > 0 ? [['Room GST', `+${formatCurrency(billData.charges.room_gst || 0)}`]] : []),
+      ...(billData.charges.package_gst > 0 ? [['Package GST', `+${formatCurrency(billData.charges.package_gst || 0)}`]] : []),
+      ...(billData.charges.food_gst > 0 ? [['Food GST (5%)', `+${formatCurrency(billData.charges.food_gst || 0)}`]] : []),
+      ['Total GST', `+${formatCurrency(totalGST)}`],
       ...(discount > 0 ? [['Discount', `-${formatCurrency(parseFloat(discount))}`]] : []),
       ['Grand Total', formatCurrency(grandTotal)]
     ];
@@ -429,9 +574,21 @@ const Billing = () => {
     }
     text += `${line}\n`;
     text += `Subtotal: ${formatCurrency(billData.charges.total_due)}\n`;
-    text += `Tax (5%): +${formatCurrency(billData.charges.total_due * 0.05)}\n`;
+    // GST Breakdown
+    if (billData.charges.room_gst > 0) {
+      const gstRate = billData.charges.room_charges <= 7500 ? '12%' : '18%';
+      text += `Room GST (${gstRate}): +${formatCurrency(billData.charges.room_gst || 0)}\n`;
+    }
+    if (billData.charges.package_gst > 0) {
+      const gstRate = billData.charges.package_charges <= 7500 ? '12%' : '18%';
+      text += `Package GST (${gstRate}): +${formatCurrency(billData.charges.package_gst || 0)}\n`;
+    }
+    if (billData.charges.food_gst > 0) {
+      text += `Food GST (5%): +${formatCurrency(billData.charges.food_gst || 0)}\n`;
+    }
+    text += `Total GST: +${formatCurrency(billData.charges.total_gst || 0)}\n`;
     if (discount > 0) text += `Discount: -${formatCurrency(parseFloat(discount))}\n`;
-    text += `${bold('Grand Total:')} ${formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}\n`;
+    text += `${bold('Grand Total:')} ${formatCurrency(Math.max(0, billData.charges.total_due + (billData.charges.total_gst || 0) - discount))}\n`;
     text += `${line}\nThank you for staying with us!`;
 
     return encodeURIComponent(text);
@@ -568,7 +725,7 @@ const Billing = () => {
                 return (
                   <option key={`${uniqueValue}-${index}`} value={uniqueValue}>
                     {booking.display_label || `${booking.room_numbers?.join(', ') || booking.room_number} (${booking.guest_name})`}
-                  </option>
+                </option>
                 );
               })}
             </select>
@@ -655,12 +812,22 @@ const Billing = () => {
 
                 <div className="mt-4 pt-4 border-t text-right space-y-1">
                   <p className="text-sm text-gray-600">Subtotal: {formatCurrency(billData.charges.total_due)}</p>
-                  <p className="text-sm text-gray-600">Tax (5%): +{formatCurrency(billData.charges.total_due * 0.05)}</p>
+                  {/* GST Breakdown */}
+                  {billData.charges.room_gst > 0 && (
+                    <p className="text-xs text-gray-500">Room GST ({billData.charges.room_charges <= 7500 ? '12%' : '18%'}): +{formatCurrency(billData.charges.room_gst || 0)}</p>
+                  )}
+                  {billData.charges.package_gst > 0 && (
+                    <p className="text-xs text-gray-500">Package GST ({billData.charges.package_charges <= 7500 ? '12%' : '18%'}): +{formatCurrency(billData.charges.package_gst || 0)}</p>
+                  )}
+                  {billData.charges.food_gst > 0 && (
+                    <p className="text-xs text-gray-500">Food GST (5%): +{formatCurrency(billData.charges.food_gst || 0)}</p>
+                  )}
+                  <p className="text-sm text-gray-600 font-semibold">Total GST: +{formatCurrency(billData.charges.total_gst || 0)}</p>
                   {discount > 0 && (
                     <p className="text-sm text-green-600">Discount: -{formatCurrency(parseFloat(discount))}</p>
                   )}
                   <p className="font-bold text-xl text-gray-900">
-                    Grand Total: {formatCurrency(Math.max(0, billData.charges.total_due * 1.05 - discount))}
+                    Grand Total: {formatCurrency(Math.max(0, billData.charges.total_due + (billData.charges.total_gst || 0) - discount))}
                   </p>
                 </div>
               </div>
@@ -903,11 +1070,11 @@ const Billing = () => {
               </tbody>
             </table>
           </div>
-          {hasMoreCheckouts && (
-            <div ref={loadMoreRef} className="text-center p-4">
-              {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
-            </div>
-          )}
+            {hasMoreCheckouts && (
+              <div ref={loadMoreRef} className="text-center p-4">
+                {isFetchingMore && <span className="text-indigo-600">Loading more checkouts...</span>}
+              </div>
+            )}
         </div>
 
         <CheckoutDetailModal checkout={selectedCheckout} onClose={() => setSelectedCheckout(null)} />

@@ -23,6 +23,12 @@ class BillBreakdown(BaseModel):
     service_charges: Optional[float] = 0.0
     package_charges: Optional[float] = 0.0
     
+    # GST breakdown
+    room_gst: Optional[float] = 0.0  # GST on room charges (12% if <= 7500, 18% if > 7500)
+    food_gst: Optional[float] = 0.0  # GST on food charges (5% always)
+    package_gst: Optional[float] = 0.0  # GST on package charges (12% if <= 7500, 18% if > 7500)
+    total_gst: Optional[float] = 0.0  # Total GST amount
+    
     # Detailed lists
     food_items: List[FoodOrderItem] = []
     service_items: List[ServiceItem] = []
