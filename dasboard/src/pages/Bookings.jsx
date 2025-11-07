@@ -379,7 +379,8 @@ const Bookings = () => {
   const [bookingToCheckIn, setBookingToCheckIn] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [totalBookings, setTotalBookings] = useState(0);
-  const [hasMoreBookings, setHasMoreBookings] = useState(true);
+  const [hasMoreBookings, setHasMoreBookings] = useState(false);
+  const [regularBookingsLoaded, setRegularBookingsLoaded] = useState(0);
 
   // Map of roomId -> room for robust display when API omits nested room payloads
   const roomIdToRoom = useMemo(() => {
@@ -495,7 +496,8 @@ const Bookings = () => {
       setBookings(combinedBookings);
       setPackages(packageRes.data || []);
       setTotalBookings(total + (packageBookings?.length || 0));
-      setHasMoreBookings(combinedBookings.length < (total + (packageBookings?.length || 0)));
+      setHasMoreBookings(initialBookings.length < total);
+      setRegularBookingsLoaded(initialBookings.length);
       setKpis({
         activeBookings: activeBookingsCount,
         cancelledBookings: cancelledBookingsCount,
@@ -584,10 +586,32 @@ const Bookings = () => {
     if (!hasMoreBookings) return;
     setIsSubmitting(true);
     try {
-      const response = await API.get(`/bookings?skip=${bookings.length}&limit=20&order_by=id&order=desc`, authHeader());
+      const response = await API.get(`/bookings?skip=${regularBookingsLoaded}&limit=20&order_by=id&order=desc`, authHeader());
       const { bookings: newBookings, total } = response.data;
-      setBookings(prev => [...prev, ...newBookings]);
-      setHasMoreBookings(bookings.length + newBookings.length < total);
+
+      if (!newBookings || newBookings.length === 0) {
+        setHasMoreBookings(false);
+        return;
+      }
+
+      setBookings(prev => {
+        const bookingsMap = new Map();
+
+        prev.forEach((booking) => {
+          const key = booking.is_package ? `package_${booking.id}` : `regular_${booking.id}`;
+          bookingsMap.set(key, booking);
+        });
+
+        newBookings.forEach((booking) => {
+          bookingsMap.set(`regular_${booking.id}`, { ...booking, is_package: false });
+        });
+
+        return Array.from(bookingsMap.values()).sort((a, b) => b.id - a.id);
+      });
+
+      const updatedRegularCount = regularBookingsLoaded + newBookings.length;
+      setRegularBookingsLoaded(updatedRegularCount);
+      setHasMoreBookings(updatedRegularCount < total);
     } catch (err) {
       console.error("Failed to load more bookings:", err);
       showBannerMessage("error", "Could not load more bookings.");
