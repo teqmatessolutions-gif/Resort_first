@@ -429,22 +429,16 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
     
     if checkout_mode == "single":
         # Single room checkout
-        # First, check if room exists and is already checked out BEFORE calculating bill
-        room = db.query(Room).filter(Room.number == room_number).first()
-        if not room:
-            raise HTTPException(status_code=404, detail=f"Room {room_number} not found.")
-        
-        if room.status == "Available":
-            raise HTTPException(
-                status_code=409, 
-                detail=f"Room {room_number} has already been checked out and is currently available. Please select a different room."
-            )
-        
-        # Now calculate bill
+        # Calculate bill first - this will validate that there's an active booking
         bill_data = _calculate_bill_for_single_room(db, room_number)
         booking = bill_data["booking"]
+        room = bill_data["room"]
         charges = bill_data["charges"]
         is_package = bill_data["is_package"]
+        
+        # Validate booking is in a valid state (this is the source of truth, not room status)
+        if booking.status not in ['checked-in', 'checked_in', 'booked']:
+            raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
         
         # Check if there's already a checkout for this specific room today (to prevent duplicates)
         today = date.today()
@@ -458,9 +452,12 @@ def process_booking_checkout(room_number: str, request: CheckoutRequest, db: Ses
                 detail=f"Room {room_number} was already checked out today (Checkout ID: {existing_room_checkout.id}). Please refresh the page to see updated room status."
             )
         
-        # Validate booking is in a valid state
-        if booking.status not in ['checked-in', 'checked_in', 'booked']:
-            raise HTTPException(status_code=400, detail=f"Booking cannot be checked out. Current status: {booking.status}")
+        # Check if booking is already checked out (more reliable than room status)
+        if booking.status in ['checked_out', 'checked-out']:
+            raise HTTPException(
+                status_code=409, 
+                detail=f"Booking for room {room_number} has already been checked out. Please refresh the page to see updated status."
+            )
         
         try:
             # Calculate final bill with GST
