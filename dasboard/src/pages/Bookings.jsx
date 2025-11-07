@@ -491,7 +491,7 @@ const Bookings = () => {
       });
       
       // Convert Map to array and sort by ID descending
-      const combinedBookings = Array.from(bookingsMap.values()).sort((a, b) => b.id - a.id);
+      const combinedBookings = Array.from(bookingsMap.values()).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
       
       setBookings(combinedBookings);
       setPackages(packageRes.data || []);
@@ -606,7 +606,7 @@ const Bookings = () => {
           bookingsMap.set(`regular_${booking.id}`, { ...booking, is_package: false });
         });
 
-        return Array.from(bookingsMap.values()).sort((a, b) => b.id - a.id);
+        return Array.from(bookingsMap.values()).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
       });
 
       const updatedRegularCount = regularBookingsLoaded + newBookings.length;
@@ -639,21 +639,32 @@ const Bookings = () => {
 
   const dedupeBookings = useCallback((list) => {
     const map = new Map();
-    list.forEach((booking) => {
-      if (!booking || booking.id === undefined || booking.id === null) {
-        return;
-      }
-      const key = booking.is_package ? `package_${booking.id}` : `regular_${booking.id}`;
+
+    list.forEach((rawBooking) => {
+      if (!rawBooking) return;
+
+      const booking = {
+        ...rawBooking,
+        is_package: Boolean(rawBooking.is_package),
+      };
+
+      const prefix = booking.is_package ? "PK" : "BK";
+      const displayId = (booking.display_id || `${prefix}-${String(booking.id ?? "").padStart(6, "0")}`)
+        .toString()
+        .trim()
+        .toUpperCase();
+
+      const key = `${prefix}_${displayId}`;
+
       if (!map.has(key)) {
         map.set(key, booking);
       } else {
         const existing = map.get(key);
-        if (existing && existing.status !== booking.status) {
-          map.set(key, { ...existing, ...booking });
-        }
+        map.set(key, { ...existing, ...booking });
       }
     });
-    return Array.from(map.values()).sort((a, b) => b.id - a.id);
+
+    return Array.from(map.values()).sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
   }, []);
 
   const roomTypes = useMemo(() => {
