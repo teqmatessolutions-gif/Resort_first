@@ -598,19 +598,39 @@ const Bookings = () => {
 
   const loadMoreRef = useInfiniteScroll(loadMoreBookings, hasMoreBookings, isSubmitting);
 
+  const extractRoomNumber = useCallback((room) => {
+    if (!room) return null;
+    const directNumber = room.number;
+    if (directNumber !== undefined && directNumber !== null && directNumber !== '') {
+      return String(directNumber).trim();
+    }
+
+    const nestedNumber = room.room?.number;
+    if (nestedNumber !== undefined && nestedNumber !== null && nestedNumber !== '') {
+      return String(nestedNumber).trim();
+    }
+
+    return null;
+  }, []);
+
   const roomTypes = useMemo(() => {
     return [...new Set(rooms.map((r) => r.type))];
   }, [rooms]);
 
   const allRoomNumbers = useMemo(() => {
     const numbers = new Set();
-    bookings.forEach(booking => {
-      if (booking.rooms) {
-        booking.rooms.forEach(room => numbers.add(room.number));
-      }
+    bookings.forEach((booking) => {
+      booking.rooms?.forEach((room) => {
+        const roomNumber = extractRoomNumber(room);
+        if (roomNumber) {
+          numbers.add(roomNumber);
+        }
+      });
     });
-    return ["All", ...Array.from(numbers).sort()];
-  }, [bookings]);
+
+    const sortedNumbers = Array.from(numbers).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    return ["All", ...sortedNumbers];
+  }, [bookings, extractRoomNumber]);
 
   const filteredRooms = useMemo(() => {
     return rooms.filter((r) => r.type === formData.roomTypes[0]);
@@ -850,7 +870,8 @@ const Bookings = () => {
           (normalizedBookingStatus === "checked_out" && normalizedFilterStatus === "checked-out") ||
           (normalizedBookingStatus === "checked-in" && normalizedFilterStatus === "checked-in") ||
           (normalizedBookingStatus === "checked_in" && normalizedFilterStatus === "checked-in");
-        const roomNumberMatch = roomNumberFilter === "All" || (b.rooms && b.rooms.some(r => r.number === roomNumberFilter));
+        const normalizedRoomFilterValue = roomNumberFilter === "All" ? null : String(roomNumberFilter).trim();
+        const roomNumberMatch = !normalizedRoomFilterValue || (b.rooms && b.rooms.some((room) => extractRoomNumber(room) === normalizedRoomFilterValue));
         
         // Fix: Apply date filter to both check-in and check-out dates
         let dateMatch = true;
@@ -909,7 +930,7 @@ const Bookings = () => {
         // If same status, sort by ID descending (latest first)
         return b.id - a.id;
       });
-  }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate]);
+  }, [bookings, statusFilter, roomNumberFilter, fromDate, toDate, extractRoomNumber]);
 
   const handleRoomNumberToggle = (roomNumber) => {
     const isSelected = formData.roomNumbers.includes(roomNumber);
