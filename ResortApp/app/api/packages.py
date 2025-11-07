@@ -262,6 +262,95 @@ def cancel_package_booking(booking_id: int, db: Session = Depends(get_db), curre
     db.refresh(booking)
     return booking
 
+@router.put("/booking/{booking_id}/extend", response_model=PackageBookingOut)
+def extend_package_booking_checkout(booking_id: int, new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """
+    Extend the checkout date for a package booking.
+    Validates that the new checkout date is after the current checkout date
+    and checks for conflicts with other bookings on the same rooms.
+    """
+    from datetime import datetime
+    from sqlalchemy import and_, or_
+    
+    # Parse the new checkout date string to a date object
+    try:
+        new_checkout_date = datetime.strptime(new_checkout, '%Y-%m-%d').date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD format")
+    
+    # Fetch the package booking with its rooms
+    booking = db.query(PackageBooking).options(
+        joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room)
+    ).filter(PackageBooking.id == booking_id).first()
+    
+    if not booking:
+        raise HTTPException(status_code=404, detail="Package booking not found")
+    
+    # Check if booking is in a valid state for extension
+    if booking.status not in ['booked', 'checked-in', 'checked_in']:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot extend checkout for package booking with status '{booking.status}'. Only 'booked' or 'checked-in' bookings can be extended."
+        )
+    
+    # Validate that new checkout date is after current checkout date
+    if new_checkout_date <= booking.check_out:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"New checkout date ({new_checkout_date}) must be after current checkout date ({booking.check_out})"
+        )
+    
+    # Check for conflicts with other bookings on the same rooms
+    room_ids = [br.room_id for br in booking.rooms if br.room_id]
+    
+    if room_ids:
+        # Check for conflicts with regular bookings
+        from app.models.booking import Booking, BookingRoom
+        conflicting_bookings = db.query(Booking).join(BookingRoom).filter(
+            BookingRoom.room_id.in_(room_ids),
+            Booking.status.in_(['booked', 'checked-in', 'checked_in']),
+            and_(
+                Booking.check_in < new_checkout_date,
+                Booking.check_out > booking.check_out
+            )
+        ).first()
+        
+        if conflicting_bookings:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot extend checkout date. Room(s) are already booked by another booking (ID: {conflicting_bookings.id}) during the extended period."
+            )
+        
+        # Check for conflicts with other package bookings
+        conflicting_package_bookings = db.query(PackageBooking).join(PackageBookingRoom).filter(
+            PackageBooking.id != booking_id,
+            PackageBookingRoom.room_id.in_(room_ids),
+            PackageBooking.status.in_(['booked', 'checked-in', 'checked_in']),
+            and_(
+                PackageBooking.check_in < new_checkout_date,
+                PackageBooking.check_out > booking.check_out
+            )
+        ).first()
+        
+        if conflicting_package_bookings:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot extend checkout date. Room(s) are already booked by another package booking (ID: {conflicting_package_bookings.id}) during the extended period."
+            )
+    
+    # Update the checkout date
+    booking.check_out = new_checkout_date
+    db.commit()
+    db.refresh(booking)
+    
+    # Reload booking with relationships for response
+    booking_with_rooms = db.query(PackageBooking).options(
+        joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room),
+        joinedload(PackageBooking.package)
+    ).filter(PackageBooking.id == booking_id).first()
+    
+    return booking_with_rooms
+
 @router.put("/booking/{booking_id}/check-in", response_model=PackageBookingOut)
 def check_in_package_booking(
     booking_id: int,

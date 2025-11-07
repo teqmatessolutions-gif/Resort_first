@@ -1043,8 +1043,17 @@ const Bookings = () => {
     setIsSubmitting(true);
 
     try {
+      // Find the booking to determine if it's a package booking
+      const booking = bookings.find(b => b.id === bookingId);
+      const isPackage = booking?.is_package || bookingToExtend?.is_package || false;
+      
+      // Use the correct endpoint based on booking type
+      const url = isPackage 
+        ? `/packages/booking/${bookingId}/extend?new_checkout=${newCheckoutDate}`
+        : `/bookings/${bookingId}/extend?new_checkout=${newCheckoutDate}`;
+      
       await API.put(
-        `/bookings/${bookingId}/extend?new_checkout=${newCheckoutDate}`,
+        url,
         {},
         authHeader()
       );
@@ -1053,7 +1062,7 @@ const Bookings = () => {
       fetchData();
     } catch (err) {
       console.error("Booking extension error:", err);
-      const errorMessage = err.response?.data?.message || "Failed to extend booking.";
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || "Failed to extend booking.";
       showBannerMessage("error", errorMessage);
     } finally {
       setIsSubmitting(false);
