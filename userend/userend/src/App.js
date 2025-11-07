@@ -1521,9 +1521,9 @@ export default function App() {
             <div className={`relative ${theme.bgPrimary} ${theme.textPrimary} font-sans min-h-screen transition-colors duration-500`}>
                 <BackgroundAnimation theme={theme} />
                 
-                {/* Banner Message */}
+                {/* Banner Message - High z-index to appear above modals */}
                 {bannerMessage.text && (
-                    <div className={`fixed top-0 left-0 right-0 z-[60] p-4 ${bannerMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-center font-medium shadow-lg transform transition-transform duration-300`}>
+                    <div className={`fixed top-0 left-0 right-0 z-[9999] p-4 ${bannerMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-center font-medium shadow-lg transform transition-transform duration-300`}>
                         <div className="flex items-center justify-center">
                             <span className="mr-2">
                                 {bannerMessage.type === 'success' ? '✅' : '❌'}
@@ -2490,6 +2490,20 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><BedDouble className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Room</h3>
                                 <button onClick={() => setIsRoomBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
+                            {/* Error message inside modal */}
+                            {bannerMessage.text && bannerMessage.type === 'error' && (
+                                <div className={`mx-6 mt-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm flex items-center`}>
+                                    <span className="mr-2">❌</span>
+                                    {bannerMessage.text}
+                                </div>
+                            )}
+                            {/* Success message inside modal */}
+                            {bannerMessage.text && bannerMessage.type === 'success' && (
+                                <div className={`mx-6 mt-4 p-3 rounded-lg bg-green-100 border border-green-300 text-green-700 text-sm flex items-center`}>
+                                    <span className="mr-2">✅</span>
+                                    {bannerMessage.text}
+                                </div>
+                            )}
                             <form onSubmit={handleRoomBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
                                 {/* Show dates as read-only display if already selected, otherwise show date inputs */}
                                 {bookingData.check_in && bookingData.check_out ? (
@@ -2602,6 +2616,20 @@ export default function App() {
                                 <h3 className="text-lg font-bold flex items-center"><Package className={`w-5 h-5 mr-2 ${theme.textAccent}`} /> Book a Package</h3>
                                 <button onClick={() => setIsPackageBookingFormOpen(false)} className={`p-1 rounded-full ${theme.textSecondary} hover:${theme.textPrimary} transition-colors`}><X className="w-6 h-6" /></button>
                             </div>
+                            {/* Error message inside modal */}
+                            {bannerMessage.text && bannerMessage.type === 'error' && (
+                                <div className={`mx-6 mt-4 p-3 rounded-lg bg-red-100 border border-red-300 text-red-700 text-sm flex items-center`}>
+                                    <span className="mr-2">❌</span>
+                                    {bannerMessage.text}
+                                </div>
+                            )}
+                            {/* Success message inside modal */}
+                            {bannerMessage.text && bannerMessage.type === 'success' && (
+                                <div className={`mx-6 mt-4 p-3 rounded-lg bg-green-100 border border-green-300 text-green-700 text-sm flex items-center`}>
+                                    <span className="mr-2">✅</span>
+                                    {bannerMessage.text}
+                                </div>
+                            )}
                             <form onSubmit={handlePackageBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
