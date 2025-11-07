@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
-from typing import List
+from typing import List, Union
 import os
 from app.models.user import User
 from app.models.room import Room
 from app.models.Package import Package, PackageBooking, PackageBookingRoom
 from app.utils.auth import get_db, get_current_user
+from app.utils.booking_id import parse_display_id
 from app.schemas.packages import PackageBookingCreate, PackageOut, PackageBookingOut
 from fastapi.responses import FileResponse
 from app.curd import packages as crud_package
@@ -239,7 +240,15 @@ def get_package_api(package_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/booking/{booking_id}")
-def delete_package_booking_api(booking_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def delete_package_booking_api(booking_id: Union[str, int], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Parse display ID (PK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "package":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected package booking, got: {booking_id}")
+    booking_id = numeric_id
+    
     success = crud_package.delete_package_booking(db, booking_id)
     if not success:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -247,7 +256,15 @@ def delete_package_booking_api(booking_id: int, db: Session = Depends(get_db), c
 
 # ------------------- Cancel a package booking -------------------
 @router.put("/booking/{booking_id}/cancel", response_model=PackageBookingOut)
-def cancel_package_booking(booking_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def cancel_package_booking(booking_id: Union[str, int], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Parse display ID (PK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "package":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected package booking, got: {booking_id}")
+    booking_id = numeric_id
+    
     booking = db.query(PackageBooking).filter(PackageBooking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Package booking not found")
@@ -263,14 +280,23 @@ def cancel_package_booking(booking_id: int, db: Session = Depends(get_db), curre
     return booking
 
 @router.put("/booking/{booking_id}/extend", response_model=PackageBookingOut)
-def extend_package_booking_checkout(booking_id: int, new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def extend_package_booking_checkout(booking_id: Union[str, int], new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Extend the checkout date for a package booking.
     Validates that the new checkout date is after the current checkout date
     and checks for conflicts with other bookings on the same rooms.
+    Accepts both display ID (PK-000001) and numeric ID.
     """
     from datetime import datetime
     from sqlalchemy import and_, or_
+    
+    # Parse display ID (PK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "package":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected package booking, got: {booking_id}")
+    booking_id = numeric_id
     
     # Parse the new checkout date string to a date object
     try:
@@ -353,12 +379,20 @@ def extend_package_booking_checkout(booking_id: int, new_checkout: str, db: Sess
 
 @router.put("/booking/{booking_id}/check-in", response_model=PackageBookingOut)
 def check_in_package_booking(
-    booking_id: int,
+    booking_id: Union[str, int],
     id_card_image: UploadFile = File(...),
     guest_photo: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Parse display ID (PK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "package":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected package booking, got: {booking_id}")
+    booking_id = numeric_id
+    
     booking = (
         db.query(PackageBooking)
         .options(joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room))

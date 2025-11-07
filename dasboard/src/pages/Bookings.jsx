@@ -169,6 +169,8 @@ const ExtendBookingModal = ({ booking, onSave, onClose, feedback, isSubmitting }
   const minDate = booking.check_out;
 
   const handleSave = () => {
+    // Pass both id (for state lookup) and display_id (for API call)
+    // The parent component will handle converting to display ID
     onSave(booking.id, newCheckout);
   };
 
@@ -1048,14 +1050,15 @@ const Bookings = () => {
     setIsSubmitting(true);
 
     try {
-      // Find the booking to determine if it's a package booking
+      // Find the booking to determine if it's a package booking and get display ID
       const booking = bookings.find(b => b.id === bookingId);
       const isPackage = booking?.is_package || bookingToExtend?.is_package || false;
+      const displayId = generateBookingId(booking || bookingToExtend);
       
-      // Use the correct endpoint based on booking type
+      // Use the correct endpoint based on booking type, and use display ID
       const url = isPackage 
-        ? `/packages/booking/${bookingId}/extend?new_checkout=${newCheckoutDate}`
-        : `/bookings/${bookingId}/extend?new_checkout=${newCheckoutDate}`;
+        ? `/packages/booking/${displayId}/extend?new_checkout=${newCheckoutDate}`
+        : `/bookings/${displayId}/extend?new_checkout=${newCheckoutDate}`;
       
       await API.put(
         url,
@@ -1094,7 +1097,9 @@ const Bookings = () => {
     formData.append("id_card_image", images.id_card_image);
     formData.append("guest_photo", images.guest_photo);
 
-    const url = booking?.is_package ? `/packages/booking/${bookingId}/check-in` : `/bookings/${bookingId}/check-in`;
+    // Use display ID for API call
+    const displayId = generateBookingId(booking || bookingToCheckIn);
+    const url = booking?.is_package ? `/packages/booking/${displayId}/check-in` : `/bookings/${displayId}/check-in`;
 
     try {
       const response = await API.put(url, formData, {
@@ -1133,7 +1138,9 @@ const Bookings = () => {
     setModalBooking(tempBooking || { guest_name: "Loading..." }); // Show a loading state
 
     try {
-      const response = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+      // Use display ID for API call
+      const displayId = tempBooking ? generateBookingId(tempBooking) : (is_package ? `PK-${String(id).padStart(6, '0')}` : `BK-${String(id).padStart(6, '0')}`);
+      const response = await API.get(`/bookings/details/${displayId}?is_package=${is_package}`, authHeader());
       setModalBooking(response.data); // Update the modal with full, fresh data
     } catch (err) {
       console.error("Failed to fetch booking details:", err);
@@ -1146,9 +1153,13 @@ const Bookings = () => {
   const cancelBooking = async (id, is_package) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
     try {
+      // Find booking and get display ID
+      const booking = bookings.find(b => b.id === id && b.is_package === is_package);
+      const displayId = booking ? generateBookingId(booking) : (is_package ? `PK-${String(id).padStart(6, '0')}` : `BK-${String(id).padStart(6, '0')}`);
+      
       // First fetch fresh details; if already cancelled, reflect immediately
       try {
-        const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+        const fresh = await API.get(`/bookings/details/${displayId}?is_package=${is_package}`, authHeader());
         if (fresh?.data?.status && fresh.data.status.toLowerCase().includes('cancel')) {
           setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
           showBannerMessage("success", "Booking is already cancelled.");
@@ -1156,7 +1167,7 @@ const Bookings = () => {
         }
       } catch (_) {}
 
-      const url = is_package ? `/packages/booking/${id}/cancel` : `/bookings/${id}/cancel`;
+      const url = is_package ? `/packages/booking/${displayId}/cancel` : `/bookings/${displayId}/cancel`;
       const response = await API.put(url, {}, authHeader());
       showBannerMessage("success", "Booking cancelled successfully.");
       // Update the booking in state instead of refetching everything
@@ -1169,7 +1180,9 @@ const Bookings = () => {
       // If endpoint is unavailable but the booking is actually cancelled, reflect it
       if (err?.response?.status === 404) {
         try {
-          const fresh = await API.get(`/bookings/details/${id}?is_package=${is_package}`, authHeader());
+          const booking = bookings.find(b => b.id === id && b.is_package === is_package);
+          const displayId = booking ? generateBookingId(booking) : (is_package ? `PK-${String(id).padStart(6, '0')}` : `BK-${String(id).padStart(6, '0')}`);
+          const fresh = await API.get(`/bookings/details/${displayId}?is_package=${is_package}`, authHeader());
           if (fresh?.data) {
             setBookings(prev => prev.map(b => (b.id === id && b.is_package === is_package) ? { ...b, ...fresh.data } : b));
             const normalized = fresh.data.status?.toLowerCase() || '';
@@ -1624,7 +1637,9 @@ const Bookings = () => {
                         <button
                           onClick={async () => {
                             try {
-                              const response = await API.get(`/bookings/details/${b.id}?is_package=${b.is_package}`, authHeader());
+                              // Use display ID for API call
+                              const displayId = generateBookingId(b);
+                              const response = await API.get(`/bookings/details/${displayId}?is_package=${b.is_package}`, authHeader());
                               setBookingToCheckIn({ ...b, ...response.data });
                             } catch (e) {
                               // Fallback to existing data if details fetch fails

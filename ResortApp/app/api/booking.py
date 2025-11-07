@@ -2,8 +2,9 @@
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session, joinedload, load_only
 from sqlalchemy import or_, and_
-from typing import List
+from typing import List, Union
 from app.utils.auth import get_db, get_current_user
+from app.utils.booking_id import parse_display_id
 from app.models.booking import Booking, BookingRoom
 from app.models.user import User
 from app.models.room import Room
@@ -81,7 +82,21 @@ def get_bookings(db: Session = Depends(get_db), skip: int = 0, limit: int = 20, 
 # This is a more reliable way to get full details for the modal view.
 # ----------------------------------------------------------------
 @router.get("/details/{booking_id}", response_model=BookingOut)
-def get_booking_details(booking_id: int, is_package: bool, db: Session = Depends(get_db)):
+def get_booking_details(booking_id: Union[str, int], is_package: bool, db: Session = Depends(get_db)):
+    # Parse display ID (BK-000001 or PK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    
+    # Validate booking type matches is_package parameter
+    if booking_type:
+        if booking_type == "package" and not is_package:
+            raise HTTPException(status_code=400, detail=f"Booking ID {booking_id} is a package booking, but is_package parameter is False")
+        if booking_type == "booking" and is_package:
+            raise HTTPException(status_code=400, detail=f"Booking ID {booking_id} is a regular booking, but is_package parameter is True")
+    
+    booking_id = numeric_id
+    
     if is_package:
         booking = db.query(PackageBooking).options(
             joinedload(PackageBooking.rooms).joinedload(PackageBookingRoom.room),
@@ -604,12 +619,19 @@ def create_guest_booking(booking: BookingCreate, db: Session = Depends(get_db)):
 # -------------------------------
 @router.put("/{booking_id}/check-in", response_model=BookingOut)
 def check_in_booking(
-    booking_id: int,
+    booking_id: Union[str, int],
     id_card_image: UploadFile = File(...),
     guest_photo: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Parse display ID (BK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "booking":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected regular booking, got: {booking_id}")
+    booking_id = numeric_id
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -648,7 +670,15 @@ def check_in_booking(
 # Cancel a booking
 # -------------------------------
 @router.put("/{booking_id}/cancel", response_model=BookingOut)
-def cancel_booking(booking_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def cancel_booking(booking_id: Union[str, int], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Parse display ID (BK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "booking":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected regular booking, got: {booking_id}")
+    booking_id = numeric_id
+    
     booking = db.query(Booking).filter(Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -664,13 +694,22 @@ def cancel_booking(booking_id: int, db: Session = Depends(get_db), current_user:
     return booking
     
 @router.put("/{booking_id}/extend", response_model=BookingOut)
-def extend_checkout(booking_id: int, new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def extend_checkout(booking_id: Union[str, int], new_checkout: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Extend the checkout date for a booking.
     Validates that the new checkout date is after the current checkout date
     and checks for conflicts with other bookings on the same rooms.
+    Accepts both display ID (BK-000001) and numeric ID.
     """
     from datetime import datetime
+    
+    # Parse display ID (BK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "booking":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected regular booking, got: {booking_id}")
+    booking_id = numeric_id
     
     # Parse the new checkout date string to a date object
     try:
@@ -770,7 +809,15 @@ def extend_checkout(booking_id: int, new_checkout: str, db: Session = Depends(ge
 # GET booking by ID
 # -------------------------------
 @router.get("/{booking_id}", response_model=BookingOut)
-def get_booking(booking_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def get_booking(booking_id: Union[str, int], db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Parse display ID (BK-000001) or accept numeric ID
+    numeric_id, booking_type = parse_display_id(str(booking_id))
+    if numeric_id is None:
+        raise HTTPException(status_code=400, detail=f"Invalid booking ID format: {booking_id}")
+    if booking_type and booking_type != "booking":
+        raise HTTPException(status_code=400, detail=f"Invalid booking type. Expected regular booking, got: {booking_id}")
+    booking_id = numeric_id
+    
     booking = db.query(Booking).options(
         joinedload(Booking.booking_rooms).joinedload(BookingRoom.room)
     ).filter(Booking.id == booking_id).first()
