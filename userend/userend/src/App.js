@@ -1521,14 +1521,35 @@ export default function App() {
             <div className={`relative ${theme.bgPrimary} ${theme.textPrimary} font-sans min-h-screen transition-colors duration-500`}>
                 <BackgroundAnimation theme={theme} />
                 
-                {/* Banner Message - High z-index to appear above modals */}
+                {/* Banner Message - High z-index to appear above all modals and overlays */}
                 {bannerMessage.text && (
-                    <div className={`fixed top-0 left-0 right-0 z-[9999] p-4 ${bannerMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white text-center font-medium shadow-lg transform transition-transform duration-300`}>
-                        <div className="flex items-center justify-center">
+                    <div 
+                        className={`fixed top-0 left-0 right-0 z-[99999] p-4 text-white text-center font-medium shadow-2xl transform transition-all duration-300 ${
+                            bannerMessage.type === 'success' ? 'bg-green-600' : 
+                            bannerMessage.type === 'error' ? 'bg-red-600' : 
+                            bannerMessage.type === 'warning' ? 'bg-yellow-600' : 
+                            'bg-blue-600'
+                        }`}
+                        style={{ 
+                            zIndex: 99999,
+                            pointerEvents: 'auto'
+                        }}
+                    >
+                        <div className="flex items-center justify-center relative max-w-7xl mx-auto">
                             <span className="mr-2">
-                                {bannerMessage.type === 'success' ? '✅' : '❌'}
+                                {bannerMessage.type === 'success' ? '✅' : 
+                                 bannerMessage.type === 'error' ? '❌' : 
+                                 bannerMessage.type === 'warning' ? '⚠️' : 
+                                 'ℹ️'}
                             </span>
-                            {bannerMessage.text}
+                            <span className="flex-1">{bannerMessage.text}</span>
+                            <button 
+                                onClick={() => setBannerMessage({ type: null, text: "" })}
+                                className="ml-4 p-1 rounded-full hover:bg-white/20 transition-colors"
+                                aria-label="Close message"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
                         </div>
                     </div>
                 )}
