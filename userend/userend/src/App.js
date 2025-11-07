@@ -2526,33 +2526,33 @@ export default function App() {
                                 </div>
                             )}
                             <form onSubmit={handleRoomBookingSubmit} className="p-4 space-y-4 overflow-y-auto">
-                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
-                                {bookingData.check_in && bookingData.check_out ? (
-                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
-                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
-                                        <div className="flex space-x-4">
-                                            <div className="flex-1">
-                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
-                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_in}</p>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
-                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{bookingData.check_out}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
+                                {/* Always show editable date inputs */}
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                            <input type="date" name="check_in" value={bookingData.check_in || ''} onChange={handleRoomBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input 
+                                            type="date" 
+                                            name="check_in" 
+                                            value={bookingData.check_in || ''} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={bookingData.check_out || ''} onChange={handleRoomBookingChange} min={bookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input 
+                                            type="date" 
+                                            name="check_out" 
+                                            value={bookingData.check_out || ''} 
+                                            onChange={handleRoomBookingChange} 
+                                            min={bookingData.check_in || new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
                                     </div>
                                 </div>
-                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
                                     {!bookingData.check_in || !bookingData.check_out ? (
@@ -2656,33 +2656,33 @@ export default function App() {
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Package ID</label>
                                     <input type="number" name="package_id" value={packageBookingData.package_id || ''} readOnly className={`w-full p-3 rounded-xl ${theme.placeholderBg} ${theme.placeholderText} focus:outline-none`} />
                                 </div>
-                                {/* Show dates as read-only display if already selected, otherwise show date inputs */}
-                                {packageBookingData.check_in && packageBookingData.check_out && packageBookingData.check_in !== '' && packageBookingData.check_out !== '' ? (
-                                    <div className={`p-4 rounded-xl ${theme.bgSecondary} border ${theme.border} mb-4`}>
-                                        <label className={`block text-sm font-medium ${theme.textSecondary} mb-3`}>Selected Dates</label>
-                                        <div className="flex space-x-4">
-                                            <div className="flex-1">
-                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-in</p>
-                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_in}</p>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className={`text-xs ${theme.textSecondary} mb-1`}>Check-out</p>
-                                                <p className={`text-base font-semibold ${theme.textPrimary}`}>{packageBookingData.check_out}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
+                                {/* Always show editable date inputs */}
                                 <div className="flex space-x-4">
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-in Date</label>
-                                            <input type="date" name="check_in" value={packageBookingData.check_in || ''} onChange={handlePackageBookingChange} min={new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input 
+                                            type="date" 
+                                            name="check_in" 
+                                            value={packageBookingData.check_in || ''} 
+                                            onChange={handlePackageBookingChange} 
+                                            min={new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
                                     </div>
                                     <div className="space-y-2 w-1/2">
                                         <label className={`block text-sm font-medium ${theme.textSecondary}`}>Check-out Date</label>
-                                            <input type="date" name="check_out" value={packageBookingData.check_out || ''} onChange={handlePackageBookingChange} min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} required className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} />
+                                        <input 
+                                            type="date" 
+                                            name="check_out" 
+                                            value={packageBookingData.check_out || ''} 
+                                            onChange={handlePackageBookingChange} 
+                                            min={packageBookingData.check_in || new Date().toISOString().split('T')[0]} 
+                                            required 
+                                            className={`w-full p-3 rounded-xl ${theme.bgSecondary} ${theme.textPrimary} border ${theme.border} focus:outline-none focus:ring-2 focus:ring-amber-500 transition-colors`} 
+                                        />
                                     </div>
                                 </div>
-                                )}
                                 <div className="space-y-2">
                                     <label className={`block text-sm font-medium ${theme.textSecondary}`}>Available Rooms for Selected Dates</label>
                                     {!packageBookingData.check_in || !packageBookingData.check_out ? (
