@@ -11,11 +11,16 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await api.post("/auth/login", { email, password });
-      localStorage.setItem("token", response.data.access_token);
-      window.location.href = "/admin/dashboard";
+      if (response.data && response.data.access_token) {
+        localStorage.setItem("token", response.data.access_token);
+        window.location.href = "/admin/dashboard";
+      } else {
+        alert("Login failed: No token received from server.");
+      }
     } catch (err) {
-      console.error(err);
-      alert("Login failed. Please check your credentials.");
+      console.error("Login error:", err);
+      const errorMessage = err.response?.data?.detail || err.message || "Login failed. Please check your credentials.";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

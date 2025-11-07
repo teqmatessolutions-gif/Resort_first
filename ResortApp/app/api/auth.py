@@ -13,15 +13,44 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/login", response_model=Token)
 def login(request: LoginRequest, db: Session = Depends(auth.get_db)):
-  
-    user = crud_user.authenticate_user(db, request.email, request.password)
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid credentials")
-    access_token = auth.create_access_token(
-        data={"user_id": user.id, "role": user.role.name},
-        expires_delta=timedelta(hours=auth.ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
-    return {"access_token": access_token}
+    try:
+        # Check if user exists
+        user = crud_user.get_user_by_email(db, request.email)
+        if not user:
+            print(f"Login attempt: User not found for email: {request.email}")
+            raise HTTPException(status_code=400, detail="Invalid credentials")
+        
+        # Check if user is active
+        if not user.is_active:
+            print(f"Login attempt: User {request.email} is inactive")
+            raise HTTPException(status_code=400, detail="Account is inactive. Please contact administrator.")
+        
+        # Verify password
+        if not auth.verify_password(request.password, user.hashed_password):
+            print(f"Login attempt: Invalid password for email: {request.email}")
+            raise HTTPException(status_code=400, detail="Invalid credentials")
+        
+        # Check if user has a role
+        if not user.role:
+            print(f"Login attempt: User {request.email} has no role assigned")
+            raise HTTPException(status_code=400, detail="User role not assigned. Please contact administrator.")
+        
+        # Create access token
+        access_token = auth.create_access_token(
+            data={"user_id": user.id, "role": user.role.name},
+            expires_delta=timedelta(hours=auth.ACCESS_TOKEN_EXPIRE_MINUTES),
+        )
+        print(f"Login successful: {request.email}")
+        return {"access_token": access_token}
+    except HTTPException:
+        # Re-raise HTTP exceptions (like invalid credentials)
+        raise
+    except Exception as e:
+        # Log unexpected errors
+        print(f"Login error for {request.email}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
 
 
 @router.get("/admin-only")

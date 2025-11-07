@@ -36,6 +36,14 @@ def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
     if not user:
         return None
-    if not auth.verify_password(password, user.hashed_password):
+    # Check if user is active
+    if not user.is_active:
+        return None
+    # Verify password
+    try:
+        if not auth.verify_password(password, user.hashed_password):
+            return None
+    except Exception as e:
+        print(f"Password verification error for {email}: {str(e)}")
         return None
     return user
